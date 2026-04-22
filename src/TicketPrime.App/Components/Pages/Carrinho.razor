@@ -1,0 +1,212 @@
+@page "/carrinho"
+@inject CartState Cart
+@inject TicketPrimeApiClient ApiClient
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Carrinho</PageTitle>
+
+@if (Session.CurrentUser is null)
+{
+    <div class="cart-shell">
+        <div class="status-box status-box--error">Entre com uma conta de cliente para acessar o carrinho.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
+    </div>
+}
+else
+{
+    <div class="cart-shell">
+        <section class="cart-hero">
+            <div>
+                <span class="eyebrow">Carrinho TicketPrime</span>
+                <h1>Revise seus ingressos antes de finalizar</h1>
+                <p>Confirme quantidades, aplique cupom se desejar e conclua a compra com sua conta atual.</p>
+            </div>
+            <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Continuar explorando</button>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="status-box @(isError ? "status-box--error" : "status-box--success")">@statusMessage</div>
+        }
+
+        @if (Cart.Items.Count == 0)
+        {
+            <div class="status-box">Seu carrinho esta vazio. Adicione um evento para continuar.</div>
+        }
+        else
+        {
+            <div class="cart-grid">
+                <section class="cart-panel cart-panel--list">
+                    @foreach (var item in Cart.Items)
+                    {
+                        <article class="cart-item">
+                            @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
+                            {
+                                <img class="cart-item__image" src="@item.ImagemUrl" alt="@item.Nome" />
+                            }
+
+                                <div class="cart-item__body">
+                                    <div>
+                                        <h2>@item.Nome</h2>
+                                        <p>@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                                        <p>Assentos: @string.Join(", ", item.Assentos)</p>
+                                    </div>
+
+                                <div class="cart-item__controls">
+                                    <label>
+                                        Quantidade
+                                        <span class="cart-item__count">@item.Quantidade ingresso(s)</span>
+                                    </label>
+                                    <strong>R$ @item.Subtotal.ToString("0.00")</strong>
+                                    <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}/assentos")'>Alterar assentos</button>
+                                    <button class="ghost-button" type="button" @onclick='() => RemoveItem(item.EventoId)'>Remover</button>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </section>
+
+                <section class="cart-panel cart-panel--summary">
+                    <h2>Resumo da compra</h2>
+                    <div class="summary-row">
+                        <span>Ingressos</span>
+                        <strong>@Cart.TotalItems</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total parcial</span>
+                        <strong>R$ @DisplayedOriginalTotal.ToString("0.00")</strong>
+                    </div>
+
+                    <div class="field">
+                        <label for="cupom">Cupom</label>
+                        <div class="cart-coupon">
+                            <input id="cupom" class="field__input" @bind="couponCode" placeholder="Ex.: PROMO10" />
+                            <button class="ghost-button" type="button" @onclick="ApplyCoupon" disabled="@isBusy">Aplicar cupom</button>
+                        </div>
+                    </div>
+
+                    @if (couponPreview is not null)
+                    {
+                        <div class="cart-discount-box">
+                            <div class="summary-row">
+                                <span>Cupom aplicado</span>
+                                <strong>@(string.IsNullOrWhiteSpace(couponPreview.CupomAplicado) ? "-" : couponPreview.CupomAplicado)</strong>
+                            </div>
+                            <div class="summary-row">
+                                <span>Desconto</span>
+                                <strong>- R$ @couponPreview.DescontoAplicado.ToString("0.00")</strong>
+                            </div>
+                            <div class="summary-row summary-row--total">
+                                <span>Total final</span>
+                                <strong>R$ @couponPreview.TotalFinal.ToString("0.00")</strong>
+                            </div>
+                        </div>
+                    }
+
+                    <button class="secondary-button" type="button" @onclick="FinalizePurchase" disabled="@isBusy">Finalizar compra</button>
+                </section>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string couponCode = string.Empty;
+    private string statusMessage = string.Empty;
+    private bool isError;
+    private bool isBusy;
+    private ReservationCheckoutResponseViewModel? couponPreview;
+
+    private decimal DisplayedOriginalTotal => couponPreview?.TotalOriginal ?? Cart.TotalValue;
+
+    private void RemoveItem(int eventoId)
+    {
+        Cart.RemoveItem(eventoId);
+        couponPreview = null;
+    }
+
+    private async Task ApplyCoupon()
+    {
+        if (Session.CurrentUser is null || Cart.Items.Count == 0)
+            return;
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var response = await ApiClient.PreviewCouponAsync(new ReservationCheckoutRequest
+            {
+                UsuarioCpf = Session.CurrentUser.Cpf,
+                CupomCodigo = string.IsNullOrWhiteSpace(couponCode) ? null : couponCode,
+                Itens = Cart.Items.Select(item => new ReservationCheckoutItemRequest
+                {
+                    EventoId = item.EventoId,
+                    Quantidade = item.Quantidade,
+                    Assentos = item.Assentos
+                }).ToList()
+            });
+
+            isError = !response.Sucesso;
+            statusMessage = response.Mensagem;
+            couponPreview = response.Sucesso ? response : null;
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel validar o cupom agora.";
+            couponPreview = null;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task FinalizePurchase()
+    {
+        if (Session.CurrentUser is null || Cart.Items.Count == 0)
+            return;
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var response = await ApiClient.CheckoutReservationsAsync(new ReservationCheckoutRequest
+            {
+                UsuarioCpf = Session.CurrentUser.Cpf,
+                CupomCodigo = string.IsNullOrWhiteSpace(couponCode) ? null : couponCode,
+                Itens = Cart.Items.Select(item => new ReservationCheckoutItemRequest
+                {
+                    EventoId = item.EventoId,
+                    Quantidade = item.Quantidade,
+                    Assentos = item.Assentos
+                }).ToList()
+            });
+
+            isError = !response.Sucesso;
+            statusMessage = response.Mensagem;
+
+            if (response.Sucesso)
+            {
+                Cart.Clear();
+                couponCode = string.Empty;
+                couponPreview = null;
+                Navigation.NavigateTo("/reservas");
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel concluir a compra agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+}

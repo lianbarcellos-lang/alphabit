@@ -1,0 +1,83 @@
+@implements IDisposable
+@inject AuthOverlayState AuthOverlay
+@inject UserSessionState Session
+@inject CartState Cart
+@inject NavigationManager Navigation
+
+<nav class="site-nav">
+    <a class="navbar-brand" href="">
+        <span class="brand-mark">TP</span>
+        <span class="brand-copy">
+            <strong>TicketPrime</strong>
+            <small>Descubra eventos perto de voce</small>
+        </span>
+    </a>
+
+    <div class="site-nav__search">
+        <span class="bi bi-search-nav-menu" aria-hidden="true"></span>
+        <input class="site-nav__input" value="Shows, festivais e experiencias" readonly />
+    </div>
+
+    <div class="site-nav__links">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+        <NavLink class="nav-link" href="eventos">Eventos</NavLink>
+
+        @if (Session.IsAuthenticated && !Session.IsAdmin)
+        {
+            <NavLink class="nav-link" href="minha-conta">Minha conta</NavLink>
+            <NavLink class="nav-link" href="carrinho">Carrinho (@Cart.TotalItems)</NavLink>
+            <NavLink class="nav-link" href="reservas">Ingressos</NavLink>
+        }
+
+        @if (Session.IsAdmin)
+        {
+            <NavLink class="nav-link" href="admin">Painel</NavLink>
+        }
+    </div>
+
+    <div class="site-nav__actions">
+        @if (Session.IsAuthenticated)
+        {
+            <span class="site-nav__user">@Session.DisplayName</span>
+            <button class="site-nav__cta site-nav__cta--ghost" type="button" @onclick="Logout">Sair</button>
+        }
+        else
+        {
+            <button class="site-nav__cta site-nav__cta--ghost" type="button" @onclick="OpenLogin">Entrar</button>
+            <button class="site-nav__cta" type="button" @onclick="OpenRegister">Criar conta</button>
+        }
+    </div>
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Session.OnChange += HandleSessionChanged;
+    }
+
+    private void HandleSessionChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenLogin()
+    {
+        AuthOverlay.OpenLogin();
+    }
+
+    private void OpenRegister()
+    {
+        AuthOverlay.OpenRegister();
+    }
+
+    private void Logout()
+    {
+        Session.Logout();
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        Session.OnChange -= HandleSessionChanged;
+    }
+}

@@ -1,0 +1,104 @@
+
+
+
+# Estrutura de História do Usuário
+
+| Componente | Descrição | Sintaxe Padrão |
+| :--- | :--- | :--- |
+| **Persona** | Quem é o usuário que interage com o sistema. | **Como um** [perfil de usuário] |
+| **Desejo** | Qual funcionalidade ou ação o usuário quer realizar. | **eu quero** [realizar uma ação] |
+| **Propósito** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+
+---
+
+### Definição de Qualidade (Critérios INVEST)
+
+| Letra | Conceito | Definição Curta |
+| :--- | :---: | :--- |
+| **I** | Independente | A história não deve depender de outra para ser concluída. |
+| **N** | Negociável | Os detalhes são discutidos entre o time e o cliente. |
+| **V** | Valiosa | Deve trazer um benefício claro para o usuário final. |
+| **E** | Estimável | O time de desenvolvimento deve conseguir medir o esforço. |
+| **S** | Small (Pequena) | Deve ser realizável dentro de um único ciclo (Sprint). |
+| **T** | Testável | Deve permitir a criação de testes de aceitação claros. |
+
+
+
+
+Exemplo 1
+-Exigência do Cliente (Problema)
+"Não quero perder meu tempo escolhendo e depois descobrir que o ingresso acabou."
+
+-História do Usuário (User Story)
+Como um fã de música, eu quero que o sistema reserve meu ingresso por 10 minutos após a seleção, para que eu consiga preencher meus dados de pagamento com calma.
+
+-Resolução / Critérios de Aceite (Definition of Done)
+O sistema deve exibir um cronômetro regressivo.
+O assento deve ficar "bloqueado" para outros usuários durante esse tempo.
+Após 10 min sem pagamento, o ingresso volta ao inventário.
+
+
+
+Exemplo 2
+-Exigência do Cliente (Problema)
+- Comprei o ingresso mas não posso ir. Quero dar para um amigo sem burocracia."
+
+-História do Usuário (User Story)
+Como um comprador de última hora, eu quero transferir a titularidade do ingresso pelo app, para que meu convidado consiga entrar no evento com o nome dele.
+
+-Resolução / Critérios de Aceite (Definition of Done)
+O sistema deve invalidar o QR Code antigo e gerar um novo para o destinatário.
+
+
+
+Exemplo 3 
+
+-Exigência do Cliente (Problema)
+Tenho medo de clonarem meu cartão ou de o site não ser seguro."
+
+
+-História do Usuário (User Story)
+Como um comprador preocupado com segurança, eu quero pagar via Pix ou Carteira Digital (Apple/Google Pay), para que eu não precise digitar meus dados de cartão.
+
+
+-Resolução / Critérios de Aceite (Definition of Done)
+• Integração com APIs de pagamento instantâneo (Pix Copy & Paste).
+
+
+Exemplo 4 
+
+-Exigência do Cliente (Problema)
+Quero comprar vários ingressos de uma vez para minha família, sem repetir o processo."
+
+
+-História do Usuário (User Story)
+Como um pai de família, eu quero selecionar múltiplos ingressos no carrinho, para que eu pague apenas uma taxa de conveniência por transação.
+
+-Resolução / Critérios de Aceite (Definition of Done)
+Permitir seleção de até 6 ingressos por CPF.
+
+
+
+CÓDIGO vscode 26/02/2026
+# Estrutura de História do Usuário
+
+| Código | História do Usuário | Resolução |
+| :--- | :--- | :--- |
+| **HU001** | Não quero perder meu tempo escolhendo e depois descobrir que o ingresso acabou. | ■ O sistema deve exibir um cronômetro regressivo.                                     ■ O assento deve ficar "bloqueado" para outros usuários durante esse tempo. ■ Após 10 min sem pagamento, o ingresso volta ao inventário.
+| **HU002** | Qual funcionalidade ou ação o usuário quer realizar. | **eu quero** [realizar uma ação] |
+| **HU003** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU004** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU005** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU006** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU007** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU008** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU009** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+| **HU010** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
+
+
+
+
+
+
+
+

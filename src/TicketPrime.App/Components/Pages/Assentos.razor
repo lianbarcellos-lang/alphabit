@@ -1,0 +1,192 @@
+@page "/eventos/{Id:int}/assentos"
+@inject TicketPrimeApiClient ApiClient
+@inject CartState Cart
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Selecionar Assentos</PageTitle>
+
+@if (Session.CurrentUser is null)
+{
+    <div class="seats-shell">
+        <div class="status-box status-box--error">Entre com uma conta de cliente para selecionar assentos.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
+    </div>
+}
+else if (isLoading)
+{
+    <div class="seats-shell">
+        <div class="status-box">Carregando mapa de assentos...</div>
+    </div>
+}
+else if (eventItem is null)
+{
+    <div class="seats-shell">
+        <div class="status-box status-box--error">Evento nao encontrado.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar</button>
+    </div>
+}
+else
+{
+    <div class="seats-shell">
+        <section class="seats-hero">
+            <div>
+                <span class="eyebrow">Selecao de assentos</span>
+                <h1>@eventItem.Nome</h1>
+                <p>@eventItem.LocalEvento, @eventItem.CidadeEvento</p>
+                <p>@eventItem.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+            </div>
+            <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar aos eventos</button>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="status-box @(isError ? "status-box--error" : "status-box--success")">@statusMessage</div>
+        }
+
+        <div class="seats-grid">
+            <section class="seats-panel">
+                <div class="stage">PALCO</div>
+
+                <div class="legend">
+                    <span><i class="legend__dot legend__dot--free"></i>Livre</span>
+                    <span><i class="legend__dot legend__dot--selected"></i>Selecionado</span>
+                    <span><i class="legend__dot legend__dot--taken"></i>Ocupado</span>
+                </div>
+
+                <div class="seats-map">
+                    @foreach (var seat in seats)
+                    {
+                        <button class="seat @(GetSeatCss(seat))"
+                                type="button"
+                                disabled="@seat.IsOccupied"
+                                @onclick='() => ToggleSeat(seat.Label)'>
+                            @seat.Label
+                        </button>
+                    }
+                </div>
+            </section>
+
+            <section class="seats-panel seats-panel--summary">
+                <h2>Seu pedido</h2>
+                <p>Escolha ate 2 assentos para este evento.</p>
+
+                <div class="summary-row">
+                    <span>Assentos</span>
+                    <strong>@(selectedSeats.Count == 0 ? "Nenhum" : string.Join(", ", selectedSeats.OrderBy(item => item)))</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Quantidade</span>
+                    <strong>@selectedSeats.Count</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Total</span>
+                    <strong>R$ @((eventItem.PrecoPadrao * selectedSeats.Count).ToString("0.00"))</strong>
+                </div>
+
+                <button class="secondary-button" type="button" disabled="@(selectedSeats.Count == 0)" @onclick="AddSelectionToCart">
+                    Reservar assento(s)
+                </button>
+            </section>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private EventViewModel? eventItem;
+    private bool isLoading = true;
+    private bool isError;
+    private string statusMessage = string.Empty;
+    private readonly List<SeatItem> seats = [];
+    private readonly HashSet<string> occupiedSeats = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> selectedSeats = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            eventItem = await ApiClient.GetEventByIdAsync(Id);
+            if (eventItem is null)
+                return;
+
+            var availability = await ApiClient.GetOccupiedSeatsAsync(Id);
+            foreach (var seat in availability.AssentosOcupados)
+                occupiedSeats.Add(seat);
+
+            BuildSeats();
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel carregar os assentos agora.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void BuildSeats()
+    {
+        seats.Clear();
+        var rows = new[] { "A", "B", "C", "D", "E" };
+        foreach (var row in rows)
+        {
+            for (var number = 1; number <= 8; number++)
+            {
+                var label = $"{row}{number}";
+                seats.Add(new SeatItem
+                {
+                    Label = label,
+                    IsOccupied = occupiedSeats.Contains(label)
+                });
+            }
+        }
+    }
+
+    private void ToggleSeat(string label)
+    {
+        isError = false;
+        statusMessage = string.Empty;
+
+        if (selectedSeats.Contains(label))
+        {
+            selectedSeats.Remove(label);
+            return;
+        }
+
+        if (selectedSeats.Count >= 2)
+        {
+            isError = true;
+            statusMessage = "Voce pode selecionar no maximo 2 assentos por evento.";
+            return;
+        }
+
+        selectedSeats.Add(label);
+    }
+
+    private void AddSelectionToCart()
+    {
+        if (eventItem is null || selectedSeats.Count == 0)
+            return;
+
+        Cart.AddEvent(eventItem, selectedSeats);
+        Navigation.NavigateTo("/carrinho");
+    }
+
+    private string GetSeatCss(SeatItem seat)
+    {
+        if (seat.IsOccupied)
+            return "seat--taken";
+
+        return selectedSeats.Contains(seat.Label) ? "seat--selected" : "seat--free";
+    }
+
+    private sealed class SeatItem
+    {
+        public string Label { get; set; } = string.Empty;
+        public bool IsOccupied { get; set; }
+    }
+}

@@ -1,0 +1,145 @@
+@page "/"
+
+@inject TicketPrimeApiClient ApiClient
+@inject AuthOverlayState AuthOverlay
+@inject NavigationManager Navigation
+@inject UserSessionState Session
+
+<PageTitle>Entrar</PageTitle>
+
+<div class="landing-shell">
+    <section class="landing-hero">
+        <div class="landing-hero__copy">
+            <span class="eyebrow">Experiencias ao vivo para descobrir agora</span>
+            <h1>Encontre o proximo show, festival ou evento especial em poucos cliques.</h1>
+            <p>Uma vitrine mais clara para pesquisar, comparar e seguir para a compra com seguranca.</p>
+
+            <div class="landing-search">
+                <div class="landing-search__field">
+                    <span>Busca em destaque</span>
+                    <strong>Qual evento voce quer viver nesta semana?</strong>
+                </div>
+                <button class="search-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Buscar eventos</button>
+            </div>
+
+            <div class="landing-tags">
+                <span>Shows</span>
+                <span>Festivais</span>
+                <span>Teatro</span>
+                <span>Sao Paulo</span>
+                <span>Rio de Janeiro</span>
+            </div>
+
+            <div class="landing-metrics">
+                <div>
+                    <strong>@featuredEvents.Count</strong>
+                    <span>eventos em destaque</span>
+                </div>
+                <div>
+                    <strong>@featuredCitiesCount</strong>
+                    <span>cidades ativas</span>
+                </div>
+                <div>
+                    <strong>Compra facil</strong>
+                    <span>assentos, carrinho e reservas</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="landing-hero__banner">
+            <article class="hero-banner hero-banner--large">
+                <span>Em alta</span>
+                <strong>Grandes producoes para os proximos dias</strong>
+                <p>Descubra experiencias com visual forte, local bem definido e compra mais direta.</p>
+            </article>
+            <article class="hero-banner hero-banner--small">
+                <span>Destaque do mes</span>
+                <strong>Eventos com cara de vitrine premium</strong>
+            </article>
+        </div>
+    </section>
+
+    <section class="home-sections">
+        <div class="section-head">
+            <div>
+                <span class="eyebrow">Eventos selecionados</span>
+                <h2>Os destaques que puxam a jornada do cliente</h2>
+            </div>
+            <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Ver agenda completa</button>
+        </div>
+
+        <div class="home-event-grid">
+            @foreach (var item in featuredEvents)
+            {
+                <article class="home-event-card">
+                    @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
+                    {
+                        <img src="@item.ImagemUrl" alt="@item.Nome" />
+                    }
+                    <div class="home-event-card__body">
+                        <span class="pill">@item.GeneroMusical</span>
+                        <h3>@item.Nome</h3>
+                        <p>@item.LocalEvento, @item.CidadeEvento</p>
+                        <p>@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                        <div class="home-event-card__footer">
+                            <strong>R$ @item.PrecoPadrao.ToString("0.00")</strong>
+                            <div class="home-event-card__actions">
+                                <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.Id}")'>Ver ingressos</button>
+                                <button class="secondary-button" type="button" @onclick='() => BuyEvent(item.Id)'>Comprar agora</button>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="home-showcase">
+        <article class="showcase-panel">
+            <span class="eyebrow">Categorias em alta</span>
+            <h2>Filtros claros para cidade, data, local e estilo musical.</h2>
+            <p>O cliente entende rapido onde clicar, compara opcoes com menos atrito e avanca melhor para a compra.</p>
+        </article>
+
+        <article class="showcase-panel showcase-panel--dark">
+            <span class="eyebrow">Fluxo de compra</span>
+            <h2>Escolha o evento, veja detalhes, selecione assentos e finalize com carrinho.</h2>
+            <p>Uma jornada em etapas, mais proxima do padrao de grandes plataformas de ingressos.</p>
+        </article>
+    </section>
+
+</div>
+
+@code {
+    private readonly List<EventViewModel> featuredEvents = [];
+    private int featuredCitiesCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            featuredEvents.Clear();
+            featuredEvents.AddRange((await ApiClient.GetEventsAsync()).Take(3));
+            featuredCitiesCount = featuredEvents
+                .Select(item => item.CidadeEvento)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct()
+                .Count();
+        }
+        catch
+        {
+            featuredCitiesCount = 0;
+        }
+    }
+
+    private void BuyEvent(int eventId)
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        Navigation.NavigateTo($"/eventos/{eventId}/assentos");
+    }
+}

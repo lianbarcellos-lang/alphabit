@@ -1,0 +1,88 @@
+@page "/reservas"
+@inject TicketPrimeApiClient ApiClient
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Minhas Reservas</PageTitle>
+
+@if (Session.CurrentUser is null)
+{
+    <div class="reservations-shell">
+        <div class="status-box status-box--error">Entre com uma conta de cliente para visualizar suas reservas.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
+    </div>
+}
+else
+{
+    <div class="reservations-shell">
+        <section class="reservations-hero">
+            <div>
+                <span class="eyebrow">Minhas reservas</span>
+                <h1>Seus ingressos confirmados</h1>
+                <p>Acompanhe as compras ja registradas no seu CPF e veja o resumo de cada reserva.</p>
+            </div>
+            <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar aos eventos</button>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="status-box status-box--error">@errorMessage</div>
+        }
+        else if (isLoading)
+        {
+            <div class="status-box">Carregando suas reservas...</div>
+        }
+        else if (reservations.Count == 0)
+        {
+            <div class="status-box">Voce ainda nao possui reservas confirmadas.</div>
+        }
+        else
+        {
+            <section class="reservations-grid">
+                @foreach (var item in reservations)
+                {
+                    <article class="reservation-card">
+                        <span class="pill">@item.EventoNome</span>
+                        <h2>@item.Quantidade ingresso(s)</h2>
+                        <p>Assentos: <strong>@item.Assentos</strong></p>
+                        <p>@item.DataReserva.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                        <p>Valor pago: <strong>R$ @item.ValorFinalPago.ToString("0.00")</strong></p>
+                        @if (!string.IsNullOrWhiteSpace(item.CupomUtilizado))
+                        {
+                            <p>Cupom aplicado: <strong>@item.CupomUtilizado</strong></p>
+                        }
+                    </article>
+                }
+            </section>
+        }
+    </div>
+}
+
+@code {
+    private readonly List<ReservationViewModel> reservations = [];
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.CurrentUser is null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            reservations.Clear();
+            reservations.AddRange(await ApiClient.GetReservationsAsync(Session.CurrentUser.Cpf));
+        }
+        catch
+        {
+            errorMessage = "Nao foi possivel carregar suas reservas agora.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

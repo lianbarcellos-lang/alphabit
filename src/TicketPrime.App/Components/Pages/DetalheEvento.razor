@@ -1,0 +1,116 @@
+@page "/eventos/{Id:int}"
+@inject TicketPrimeApiClient ApiClient
+@inject AuthOverlayState AuthOverlay
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Detalhes do Evento</PageTitle>
+
+@if (isLoading)
+{
+    <div class="event-detail-shell">
+        <div class="status-box">Carregando detalhes do evento...</div>
+    </div>
+}
+else if (eventItem is null)
+{
+    <div class="event-detail-shell">
+        <div class="status-box status-box--error">Evento nao encontrado.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para eventos</button>
+    </div>
+}
+else
+{
+    <div class="event-detail-shell">
+        <section class="event-detail-hero">
+            @if (!string.IsNullOrWhiteSpace(eventItem.ImagemUrl))
+            {
+                <img class="event-detail-hero__image" src="@eventItem.ImagemUrl" alt="@eventItem.Nome" />
+            }
+
+            <div class="event-detail-hero__overlay"></div>
+
+            <div class="event-detail-hero__content">
+                <span class="pill">@eventItem.GeneroMusical</span>
+                <h1>@eventItem.Nome</h1>
+                <p>@eventItem.Artista</p>
+                <div class="event-detail-hero__meta">
+                    <span>@eventItem.LocalEvento, @eventItem.CidadeEvento</span>
+                    <span>@eventItem.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="event-detail-grid">
+            <section class="event-detail-panel">
+                <span class="eyebrow">Sobre o evento</span>
+                <h2>Uma pagina feita para orientar a decisao de compra</h2>
+                <p>@GetDescription(eventItem)</p>
+
+                <div class="event-detail-info">
+                    <article>
+                        <strong>Local</strong>
+                        <span>@eventItem.LocalEvento</span>
+                    </article>
+                    <article>
+                        <strong>Cidade</strong>
+                        <span>@eventItem.CidadeEvento</span>
+                    </article>
+                    <article>
+                        <strong>Capacidade</strong>
+                        <span>@eventItem.CapacidadeTotal lugares</span>
+                    </article>
+                    <article>
+                        <strong>Categoria</strong>
+                        <span>@eventItem.GeneroMusical</span>
+                    </article>
+                </div>
+            </section>
+
+            <aside class="event-detail-panel event-detail-panel--buy">
+                <span class="eyebrow">Ingressos</span>
+                <h2>Escolha seus assentos e siga para o checkout</h2>
+                <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
+                <p>Veja os assentos disponiveis, monte o carrinho e confirme a reserva na sua conta.</p>
+
+                <button class="secondary-button" type="button" @onclick="GoToSeats">Comprar agora</button>
+                <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para agenda</button>
+            </aside>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private EventViewModel? eventItem;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            eventItem = await ApiClient.GetEventByIdAsync(Id);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoToSeats()
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        Navigation.NavigateTo($"/eventos/{Id}/assentos");
+    }
+
+    private static string GetDescription(EventViewModel item)
+    {
+        return $"Prepare-se para {item.Nome}: um evento de {item.GeneroMusical.ToLowerInvariant()} com atmosfera forte, informacoes claras e fluxo de compra mais direto para o publico.";
+    }
+}

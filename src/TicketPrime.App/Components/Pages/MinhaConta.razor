@@ -1,0 +1,300 @@
+@page "/minha-conta"
+@inject TicketPrimeApiClient ApiClient
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Minha Conta</PageTitle>
+
+@if (Session.CurrentUser is null)
+{
+    <div class="account-shell">
+        <div class="status-box status-box--error">Entre com uma conta de cliente para acessar sua area.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
+    </div>
+}
+else
+{
+    <div class="account-shell">
+        <section class="account-hero">
+            <div>
+                <span class="eyebrow">Area do cliente</span>
+                <h1>Seu perfil e seus ingressos em um so lugar</h1>
+                <p>Atualize seus dados, acompanhe compras recentes e mantenha sua conta pronta para os proximos eventos.</p>
+            </div>
+            <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/reservas")'>Ver todas as reservas</button>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="status-box @(isError ? "status-box--error" : "status-box--success")">@statusMessage</div>
+        }
+
+        @if (isLoading)
+        {
+            <div class="status-box">Carregando seus dados...</div>
+        }
+        else
+        {
+            <div class="account-grid">
+                <section class="account-card account-card--form">
+                    <div class="section-heading">
+                        <span class="pill">Dados pessoais</span>
+                        <h2>Informacoes da conta</h2>
+                    </div>
+
+                    <EditForm Model="@profile" OnValidSubmit="SaveProfileAsync" FormName="customer-profile">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-grid form-grid--two">
+                            <div class="field">
+                                <label for="nome">Nome</label>
+                                <InputText id="nome" class="field__input" @bind-Value="profile.Nome" />
+                                <small>Nome como aparece no seu documento.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="sobrenome">Sobrenome</label>
+                                <InputText id="sobrenome" class="field__input" @bind-Value="profile.Sobrenome" />
+                                <small>Sobrenome como aparece no seu documento.</small>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="email">E-mail</label>
+                            <InputText id="email" class="field__input" @bind-Value="profile.Email" />
+                            <small>E-mail para notificacoes e recuperacao de acesso.</small>
+                        </div>
+
+                        <div class="form-grid form-grid--three">
+                            <div class="field">
+                                <label for="pais">Pais de residencia</label>
+                                <InputSelect id="pais" class="field__input" @bind-Value="profile.PaisResidencia">
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Portugal">Portugal</option>
+                                    <option value="Argentina">Argentina</option>
+                                </InputSelect>
+                                <small>O pais onde voce mora.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="documento">Tipo de documento</label>
+                                <InputSelect id="documento" class="field__input" @bind-Value="profile.TipoDocumento">
+                                    <option value="CPF">CPF</option>
+                                    <option value="RG">RG</option>
+                                    <option value="Passaporte">Passaporte</option>
+                                </InputSelect>
+                                <small>O tipo de identificacao usado na conta.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cpf">CPF</label>
+                                <InputText id="cpf" class="field__input" @bind-Value="profile.Cpf" disabled />
+                                <small>Documento principal desta conta.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-grid form-grid--four">
+                            <div class="field">
+                                <label for="codigoPais">Codigo do pais</label>
+                                <InputSelect id="codigoPais" class="field__input" @bind-Value="profile.CodigoPais">
+                                    <option value="+55">+55</option>
+                                    <option value="+351">+351</option>
+                                    <option value="+1">+1</option>
+                                </InputSelect>
+                                <small>Codigo telefonico.</small>
+                            </div>
+
+                            <div class="field field--wide">
+                                <label for="telefone">Telefone</label>
+                                <InputText id="telefone" class="field__input" @bind-Value="profile.Telefone" />
+                                <small>Telefone para contato e notificacoes.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-grid form-grid--two">
+                            <div class="field">
+                                <label for="dataNascimento">Data de nascimento</label>
+                                <InputDate id="dataNascimento" class="field__input" @bind-Value="profile.DataNascimento" />
+                                <small>Sua data de nascimento.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="sexo">Sexo</label>
+                                <InputSelect id="sexo" class="field__input" @bind-Value="profile.Sexo">
+                                    <option value="">Selecione</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Feminino">Feminino</option>
+                                    <option value="Nao informar">Nao informar</option>
+                                </InputSelect>
+                                <small>Campo opcional do perfil.</small>
+                            </div>
+                        </div>
+
+                        <div class="account-actions">
+                            <button class="secondary-button" type="submit" disabled="@isSaving">Salvar alteracoes</button>
+                        </div>
+                    </EditForm>
+                </section>
+
+                <section class="account-side">
+                    <article class="account-card account-card--summary">
+                        <div class="section-heading">
+                            <span class="pill">Resumo rapido</span>
+                            <h2>Sua atividade</h2>
+                        </div>
+
+                        <div class="summary-metrics">
+                            <div>
+                                <strong>@reservations.Count</strong>
+                                <span>reservas</span>
+                            </div>
+                            <div>
+                                <strong>@totalTickets</strong>
+                                <span>ingressos</span>
+                            </div>
+                            <div>
+                                <strong>R$ @totalSpent.ToString("0.00")</strong>
+                                <span>total gasto</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="account-card account-card--tickets">
+                        <div class="section-heading">
+                            <span class="pill">Compras recentes</span>
+                            <h2>O que voce ja garantiu</h2>
+                        </div>
+
+                        @if (reservations.Count == 0)
+                        {
+                            <div class="status-box">Voce ainda nao possui compras confirmadas.</div>
+                        }
+                        else
+                        {
+                            <div class="ticket-list">
+                                @foreach (var item in reservations.Take(4))
+                                {
+                                    <article class="ticket-item">
+                                        <div>
+                                            <strong>@item.EventoNome</strong>
+                                            <p>@item.DataReserva.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                                            <p>Assentos: @item.Assentos</p>
+                                        </div>
+                                        <span>R$ @item.ValorFinalPago.ToString("0.00")</span>
+                                    </article>
+                                }
+                            </div>
+                        }
+                    </article>
+                </section>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly CustomerProfileViewModel profile = new();
+    private readonly List<ReservationViewModel> reservations = [];
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool isError;
+    private string statusMessage = string.Empty;
+
+    private int totalTickets => reservations.Sum(item => item.Quantidade);
+    private decimal totalSpent => reservations.Sum(item => item.ValorFinalPago);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.CurrentUser is null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            var userCpf = Session.CurrentUser.Cpf;
+            var profileTask = ApiClient.GetUserProfileAsync(userCpf);
+            var reservationsTask = ApiClient.GetReservationsAsync(userCpf);
+
+            await Task.WhenAll(profileTask!, reservationsTask);
+
+            var payload = profileTask.Result;
+            if (payload is not null)
+            {
+                profile.Cpf = payload.Cpf;
+                profile.Nome = payload.Nome;
+                profile.Sobrenome = payload.Sobrenome;
+                profile.Email = payload.Email;
+                profile.PaisResidencia = payload.PaisResidencia;
+                profile.TipoDocumento = payload.TipoDocumento;
+                profile.CodigoPais = payload.CodigoPais;
+                profile.Telefone = payload.Telefone;
+                profile.DataNascimento = payload.DataNascimento;
+                profile.Sexo = payload.Sexo;
+
+                Session.UpdateUser(ToUserViewModel(profile));
+            }
+
+            reservations.Clear();
+            reservations.AddRange(reservationsTask.Result);
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel carregar sua area do cliente agora.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (Session.CurrentUser is null)
+            return;
+
+        isSaving = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.UpdateUserProfileAsync(Session.CurrentUser.Cpf, profile);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                Session.UpdateUser(ToUserViewModel(profile));
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel salvar seu perfil agora.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private static UserViewModel ToUserViewModel(CustomerProfileViewModel source)
+    {
+        return new UserViewModel
+        {
+            Cpf = source.Cpf,
+            Nome = source.Nome,
+            Sobrenome = source.Sobrenome,
+            Email = source.Email,
+            PaisResidencia = source.PaisResidencia,
+            TipoDocumento = source.TipoDocumento,
+            CodigoPais = source.CodigoPais,
+            Telefone = source.Telefone,
+            DataNascimento = source.DataNascimento,
+            Sexo = source.Sexo
+        };
+    }
+}

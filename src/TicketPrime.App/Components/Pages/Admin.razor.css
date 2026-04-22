@@ -1,0 +1,409 @@
+.admin-shell {
+    display: grid;
+    gap: 1.4rem;
+}
+
+.admin-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding: 2rem;
+    border-radius: 2rem;
+    background:
+        radial-gradient(circle at top right, rgba(119, 190, 255, 0.18), transparent 14rem),
+        linear-gradient(135deg, #0f2247 0%, #0a66d1 100%);
+    color: #fff;
+    box-shadow: 0 28px 70px rgba(24, 32, 45, 0.16);
+}
+
+.admin-hero__copy {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.admin-hero h1 {
+    margin: 0.45rem 0 0.7rem;
+    max-width: 13ch;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    line-height: 0.98;
+}
+
+.admin-hero p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 42rem;
+    line-height: 1.7;
+}
+
+.admin-hero__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.admin-hero__chips span {
+    padding: 0.48rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.admin-hero__actions {
+    display: grid;
+    align-content: space-between;
+    justify-items: end;
+    gap: 1rem;
+}
+
+.admin-hero__badge {
+    min-width: 210px;
+    padding: 1rem 1.1rem;
+    border-radius: 1.4rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(8px);
+}
+
+.admin-hero__badge strong {
+    display: block;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.9rem;
+    line-height: 1;
+}
+
+.admin-hero__badge span {
+    display: block;
+    margin-top: 0.35rem;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.88rem;
+}
+
+.admin-stats {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.admin-stat-card {
+    padding: 1.15rem 1.2rem;
+    border-radius: 1.35rem;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    background: rgba(255, 251, 245, 0.82);
+    box-shadow: 0 18px 45px rgba(24, 32, 45, 0.08);
+    display: grid;
+    gap: 0.3rem;
+}
+
+.admin-stat-card span {
+    color: #5d6676;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.admin-stat-card strong {
+    font-family: "Fraunces", Georgia, serif;
+    color: #18202d;
+    font-size: 1.65rem;
+    line-height: 1.05;
+}
+
+.admin-stat-card--accent {
+    background:
+        linear-gradient(180deg, rgba(15, 130, 255, 0.12), rgba(255, 255, 255, 0.92)),
+        #fff;
+}
+
+.admin-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-panel {
+    padding: 1.75rem;
+    border-radius: 1.8rem;
+    background: rgba(255, 251, 245, 0.88);
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    box-shadow: 0 24px 58px rgba(24, 32, 45, 0.08);
+}
+
+.admin-panel--soft {
+    background: linear-gradient(180deg, #f4faff 0%, #fff 100%);
+}
+
+.admin-panel__head {
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 1.1rem;
+}
+
+.admin-panel__pill {
+    width: fit-content;
+    padding: 0.42rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(15, 130, 255, 0.1);
+    color: #0a66d1;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.admin-panel h2 {
+    margin: 0 0 0.35rem;
+    color: #18202d;
+}
+
+.admin-panel p {
+    margin: 0 0 1rem;
+    color: #5d6676;
+}
+
+.admin-form {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.field {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.field label {
+    color: #243757;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.field__input {
+    width: 100%;
+    min-height: 3.25rem;
+    border: 1px solid rgba(17, 33, 63, 0.12);
+    background: rgba(248, 251, 255, 0.96);
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    color: #11213f;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.field__input:focus {
+    outline: none;
+    border-color: #0f82ff;
+    box-shadow: 0 0 0 4px rgba(15, 130, 255, 0.12);
+}
+
+.admin-form__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+}
+
+.admin-form__grid--triple {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.admin-image-preview,
+.admin-note {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem 1.05rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-image-preview {
+    grid-template-columns: 120px 1fr;
+    align-items: center;
+}
+
+.admin-image-preview img {
+    width: 100%;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 1rem;
+}
+
+.admin-image-preview strong,
+.admin-note strong {
+    color: #18202d;
+}
+
+.admin-image-preview span,
+.admin-note span {
+    color: #5d6676;
+    line-height: 1.55;
+    font-size: 0.9rem;
+}
+
+.admin-subsection {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.4rem;
+    padding-top: 1.35rem;
+    border-top: 1px solid rgba(24, 32, 45, 0.08);
+}
+
+.admin-subsection__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+}
+
+.admin-subsection__head h3 {
+    margin: 0 0 0.2rem;
+    color: #18202d;
+    font-size: 1.2rem;
+}
+
+.admin-subsection__head p {
+    margin: 0;
+    color: #5d6676;
+}
+
+.admin-coupon-list {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.admin-coupon-card {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.1rem 1.15rem;
+    border-radius: 1.3rem;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 14px 32px rgba(24, 32, 45, 0.06);
+}
+
+.admin-coupon-card__meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.admin-coupon-card strong {
+    color: #18202d;
+    font-size: 1.05rem;
+}
+
+.admin-coupon-card p {
+    margin: 0;
+    color: #5d6676;
+    line-height: 1.55;
+}
+
+.admin-panel--list {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+}
+
+.admin-event-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-event-card {
+    display: grid;
+    gap: 0;
+    border-radius: 1.6rem;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    box-shadow: 0 18px 42px rgba(24, 32, 45, 0.08);
+}
+
+.admin-event-card__image {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+}
+
+.admin-event-card__body {
+    padding: 1.3rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.admin-event-card__meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.admin-event-card h3 {
+    margin: 0;
+    color: #18202d;
+    font-size: 1.35rem;
+}
+
+.admin-event-card__copy {
+    margin: 0;
+    color: #5d6676;
+    line-height: 1.55;
+}
+
+.admin-event-card__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.2rem;
+}
+
+::deep .validation-message {
+    color: #b42318;
+    font-size: 0.84rem;
+}
+
+@media (min-width: 980px) {
+    .admin-grid {
+        grid-template-columns: 1.15fr 0.85fr;
+    }
+
+    .admin-event-list {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .admin-coupon-list {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-hero {
+        align-items: start;
+        flex-direction: column;
+    }
+
+    .admin-hero__actions {
+        width: 100%;
+        justify-items: stretch;
+    }
+
+    .admin-hero__badge {
+        min-width: 0;
+    }
+
+    .admin-form__grid,
+    .admin-form__grid--triple,
+    .admin-image-preview {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-subsection__head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

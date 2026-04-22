@@ -1,0 +1,307 @@
+.events-shell {
+    display: grid;
+    gap: 1.3rem;
+}
+
+.events-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.8rem;
+    border-radius: 2rem;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    background:
+        radial-gradient(circle at top right, rgba(15, 130, 255, 0.1), transparent 16rem),
+        rgba(255, 255, 255, 0.86);
+    box-shadow: 0 18px 50px rgba(24, 32, 45, 0.08);
+}
+
+.events-hero h1 {
+    margin: 0.4rem 0 0.7rem;
+    color: #11213f;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+}
+
+.events-hero p {
+    margin: 0;
+    color: #66758f;
+    max-width: 42rem;
+    line-height: 1.7;
+}
+
+.events-hero__copy {
+    display: grid;
+    gap: 1rem;
+}
+
+.events-hero__search {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.1rem;
+    border-radius: 1.25rem;
+    background: #fff;
+    border: 1px solid rgba(17, 33, 63, 0.08);
+}
+
+.events-hero__search span {
+    display: block;
+    color: #66758f;
+    font-size: 0.82rem;
+}
+
+.events-hero__search strong {
+    color: #11213f;
+}
+
+.search-button {
+    border: none;
+    border-radius: 999px;
+    padding: 0.95rem 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #0f82ff 0%, #0a66d1 100%);
+    box-shadow: 0 14px 30px rgba(15, 130, 255, 0.2);
+}
+
+.events-hero__aside {
+    display: grid;
+    gap: 0.85rem;
+    min-width: 240px;
+}
+
+.events-hero__panel {
+    padding: 1rem 1.1rem;
+    border-radius: 1.15rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(15, 130, 255, 0.08);
+}
+
+.events-hero__panel strong {
+    display: block;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.5rem;
+    color: #11213f;
+}
+
+.events-hero__panel span {
+    color: #66758f;
+    font-size: 0.84rem;
+}
+
+.events-highlight {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.events-filters {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    padding: 1.2rem;
+    border-radius: 1.45rem;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    box-shadow: 0 14px 34px rgba(24, 32, 45, 0.06);
+}
+
+.highlight-panel {
+    min-height: 150px;
+    padding: 1.3rem;
+    border-radius: 1.5rem;
+    background:
+        linear-gradient(180deg, rgba(15, 130, 255, 0.08), rgba(255, 255, 255, 0.94)),
+        #fff;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    display: grid;
+    align-content: end;
+    gap: 0.45rem;
+}
+
+.highlight-panel span {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    color: #0a66d1;
+    font-weight: 800;
+}
+
+.highlight-panel strong {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.45rem;
+    color: #11213f;
+    line-height: 1.1;
+}
+
+.highlight-panel--dark {
+    background:
+        radial-gradient(circle at top right, rgba(119, 190, 255, 0.18), transparent 10rem),
+        linear-gradient(135deg, #0f2247 0%, #0a66d1 100%);
+}
+
+.highlight-panel--dark span,
+.highlight-panel--dark strong {
+    color: #fff8ef;
+}
+
+.events-grid {
+    display: grid;
+    gap: 1.1rem;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+}
+
+.event-card {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1.65rem;
+    min-height: 640px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    box-shadow: 0 22px 60px rgba(24, 32, 45, 0.09);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.event-card__image {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+}
+
+.event-card--sunset {
+    background: linear-gradient(180deg, #fafdff 0%, #e9f5ff 100%);
+}
+
+.event-card--night {
+    background: linear-gradient(180deg, #16315f 0%, #0f2247 100%);
+}
+
+.event-card--night h2,
+.event-card--night .event-card__date,
+.event-card--night .event-card__description,
+.event-card--night .event-card__price,
+.event-card--night .pill--muted {
+    color: #f8fafc;
+}
+
+.event-card--night .pill--muted {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.event-card--neon {
+    background: linear-gradient(180deg, #f7fbff 0%, #e7f2ff 100%);
+}
+
+.event-card--gold {
+    background: linear-gradient(180deg, #f4faff 0%, #d9efff 100%);
+}
+
+.event-card__glow {
+    position: absolute;
+    inset: auto -3rem -4rem auto;
+    width: 12rem;
+    height: 12rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(15, 130, 255, 0.24) 0%, rgba(15, 130, 255, 0) 70%);
+}
+
+.event-card__content {
+    position: relative;
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
+.event-card__meta {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.pill {
+    border-radius: 999px;
+    padding: 0.38rem 0.75rem;
+    background: rgba(15, 130, 255, 0.1);
+    color: #0a66d1;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.pill--muted {
+    background: rgba(17, 33, 63, 0.08);
+    color: #4b5d79;
+}
+
+.event-card h2 {
+    margin: 1.2rem 0 0.7rem;
+    color: #11213f;
+    font-size: 1.55rem;
+}
+
+.event-card__date {
+    margin: 0 0 0.6rem;
+    color: #66758f;
+    font-weight: 600;
+}
+
+.event-card__artist {
+    margin: 0 0 0.4rem;
+    color: #11213f;
+    font-weight: 800;
+}
+
+.event-card__location {
+    margin: 0 0 0.45rem;
+    color: #0a66d1;
+    font-weight: 700;
+}
+
+.event-card__description {
+    margin: 0 0 1rem;
+    color: #556883;
+    line-height: 1.6;
+}
+
+.event-card__price {
+    margin: auto 0 1rem;
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #11213f;
+}
+
+.event-card__actions {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 0.75rem;
+}
+
+.event-card__actions .ghost-button,
+.event-card__actions .buy-button {
+    width: 100%;
+}
+
+.event-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 26px 64px rgba(24, 32, 45, 0.12);
+}
+
+@media (max-width: 640px) {
+    .events-hero,
+    .events-hero__search,
+    .event-card__actions {
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .events-hero__aside {
+        width: 100%;
+    }
+}

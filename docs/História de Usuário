@@ -1,0 +1,382 @@
+
+
+# Product Backlog – Sistema TicketPrime 🎟️
+
+Este documento descreve o backlog completo do sistema TicketPrime, contendo as funcionalidades necessárias para o desenvolvimento da API de venda de ingressos.
+
+---
+
+# Épico 1 – Gestão de Usuários
+
+## História 1 – Cadastro de Usuário
+
+Como cliente, Quero me cadastrar no sistema com CPF, nome e email, Para poder comprar ingressos.
+
+### Critérios de Aceitação
+
+Dado que um cliente deseja se cadastrar  
+Quando ele enviar CPF, nome e email para a API  
+Então o sistema deve registrar o usuário no banco de dados.
+
+### Tarefas Técnicas
+
+- Criar endpoint `POST /api/usuarios`
+- Validar se CPF já existe
+- Inserir usuário na tabela `Usuarios`
+- Retornar erro `400 BadRequest` se CPF duplicado
+
+---
+
+## História 2 – Validação de CPF duplicado
+
+Como sistema, Quero validar se o CPF já existe no banco, Para evitar cadastros duplicados.
+
+### Critérios de Aceitação
+
+Dado que um CPF já está cadastrado  
+Quando um novo cadastro for enviado com o mesmo CPF  
+Então o sistema deve retornar erro.
+
+### Tarefas Técnicas
+
+- Consultar CPF na tabela `Usuarios`
+- Bloquear cadastro duplicado
+- Retornar `BadRequest`
+
+---
+
+# Épico 2 – Gestão de Eventos
+
+## História 3 – Cadastro de Evento
+
+Como administrador, Quero cadastrar eventos, Para disponibilizar ingressos no sistema.
+
+### Critérios de Aceitação
+
+Dado que o administrador possui os dados do evento  
+Quando ele enviar os dados para a API  
+Então o sistema deve salvar o evento no banco.
+
+### Tarefas Técnicas
+
+- Criar endpoint `POST /api/eventos`
+- Inserir evento na tabela `Eventos`
+
+---
+
+## História 4 – Listagem de Eventos
+
+Como cliente, Quero visualizar os eventos disponíveis, Para escolher qual ingresso comprar.
+
+### Critérios de Aceitação
+
+Dado que existem eventos cadastrados  
+Quando o cliente solicitar a lista de eventos  
+Então o sistema deve retornar todos os eventos.
+
+### Tarefas Técnicas
+
+- Criar endpoint `GET /api/eventos`
+- Buscar eventos no banco
+- Retornar JSON
+
+---
+
+## História 5 – Visualizar detalhes do evento
+
+Como cliente, Quero visualizar detalhes do evento, Para saber informações antes de comprar.
+
+### Critérios de Aceitação
+
+Dado que um evento existe  
+Quando o cliente consultar o evento  
+Então o sistema deve retornar suas informações.
+
+### Tarefas Técnicas
+
+- Criar endpoint `GET /api/eventos/{id}`
+- Buscar evento por ID
+
+---
+
+# Épico 3 – Gestão de Cupons
+
+## História 6 – Cadastro de Cupom
+
+Como administrador, Quero cadastrar cupons de desconto, Para oferecer promoções aos clientes.
+
+### Critérios de Aceitação
+
+Dado que o administrador possui um cupom  
+Quando ele enviar os dados para a API  
+Então o sistema deve registrar o cupom.
+
+### Tarefas Técnicas
+
+- Criar endpoint `POST /api/cupons`
+- Inserir cupom na tabela `Cupons
+- nao inserir mais de um cupom
+
+---
+
+## História 7 – Validação de Cupom
+
+Como sistema, Quero validar se o cupom existe, Para evitar cupons inválidos.
+
+### Critérios de Aceitação
+
+Dado que um cliente informa um cupom  
+Quando o sistema verificar o banco  
+Então o cupom deve ser validado.
+
+### Tarefas Técnicas
+
+- Buscar cupom na tabela `Cupons`
+- Validar código
+
+---
+
+## História 8 – Regra de valor mínimo
+
+Como sistema, Quero verificar se o valor do evento atende ao mínimo do cupom, Para aplicar o desconto corretamente.
+
+### Critérios de Aceitação
+
+Dado que um cupom possui valor mínimo  
+Quando o valor do evento for menor que o mínimo  
+Então o desconto não deve ser aplicado.
+
+### Tarefas Técnicas
+
+- Comparar `PrecoPadrao` com `ValorMinimoRegra`
+
+---
+
+# Épico 4 – Reservas de Ingressos
+
+## História 9 – Compra de ingresso
+
+Como cliente, Quero comprar ingressos para um evento, Para participar do evento.
+
+### Critérios de Aceitação
+
+Dado que o usuário existe  
+E que o evento existe  
+Quando ele solicitar uma reserva  
+Então o sistema deve registrar a compra.
+
+### Tarefas Técnicas
+
+- Criar endpoint `POST /api/reservas`
+- Inserir reserva na tabela `Reservas`
+
+---
+
+## História 10 – Registro de reservas
+
+Como sistema, Quero registrar reservas no banco de dados, Para controlar vendas.
+
+### Critérios de Aceitação
+
+Dado que a reserva foi aprovada  
+Quando a compra for confirmada  
+Então o sistema deve salvar a reserva.
+
+### Tarefas Técnicas
+
+- Inserir dados na tabela `Reservas`
+
+---
+
+## História 11 – Consulta de reservas
+
+Como cliente, Quero consultar minhas reservas, Para acompanhar meus ingressos.
+
+### Critérios de Aceitação
+
+Dado que um cliente possui reservas  
+Quando ele consultar suas reservas  
+Então o sistema deve retornar a lista.
+
+### Tarefas Técnicas
+
+- Criar endpoint `GET /api/reservas/{cpf}`
+
+---
+
+# Épico 5 – Regras de Negócio
+
+## História 12 – Limite por CPF
+
+Como sistema, Quero limitar reservas por CPF, Para evitar compras abusivas.
+
+### Critérios de Aceitação
+
+Dado que um cliente já possui duas reservas  
+Quando tentar comprar novamente  
+Então a compra deve ser bloqueada.
+
+### Tarefas Técnicas
+
+- Contar reservas por CPF
+- Comparar limite
+
+---
+
+## História 13 – Controle de capacidade
+
+Como sistema, Quero controlar capacidade do evento, Para evitar superlotação.
+
+### Critérios de Aceitação
+
+Dado que a capacidade do evento foi atingida  
+Quando um cliente tentar comprar  
+Então a compra deve ser bloqueada.
+
+### Tarefas Técnicas
+
+- Contar reservas do evento
+- Comparar com `CapacidadeTotal`
+
+---
+
+## História 14 – Cálculo de desconto
+
+Como sistema, Quero calcular desconto do cupom, Para gerar valor final correto.
+
+### Critérios de Aceitação
+
+Dado que o cupom é válido  
+Quando aplicado  
+Então o valor final deve ser calculado.
+
+### Tarefas Técnicas
+
+- Aplicar porcentagem de desconto
+
+---
+
+# Épico 6 – Segurança
+
+## História 15 – Prevenção SQL Injection
+
+Como sistema, Quero usar parâmetros nas consultas SQL, Para evitar ataques.
+
+### Critérios de Aceitação
+
+Dado que uma consulta SQL é executada  
+Quando receber parâmetros  
+Então deve usar `@param`.
+
+### Tarefas Técnicas
+
+- Usar parâmetros no Dapper
+
+---
+
+## História 16 – Validação de dados
+
+Como sistema, Quero validar dados recebidos pela API, Para evitar erros no banco.
+
+### Critérios de Aceitação
+
+Dado que dados inválidos são enviados  
+Quando a API processar  
+Então deve retornar erro.
+
+### Tarefas Técnicas
+
+- Validar campos obrigatórios
+
+---
+
+# Épico 7 – Testes
+
+## História 17 – Testes automatizados
+
+Como desenvolvedor, Quero testes automatizados, Para garantir qualidade.
+
+### Tarefas Técnicas
+
+- Criar projeto xUnit
+- Criar testes com `[Fact]`
+
+---
+
+## História 18 – Validação com Assert
+
+Como desenvolvedor, Quero validar resultados com Assert, Para garantir funcionamento.
+
+### Tarefas Técnicas
+
+- Usar `Assert` nos testes
+
+---
+
+# Épico 8 – Documentação
+
+## História 19 – Documentação do projeto
+
+Como equipe técnica, Quero documentar o sistema, Para facilitar manutenção.
+
+### Tarefas Técnicas
+
+- Criar `README.md`
+- Criar `docs/requisitos.md`
+
+---
+
+## História 20 – Instruções de execução
+
+Como desenvolvedor, Quero instruções para executar o sistema, Para facilitar uso do projeto.
+
+### Tarefas Técnicas
+
+- Documentar comandos no README
+
+# historia 21 - escolher do evento
+
+## local do evento 
+
+como desenvolvedor, quero conseguir o local do evento 
+
+### tarefas tecnicas 
+
+- criar `local do evento`
+
+
+
+# historia 22 - escolher cidade do evento
+
+como desenvolvedor, quero conseguir escolher a cidade em que eu queira assistir o evento
+
+### tarefas tecmica 
+
+criar `tabela de cidades`
+
+
+
+# historia 23 - escolher por dia da semana
+
+## dia da semana
+
+como desenvolvedor, quero poder escolher meu evento pelo dia da semana
+
+### tarefa tecnica 
+
+criar `tabela dia da semnana`
+
+# histotia 24 - escolher artista
+
+como desenvolvedor, quero poder escolher o artista
+
+## tarefa tecnica 
+
+criar `tabela do artista`
+
+# historia 25- escolher musica
+
+como desenvolvedor, quero escolher gosto musical
+
+## terefa tecnica 
+criar lista

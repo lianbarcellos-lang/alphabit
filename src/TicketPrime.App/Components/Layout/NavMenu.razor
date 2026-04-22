@@ -1,0 +1,100 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">
+            <span class="brand-mark">TP</span>
+            <span class="brand-copy">
+                <strong>TicketPrime</strong>
+                <small>O que fazer perto de voce</small>
+            </span>
+        </a>
+    </div>
+</div>
+
+@implements IDisposable
+@inject UserSessionState Session
+@inject CartState Cart
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Descobrir
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="eventos">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Eventos
+                </NavLink>
+            </div>
+
+        @if (Session.IsAuthenticated && !Session.IsAdmin)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="minha-conta">
+                    <span class="bi bi-person-circle-nav-menu" aria-hidden="true"></span> Minha conta
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="carrinho">
+                    <span class="bi bi-bag-nav-menu" aria-hidden="true"></span> Carrinho (@Cart.TotalItems)
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="reservas">
+                    <span class="bi bi-ticket-nav-menu" aria-hidden="true"></span> Minhas reservas
+                </NavLink>
+            </div>
+        }
+
+        @if (Session.IsAdmin)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="admin">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Painel
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-panel">
+            @if (Session.IsAuthenticated)
+            {
+                <p class="nav-panel__title">@Session.DisplayName</p>
+                <p class="nav-panel__text">
+                    @(Session.IsAdmin
+                        ? "Painel ativo para publicar eventos, ajustar destaques e manter a agenda sempre vendendo."
+                        : "Seu acesso esta pronto para explorar a agenda, descobrir novidades e seguir para os ingressos.")
+                </p>
+            }
+            else
+            {
+                <p class="nav-panel__title">Categorias em alta</p>
+                <p class="nav-panel__text">
+                    Shows, festivais, teatro, passeios e experiencias para diferentes perfis de publico.
+                </p>
+            }
+        </div>
+    </nav>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Session.OnChange += HandleSessionChanged;
+    }
+
+    private void HandleSessionChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Session.OnChange -= HandleSessionChanged;
+    }
+}
+

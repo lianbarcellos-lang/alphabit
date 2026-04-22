@@ -1,0 +1,136 @@
+.event-detail-shell {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.event-detail-hero {
+    position: relative;
+    min-height: 420px;
+    overflow: hidden;
+    border-radius: 2rem;
+    border: 1px solid rgba(17, 33, 63, 0.08);
+    box-shadow: var(--shadow-lg);
+    background: #0f2247;
+}
+
+.event-detail-hero__image {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+    object-fit: cover;
+    display: block;
+}
+
+.event-detail-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10, 19, 40, 0.16), rgba(10, 19, 40, 0.82));
+}
+
+.event-detail-hero__content {
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    bottom: 2rem;
+    color: #fff;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.pill {
+    width: fit-content;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.event-detail-hero__content h1 {
+    margin: 0;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+}
+
+.event-detail-hero__content p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.event-detail-hero__meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.event-detail-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.7fr);
+}
+
+.event-detail-panel {
+    padding: 1.7rem;
+    border-radius: 1.7rem;
+    border: 1px solid rgba(17, 33, 63, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--shadow-md);
+}
+
+.event-detail-panel h2 {
+    margin: 0.35rem 0 0.8rem;
+    color: #11213f;
+}
+
+.event-detail-panel p {
+    margin: 0;
+    color: #66758f;
+    line-height: 1.7;
+}
+
+.event-detail-info {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-top: 1.5rem;
+}
+
+.event-detail-info article {
+    padding: 1rem;
+    border-radius: 1rem;
+    background: #f8fbff;
+}
+
+.event-detail-info strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #11213f;
+}
+
+.event-detail-info span {
+    color: #66758f;
+}
+
+.event-detail-panel--buy {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+.event-detail-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #11213f;
+}
+
+@media (max-width: 900px) {
+    .event-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .event-detail-hero__content {
+        left: 1.3rem;
+        right: 1.3rem;
+        bottom: 1.3rem;
+    }
+}

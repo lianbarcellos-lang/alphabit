@@ -1,0 +1,266 @@
+@implements IDisposable
+@inject AuthOverlayState Overlay
+@inject TicketPrimeApiClient ApiClient
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+@if (Overlay.IsOpen)
+{
+    <div class="auth-overlay" @onclick="Close">
+        <div class="auth-modal" @onclick:stopPropagation="true">
+            <button class="auth-modal__close" type="button" @onclick="Close" aria-label="Fechar">x</button>
+
+            <div class="auth-modal__layout">
+                <aside class="auth-aside">
+                    <span class="eyebrow">TicketPrime Access</span>
+                    <h2>@(IsLogin ? "Seu proximo evento comeca aqui." : "Crie sua conta e entre no ritmo.")</h2>
+                    <p>
+                        @(IsLogin
+                            ? "Acesse seus ingressos, acompanhe reservas e continue a compra sem perder tempo."
+                            : "Monte sua conta em poucos passos para garantir assentos, acompanhar pedidos e explorar a agenda completa.")
+                    </p>
+
+                    <div class="auth-aside__highlights">
+                        <article>
+                            <strong>Compra rapida</strong>
+                            <span>Escolha assentos, carrinho e checkout no mesmo fluxo.</span>
+                        </article>
+                        <article>
+                            <strong>Eventos em alta</strong>
+                            <span>Shows, festivais e experiencias com curadoria visual.</span>
+                        </article>
+                        <article>
+                            <strong>Sua conta centralizada</strong>
+                            <span>Reservas, perfil e historico em um so lugar.</span>
+                        </article>
+                    </div>
+                </aside>
+
+                <section class="auth-panel">
+                    <div class="auth-panel__head">
+                        <span class="auth-panel__pill">Conta TicketPrime</span>
+                        <h3>@(IsLogin ? "Acesse a sua conta" : "Crie sua conta")</h3>
+                        <p>
+                            @if (IsLogin)
+                            {
+                                <span>Nao tem uma conta? <button class="auth-switch" type="button" @onclick="OpenRegister">Cadastre-se agora</button></span>
+                            }
+                            else
+                            {
+                                <span>Ja tem uma conta? <button class="auth-switch" type="button" @onclick="OpenLogin">Entrar agora</button></span>
+                            }
+                        </p>
+                    </div>
+
+                    <div class="auth-tabs" role="tablist" aria-label="Tipo de acesso">
+                        <button class="auth-tab @(IsLogin ? "auth-tab--active" : null)" type="button" @onclick="OpenLogin">Entrar</button>
+                        <button class="auth-tab @(!IsLogin ? "auth-tab--active" : null)" type="button" @onclick="OpenRegister">Criar conta</button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(statusMessage))
+                    {
+                        <div class="status-box @(isError ? "status-box--error" : "status-box--success")">@statusMessage</div>
+                    }
+
+                    @if (IsLogin)
+                    {
+                        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="overlay-login" class="auth-form">
+                            <DataAnnotationsValidator />
+
+                            <div class="field">
+                                <label for="overlayLogin">E-mail ou CPF</label>
+                                <InputText id="overlayLogin" class="field__input" @bind-Value="loginModel.Login" placeholder="Digite seu e-mail ou CPF" />
+                                <ValidationMessage For="() => loginModel.Login" />
+                            </div>
+
+                            <div class="field">
+                                <label for="overlaySenha">Senha</label>
+                                <InputText id="overlaySenha" class="field__input" type="password" @bind-Value="loginModel.Senha" placeholder="Digite sua senha" />
+                                <ValidationMessage For="() => loginModel.Senha" />
+                            </div>
+
+                            <button class="auth-submit" type="submit" disabled="@isBusy">
+                                @(isBusy ? "Entrando..." : "Entrar na conta")
+                            </button>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <EditForm Model="@registerModel" OnValidSubmit="HandleRegister" FormName="overlay-register" class="auth-form">
+                            <DataAnnotationsValidator />
+
+                            <div class="field">
+                                <label for="overlayCpf">CPF</label>
+                                <InputText id="overlayCpf" class="field__input" @bind-Value="registerModel.Cpf" placeholder="000.000.000-00" />
+                                <ValidationMessage For="() => registerModel.Cpf" />
+                            </div>
+
+                            <div class="field auth-form__grid">
+                                <div>
+                                    <label for="overlayNome">Nome</label>
+                                    <InputText id="overlayNome" class="field__input" @bind-Value="registerModel.Nome" placeholder="Seu nome" />
+                                    <ValidationMessage For="() => registerModel.Nome" />
+                                </div>
+                                <div>
+                                    <label for="overlayEmail">E-mail</label>
+                                    <InputText id="overlayEmail" class="field__input" @bind-Value="registerModel.Email" placeholder="voce@email.com" />
+                                    <ValidationMessage For="() => registerModel.Email" />
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="overlayCadastroSenha">Senha</label>
+                                <InputText id="overlayCadastroSenha" class="field__input" type="password" @bind-Value="registerModel.Senha" placeholder="Crie uma senha segura" />
+                                <ValidationMessage For="() => registerModel.Senha" />
+                            </div>
+
+                            <button class="auth-submit" type="submit" disabled="@isBusy">
+                                @(isBusy ? "Criando conta..." : "Cadastrar e entrar")
+                            </button>
+                        </EditForm>
+                    }
+                </section>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private readonly CustomerLoginInputModel loginModel = new();
+    private readonly RegisterInputModel registerModel = new();
+    private bool isBusy;
+    private bool isError;
+    private string statusMessage = string.Empty;
+
+    private bool IsLogin => Overlay.Mode == "login";
+
+    protected override void OnInitialized()
+    {
+        Overlay.OnChange += HandleOverlayChanged;
+    }
+
+    private void HandleOverlayChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenLogin()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        Overlay.OpenLogin();
+    }
+
+    private void OpenRegister()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        Overlay.OpenRegister();
+    }
+
+    private void Close()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        Overlay.Close();
+    }
+
+    private async Task HandleLogin()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.LoginUserAsync(new UserLoginRequest
+            {
+                Login = loginModel.Login,
+                Senha = loginModel.Senha
+            });
+
+            if (!result.Sucesso)
+            {
+                isError = true;
+                statusMessage = result.Mensagem;
+                return;
+            }
+
+            if (result.Perfil == "admin" && !string.IsNullOrWhiteSpace(result.Token))
+            {
+                Session.SetAdmin(result.Token);
+                Overlay.Close();
+                Navigation.NavigateTo("/admin");
+                return;
+            }
+
+            Session.SetUser(new UserViewModel
+            {
+                Cpf = result.Cpf ?? string.Empty,
+                Nome = result.Nome ?? string.Empty,
+                Email = result.Email ?? string.Empty
+            });
+
+            Overlay.Close();
+            Navigation.NavigateTo("/eventos");
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao conseguimos conectar ao sistema neste momento.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.RegisterUserAsync(new UserCreateRequest
+            {
+                Cpf = registerModel.Cpf,
+                Nome = registerModel.Nome,
+                Email = registerModel.Email,
+                Senha = registerModel.Senha
+            });
+
+            if (!result.Sucesso)
+            {
+                isError = true;
+                statusMessage = result.Mensagem;
+                return;
+            }
+
+            Session.SetUser(new UserViewModel
+            {
+                Cpf = result.Cpf ?? registerModel.Cpf,
+                Nome = result.Nome ?? registerModel.Nome,
+                Email = result.Email ?? registerModel.Email
+            });
+
+            Overlay.Close();
+            Navigation.NavigateTo("/eventos");
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Seu cadastro nao foi concluido agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        Overlay.OnChange -= HandleOverlayChanged;
+    }
+}

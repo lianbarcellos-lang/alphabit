@@ -1,0 +1,271 @@
+@page "/eventos"
+@inject TicketPrimeApiClient ApiClient
+@inject AuthOverlayState AuthOverlay
+@inject CartState Cart
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Eventos</PageTitle>
+
+<div class="events-shell">
+    <section class="events-hero">
+        <div class="events-hero__copy">
+            <span class="eyebrow">Eventos em destaque</span>
+            <h1>Encontre eventos por categoria, cidade, data e estilo.</h1>
+            <p>
+                @if (Session.CurrentUser is not null)
+                {
+                    <span>Bem-vindo, <strong>@Session.CurrentUser.Nome</strong>. Explore a agenda, compare opcoes e siga para os detalhes do evento.</span>
+                }
+                else
+                {
+                    <span>Confira eventos recomendados, veja os destaques da agenda e encontre a melhor opcao para voce.</span>
+                }
+            </p>
+
+            <div class="events-hero__search">
+                <div>
+                    <span>Busca rapida</span>
+                    <strong>Shows, festivais, experiencias e ingressos em destaque</strong>
+                </div>
+                <button class="search-button" type="button" @onclick="ResetFilters">Limpar filtros</button>
+            </div>
+        </div>
+
+        <div class="events-hero__aside">
+            <div class="events-hero__panel">
+                <strong>@events.Count</strong>
+                <span>eventos publicados</span>
+            </div>
+            <div class="events-hero__panel">
+                <strong>@availableCities.Count</strong>
+                <span>cidades com agenda ativa</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="events-highlight">
+        <article class="highlight-panel">
+            <span class="eyebrow">Escolha melhor</span>
+            <strong>Cards grandes, informacao clara e caminho rapido para ver os ingressos.</strong>
+        </article>
+        <article class="highlight-panel highlight-panel--dark">
+            <span class="eyebrow">Proximo passo</span>
+            <strong>Clique em um evento para abrir a pagina de detalhes e seguir para os assentos.</strong>
+        </article>
+    </section>
+
+    <section class="events-filters">
+        <div class="field">
+            <label for="filtroCidade">Cidade</label>
+            <select id="filtroCidade" class="field__input" @bind="selectedCity">
+                <option value="">Todas</option>
+                @foreach (var city in availableCities)
+                {
+                    <option value="@city">@city</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="filtroDia">Dia da semana</label>
+            <select id="filtroDia" class="field__input" @bind="selectedDayOfWeek">
+                <option value="">Todos</option>
+                @foreach (var day in availableDaysOfWeek)
+                {
+                    <option value="@day">@day</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="filtroArtista">Artista</label>
+            <select id="filtroArtista" class="field__input" @bind="selectedArtist">
+                <option value="">Todos</option>
+                @foreach (var artist in availableArtists)
+                {
+                    <option value="@artist">@artist</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label for="filtroGenero">Genero musical</label>
+            <select id="filtroGenero" class="field__input" @bind="selectedGenre">
+                <option value="">Todos</option>
+                @foreach (var genre in availableGenres)
+                {
+                    <option value="@genre">@genre</option>
+                }
+            </select>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="status-box status-box--error">@errorMessage</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <div class="status-box status-box--success">@statusMessage</div>
+    }
+    else if (isLoading)
+    {
+        <div class="status-box">Carregando a agenda de shows...</div>
+    }
+    else if (filteredEvents.Count == 0)
+    {
+        <div class="status-box">Nenhum evento encontrado para os filtros selecionados.</div>
+    }
+    else
+    {
+        <section class="events-grid">
+            @foreach (var item in filteredEvents)
+            {
+                <article class="event-card @GetTheme(item)">
+                    @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
+                    {
+                        <img class="event-card__image" src="@item.ImagemUrl" alt="@item.Nome" />
+                    }
+                    <div class="event-card__glow"></div>
+                    <div class="event-card__content">
+                        <div class="event-card__meta">
+                            <span class="pill">@GetCategory(item)</span>
+                            <span class="pill pill--muted">@item.CapacidadeTotal lugares</span>
+                        </div>
+
+                        <h2>@item.Nome</h2>
+                        <p class="event-card__artist">@item.Artista</p>
+                        <p class="event-card__location">@item.LocalEvento, @item.CidadeEvento</p>
+                        <p class="event-card__date">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                        <p class="event-card__description">@GetDescription(item)</p>
+                        <p class="event-card__price">R$ @item.PrecoPadrao.ToString("0.00")</p>
+                        <div class="event-card__actions">
+                            <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.Id}")'>Ver ingressos</button>
+                            <button class="buy-button" type="button" @onclick='() => GoToSeatSelection(item.Id)'>Comprar agora</button>
+                        </div>
+                    </div>
+                </article>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private readonly List<EventViewModel> events = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private string statusMessage = string.Empty;
+    private string selectedCity = string.Empty;
+    private string selectedDayOfWeek = string.Empty;
+    private string selectedArtist = string.Empty;
+    private string selectedGenre = string.Empty;
+
+    private IReadOnlyList<EventViewModel> filteredEvents => events
+        .Where(item => string.IsNullOrWhiteSpace(selectedCity) || item.CidadeEvento == selectedCity)
+        .Where(item => string.IsNullOrWhiteSpace(selectedDayOfWeek) || GetDayLabel(item.DataEvento.DayOfWeek) == selectedDayOfWeek)
+        .Where(item => string.IsNullOrWhiteSpace(selectedArtist) || item.Artista == selectedArtist)
+        .Where(item => string.IsNullOrWhiteSpace(selectedGenre) || item.GeneroMusical == selectedGenre)
+        .ToList();
+
+    private IReadOnlyList<string> availableCities => events.Select(item => item.CidadeEvento).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
+    private IReadOnlyList<string> availableArtists => events.Select(item => item.Artista).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
+    private IReadOnlyList<string> availableGenres => events.Select(item => item.GeneroMusical).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
+    private IReadOnlyList<string> availableDaysOfWeek => events.Select(item => GetDayLabel(item.DataEvento.DayOfWeek)).Distinct().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            events.Clear();
+            events.AddRange(await ApiClient.GetEventsAsync());
+        }
+        catch
+        {
+            errorMessage = "Nao foi possivel carregar a agenda neste momento. Tente novamente em instantes.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoToSeatSelection(int eventId)
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        Navigation.NavigateTo($"/eventos/{eventId}/assentos");
+    }
+
+    private void ResetFilters()
+    {
+        selectedCity = string.Empty;
+        selectedDayOfWeek = string.Empty;
+        selectedArtist = string.Empty;
+        selectedGenre = string.Empty;
+    }
+
+    private static string GetCategory(EventViewModel item)
+    {
+        var name = item.GeneroMusical.ToLowerInvariant();
+
+        if (name.Contains("festival"))
+            return "Festival";
+        if (name.Contains("rock"))
+            return "Rock";
+        if (name.Contains("pop"))
+            return "Pop";
+        if (name.Contains("samba"))
+            return "Samba";
+
+        return "Show";
+    }
+
+    private static string GetTheme(EventViewModel item)
+    {
+        var name = item.GeneroMusical.ToLowerInvariant();
+
+        if (name.Contains("festival"))
+            return "event-card--sunset";
+        if (name.Contains("rock"))
+            return "event-card--night";
+        if (name.Contains("pop"))
+            return "event-card--neon";
+        if (name.Contains("samba"))
+            return "event-card--gold";
+
+        return string.Empty;
+    }
+
+    private static string GetDescription(EventViewModel item)
+    {
+        var name = item.GeneroMusical.ToLowerInvariant();
+
+        if (name.Contains("festival"))
+            return "Um encontro para viver grandes shows, ativações de marca e uma atmosfera vibrante do inicio ao fim.";
+        if (name.Contains("rock"))
+            return "Guitarras, luzes e uma producao intensa para quem quer sentir a energia da pista.";
+        if (name.Contains("pop"))
+            return "Performance cenica, repertorio de hits e uma experiencia perfeita para cantar cada faixa.";
+        if (name.Contains("samba"))
+            return "Um clima elegante e envolvente para curtir musica ao vivo com conforto e boa companhia.";
+
+        return "Uma noite especial para quem ama musica ao vivo e quer garantir seu lugar com antecedencia.";
+    }
+
+    private static string GetDayLabel(DayOfWeek dayOfWeek)
+    {
+        return dayOfWeek switch
+        {
+            DayOfWeek.Sunday => "Domingo",
+            DayOfWeek.Monday => "Segunda-feira",
+            DayOfWeek.Tuesday => "Terca-feira",
+            DayOfWeek.Wednesday => "Quarta-feira",
+            DayOfWeek.Thursday => "Quinta-feira",
+            DayOfWeek.Friday => "Sexta-feira",
+            DayOfWeek.Saturday => "Sabado",
+            _ => string.Empty
+        };
+    }
+}

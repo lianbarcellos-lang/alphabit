@@ -1,0 +1,739 @@
+@page "/admin"
+@inject TicketPrimeApiClient ApiClient
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Area ADM</PageTitle>
+
+@if (!Session.IsAdmin || string.IsNullOrWhiteSpace(Session.AdminToken))
+{
+    <div class="admin-shell">
+        <div class="status-box status-box--error">
+            Acesso restrito. Entre como administrador para gerenciar a agenda TicketPrime.
+        </div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Voltar para o inicio</button>
+    </div>
+}
+else
+{
+    <div class="admin-shell">
+        <section class="admin-hero">
+            <div class="admin-hero__copy">
+                <span class="eyebrow">Painel TicketPrime</span>
+                <h1>Gerencie eventos, imagens e cupons da temporada</h1>
+                <p>Use esta area para publicar novos shows e atualizar rapidamente a agenda comercial do site.</p>
+
+                <div class="admin-hero__chips">
+                    <span>Eventos em destaque</span>
+                    <span>Cupons promocionais</span>
+                    <span>Atualizacao rapida</span>
+                </div>
+            </div>
+
+            <div class="admin-hero__actions">
+                <div class="admin-hero__badge">
+                    <strong>@adminEvents.Count</strong>
+                    <span>eventos ativos na vitrine</span>
+                </div>
+                <button class="ghost-button" @onclick="Logout">Sair do ADM</button>
+            </div>
+        </section>
+
+        <section class="admin-stats">
+            <article class="admin-stat-card">
+                <span>Eventos ativos</span>
+                <strong>@adminEvents.Count</strong>
+            </article>
+            <article class="admin-stat-card">
+                <span>Operacao</span>
+                <strong>Agenda viva</strong>
+            </article>
+            <article class="admin-stat-card admin-stat-card--accent">
+                <span>Foco</span>
+                <strong>Venda com impacto visual</strong>
+            </article>
+        </section>
+
+        <div class="admin-grid">
+            <section class="admin-panel">
+                <div class="admin-panel__head">
+                    <span class="admin-panel__pill">Cadastro</span>
+                    <h2>Novo evento</h2>
+                    <p>Cadastre um show com nome, data, preco e imagem de destaque.</p>
+                </div>
+
+                <EditForm Model="@eventModel" OnValidSubmit="HandleCreateEvent" FormName="admin-event-form" class="admin-form">
+                    <DataAnnotationsValidator />
+                    <div class="admin-form__grid">
+                        <div class="field">
+                            <label for="eventoNome">Nome do evento</label>
+                            <InputText id="eventoNome" class="field__input" @bind-Value="eventModel.Nome" />
+                            <ValidationMessage For="() => eventModel.Nome" />
+                        </div>
+                        <div class="field">
+                            <label for="eventoArtista">Artista</label>
+                            <InputText id="eventoArtista" class="field__input" @bind-Value="eventModel.Artista" />
+                            <ValidationMessage For="() => eventModel.Artista" />
+                        </div>
+                    </div>
+                    <div class="admin-form__grid">
+                        <div class="field">
+                            <label for="eventoLocal">Local do evento</label>
+                            <InputText id="eventoLocal" class="field__input" @bind-Value="eventModel.LocalEvento" />
+                            <ValidationMessage For="() => eventModel.LocalEvento" />
+                        </div>
+                        <div class="field">
+                            <label for="eventoCidade">Cidade do evento</label>
+                            <InputText id="eventoCidade" class="field__input" @bind-Value="eventModel.CidadeEvento" />
+                            <ValidationMessage For="() => eventModel.CidadeEvento" />
+                        </div>
+                    </div>
+                    <div class="admin-form__grid admin-form__grid--triple">
+                        <div class="field">
+                            <label for="eventoGenero">Genero musical</label>
+                            <InputText id="eventoGenero" class="field__input" @bind-Value="eventModel.GeneroMusical" />
+                            <ValidationMessage For="() => eventModel.GeneroMusical" />
+                        </div>
+                        <div class="field">
+                            <label for="eventoCapacidade">Capacidade</label>
+                            <InputNumber id="eventoCapacidade" class="field__input" @bind-Value="eventModel.CapacidadeTotal" />
+                            <ValidationMessage For="() => eventModel.CapacidadeTotal" />
+                        </div>
+                        <div class="field">
+                            <label for="eventoPreco">Preco</label>
+                            <InputNumber id="eventoPreco" class="field__input" @bind-Value="eventModel.PrecoPadrao" />
+                            <ValidationMessage For="() => eventModel.PrecoPadrao" />
+                        </div>
+                    </div>
+                    <div class="admin-form__grid">
+                        <div class="field">
+                            <label for="eventoData">Data e hora</label>
+                            <InputDate id="eventoData" class="field__input" @bind-Value="eventDateOnly" />
+                        </div>
+                        <div class="field">
+                            <label for="eventoHora">Horario</label>
+                            <InputText id="eventoHora" class="field__input" @bind-Value="eventTime" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="eventoImagem">URL da imagem</label>
+                        <InputText id="eventoImagem" class="field__input" @bind-Value="eventModel.ImagemUrl" />
+                        <ValidationMessage For="() => eventModel.ImagemUrl" />
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(eventModel.ImagemUrl))
+                    {
+                        <div class="admin-image-preview">
+                            <img src="@eventModel.ImagemUrl" alt="Preview do evento" />
+                            <div>
+                                <strong>Preview da capa</strong>
+                                <span>Confira como a imagem vai aparecer na vitrine do site.</span>
+                            </div>
+                        </div>
+                    }
+
+                    <button class="secondary-button" type="submit" disabled="@isBusy">Publicar evento</button>
+                </EditForm>
+            </section>
+
+            <section class="admin-panel admin-panel--soft">
+                <div class="admin-panel__head">
+                    <span class="admin-panel__pill">Promocao</span>
+                    <h2>Novo cupom</h2>
+                    <p>Cadastre codigos promocionais para campanhas e acoes especiais.</p>
+                </div>
+
+                <EditForm Model="@couponModel" OnValidSubmit="HandleCreateCoupon" FormName="admin-coupon-form" class="admin-form">
+                    <DataAnnotationsValidator />
+                    <div class="admin-form__grid">
+                        <div class="field">
+                            <label for="cupomCodigo">Codigo</label>
+                            <InputText id="cupomCodigo" class="field__input" @bind-Value="couponModel.Codigo" />
+                            <ValidationMessage For="() => couponModel.Codigo" />
+                        </div>
+                        <div class="field">
+                            <label for="cupomDesconto">Desconto (%)</label>
+                            <InputNumber id="cupomDesconto" class="field__input" @bind-Value="couponModel.PorcentagemDesconto" />
+                            <ValidationMessage For="() => couponModel.PorcentagemDesconto" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="cupomMinimo">Valor minimo</label>
+                        <InputNumber id="cupomMinimo" class="field__input" @bind-Value="couponModel.ValorMinimoRegra" />
+                        <ValidationMessage For="() => couponModel.ValorMinimoRegra" />
+                    </div>
+
+                    <div class="admin-note">
+                        <strong>Dica comercial</strong>
+                        <span>Use codigos curtos e claros para campanhas como `SHOW10`, `VIP20` ou `FESTA15`.</span>
+                    </div>
+
+                    <button class="primary-button" type="submit" disabled="@isBusy">Criar cupom</button>
+                </EditForm>
+
+                <div class="admin-subsection">
+                    <div class="admin-subsection__head">
+                        <div>
+                            <h3>Cupons cadastrados</h3>
+                            <p>Edite percentuais, revise regras minimas e remova cupons quando precisar.</p>
+                        </div>
+                        <button class="ghost-button" type="button" @onclick="LoadAdminCoupons" disabled="@isBusy">Atualizar</button>
+                    </div>
+
+                    @if (couponsLoading)
+                    {
+                        <div class="status-box">Carregando cupons cadastrados...</div>
+                    }
+                    else if (adminCoupons.Count == 0)
+                    {
+                        <div class="status-box">Nenhum cupom cadastrado ainda.</div>
+                    }
+                    else
+                    {
+                        <div class="admin-coupon-list">
+                            @foreach (var item in adminCoupons)
+                            {
+                                var isEditingCoupon = editingCoupon is not null && editingCoupon.Codigo == item.Codigo;
+
+                                <article class="admin-coupon-card">
+                                    @if (isEditingCoupon)
+                                    {
+                                        <EditForm Model="@editingCoupon" OnValidSubmit="HandleUpdateCoupon" FormName="@($"edit-coupon-{item.Codigo}")" class="admin-form">
+                                            <DataAnnotationsValidator />
+
+                                            <div class="field">
+                                                <label>Codigo</label>
+                                                <InputText class="field__input" @bind-Value="editingCoupon!.Codigo" disabled />
+                                            </div>
+                                            <div class="admin-form__grid">
+                                                <div class="field">
+                                                    <label>Desconto (%)</label>
+                                                    <InputNumber class="field__input" @bind-Value="editingCoupon!.PorcentagemDesconto" />
+                                                    <ValidationMessage For="() => editingCoupon!.PorcentagemDesconto" />
+                                                </div>
+                                                <div class="field">
+                                                    <label>Valor minimo</label>
+                                                    <InputNumber class="field__input" @bind-Value="editingCoupon!.ValorMinimoRegra" />
+                                                    <ValidationMessage For="() => editingCoupon!.ValorMinimoRegra" />
+                                                </div>
+                                            </div>
+
+                                            <div class="admin-event-card__actions">
+                                                <button class="secondary-button" type="submit" disabled="@isBusy">Salvar</button>
+                                                <button class="ghost-button" type="button" @onclick="CancelCouponEdit">Cancelar</button>
+                                            </div>
+                                        </EditForm>
+                                    }
+                                    else
+                                    {
+                                        <div class="admin-coupon-card__meta">
+                                            <span class="pill">@item.Codigo</span>
+                                            <span class="pill pill--muted">@item.PorcentagemDesconto.ToString("0")% off</span>
+                                        </div>
+                                        <strong>@item.Codigo</strong>
+                                        <p>Desconto de <strong>@item.PorcentagemDesconto.ToString("0")%</strong> para compras a partir de <strong>R$ @item.ValorMinimoRegra.ToString("0.00")</strong>.</p>
+
+                                        <div class="admin-event-card__actions">
+                                            <button class="ghost-button" type="button" @onclick='() => StartCouponEdit(item)'>Editar</button>
+                                            <button class="danger-button" type="button" @onclick='() => HandleDeleteCoupon(item.Codigo)'>Excluir</button>
+                                        </div>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <section class="admin-panel admin-panel--list">
+            <div class="admin-list-header">
+                <div>
+                    <h2>Eventos cadastrados</h2>
+                    <p>Edite os destaques da temporada, ajuste precos e remova eventos quando necessario.</p>
+                </div>
+                <button class="ghost-button" @onclick="LoadAdminEvents" disabled="@isBusy">Atualizar lista</button>
+            </div>
+
+            @if (eventsLoading)
+            {
+                <div class="status-box">Carregando eventos cadastrados...</div>
+            }
+            else if (adminEvents.Count == 0)
+            {
+                <div class="status-box">Nenhum evento cadastrado ainda.</div>
+            }
+            else
+            {
+                <div class="admin-event-list">
+                    @foreach (var item in adminEvents)
+                    {
+                        var isEditing = editingEvent is not null && editingEvent.Id == item.Id;
+
+                        <article class="admin-event-card">
+                            @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
+                            {
+                                <img class="admin-event-card__image" src="@item.ImagemUrl" alt="@item.Nome" />
+                            }
+
+                            <div class="admin-event-card__body">
+                                @if (isEditing)
+                                {
+                                    <EditForm Model="@editingEvent" OnValidSubmit="HandleUpdateEvent" FormName="@($"edit-event-{item.Id}")" class="admin-form">
+                                        <DataAnnotationsValidator />
+                                        <div class="admin-form__grid">
+                                            <div class="field">
+                                                <label>Nome</label>
+                                                <InputText class="field__input" @bind-Value="editingEvent!.Nome" />
+                                                <ValidationMessage For="() => editingEvent!.Nome" />
+                                            </div>
+                                            <div class="field">
+                                                <label>Artista</label>
+                                                <InputText class="field__input" @bind-Value="editingEvent!.Artista" />
+                                                <ValidationMessage For="() => editingEvent!.Artista" />
+                                            </div>
+                                        </div>
+                                        <div class="admin-form__grid">
+                                            <div class="field">
+                                                <label>Local</label>
+                                                <InputText class="field__input" @bind-Value="editingEvent!.LocalEvento" />
+                                                <ValidationMessage For="() => editingEvent!.LocalEvento" />
+                                            </div>
+                                            <div class="field">
+                                                <label>Cidade</label>
+                                                <InputText class="field__input" @bind-Value="editingEvent!.CidadeEvento" />
+                                                <ValidationMessage For="() => editingEvent!.CidadeEvento" />
+                                            </div>
+                                        </div>
+                                        <div class="admin-form__grid admin-form__grid--triple">
+                                            <div class="field">
+                                                <label>Genero musical</label>
+                                                <InputText class="field__input" @bind-Value="editingEvent!.GeneroMusical" />
+                                                <ValidationMessage For="() => editingEvent!.GeneroMusical" />
+                                            </div>
+                                            <div class="field">
+                                                <label>Capacidade</label>
+                                                <InputNumber class="field__input" @bind-Value="editingEvent!.CapacidadeTotal" />
+                                                <ValidationMessage For="() => editingEvent!.CapacidadeTotal" />
+                                            </div>
+                                            <div class="field">
+                                                <label>Preco</label>
+                                                <InputNumber class="field__input" @bind-Value="editingEvent!.PrecoPadrao" />
+                                                <ValidationMessage For="() => editingEvent!.PrecoPadrao" />
+                                            </div>
+                                        </div>
+                                        <div class="admin-form__grid">
+                                            <div class="field">
+                                                <label>Data</label>
+                                                <InputDate class="field__input" @bind-Value="editDateOnly" />
+                                            </div>
+                                            <div class="field">
+                                                <label>Horario</label>
+                                                <InputText class="field__input" @bind-Value="editTime" />
+                                            </div>
+                                        </div>
+                                        <div class="field">
+                                            <label>Imagem</label>
+                                            <InputText class="field__input" @bind-Value="editingEvent!.ImagemUrl" />
+                                            <ValidationMessage For="() => editingEvent!.ImagemUrl" />
+                                        </div>
+
+                                        <div class="admin-event-card__actions">
+                                            <button class="secondary-button" type="submit" disabled="@isBusy">Salvar</button>
+                                            <button class="ghost-button" type="button" @onclick="CancelEdit">Cancelar</button>
+                                        </div>
+                                    </EditForm>
+                                }
+                                else
+                                {
+                                    <div class="admin-event-card__meta">
+                                        <span class="pill">@item.DataEvento.ToString("dd/MM/yyyy")</span>
+                                        <span class="pill pill--muted">@item.CapacidadeTotal lugares</span>
+                                    </div>
+                                    <h3>@item.Nome</h3>
+                                    <p class="admin-event-card__copy">@item.LocalEvento, @item.CidadeEvento</p>
+                                    <p class="admin-event-card__copy">@item.Artista • @item.GeneroMusical</p>
+                                    <p class="admin-event-card__copy">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                                    <p class="admin-event-card__copy">R$ @item.PrecoPadrao.ToString("0.00")</p>
+
+                                    <div class="admin-event-card__actions">
+                                        <button class="ghost-button" type="button" @onclick='() => StartEdit(item)'>Editar</button>
+                                        <button class="danger-button" type="button" @onclick='() => HandleDeleteEvent(item.Id)'>Excluir</button>
+                                    </div>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="status-box @(isError ? "status-box--error" : "status-box--success")">
+                @statusMessage
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly AdminEventInputModel eventModel = new();
+    private readonly AdminCouponInputModel couponModel = new();
+    private readonly List<EventViewModel> adminEvents = new();
+    private readonly List<CouponViewModel> adminCoupons = new();
+    private bool isBusy;
+    private bool isError;
+    private bool eventsLoading;
+    private bool couponsLoading;
+    private string statusMessage = string.Empty;
+    private DateTime eventDateOnly = DateTime.Today.AddDays(15);
+    private string eventTime = "20:00";
+    private AdminEventEditModel? editingEvent;
+    private AdminCouponEditModel? editingCoupon;
+    private DateTime editDateOnly = DateTime.Today;
+    private string editTime = "20:00";
+
+    protected override async Task OnInitializedAsync()
+    {
+        eventDateOnly = eventModel.DataEvento.Date;
+        eventTime = eventModel.DataEvento.ToString("HH:mm");
+        await LoadAdminEvents();
+        await LoadAdminCoupons();
+    }
+
+    private async Task HandleCreateEvent()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var schedule = BuildEventDateTime();
+            var result = await ApiClient.CreateEventAsync(new EventCreateRequest
+            {
+                Nome = eventModel.Nome,
+                LocalEvento = eventModel.LocalEvento,
+                CidadeEvento = eventModel.CidadeEvento,
+                Artista = eventModel.Artista,
+                GeneroMusical = eventModel.GeneroMusical,
+                CapacidadeTotal = eventModel.CapacidadeTotal,
+                DataEvento = schedule,
+                PrecoPadrao = eventModel.PrecoPadrao,
+                ImagemUrl = eventModel.ImagemUrl
+            }, Session.AdminToken!);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                eventModel.Nome = string.Empty;
+                eventModel.LocalEvento = string.Empty;
+                eventModel.CidadeEvento = string.Empty;
+                eventModel.Artista = string.Empty;
+                eventModel.GeneroMusical = string.Empty;
+                eventModel.CapacidadeTotal = 1000;
+                eventModel.PrecoPadrao = 99.90m;
+                eventModel.ImagemUrl = string.Empty;
+                eventDateOnly = DateTime.Today.AddDays(15);
+                eventTime = "20:00";
+                await LoadAdminEvents();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel publicar o evento agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleCreateCoupon()
+    {
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.CreateCouponAsync(new CouponCreateRequest
+            {
+                Codigo = couponModel.Codigo,
+                PorcentagemDesconto = couponModel.PorcentagemDesconto,
+                ValorMinimoRegra = couponModel.ValorMinimoRegra
+            }, Session.AdminToken!);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                couponModel.Codigo = string.Empty;
+                couponModel.PorcentagemDesconto = 10;
+                couponModel.ValorMinimoRegra = 50;
+                await LoadAdminCoupons();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel criar o cupom agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private DateTime BuildEventDateTime()
+    {
+        if (TimeOnly.TryParse(eventTime, out var parsedTime))
+            return eventDateOnly.Date.Add(parsedTime.ToTimeSpan());
+
+        return eventDateOnly.Date.AddHours(20);
+    }
+
+    private async Task LoadAdminEvents()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        eventsLoading = true;
+
+        try
+        {
+            adminEvents.Clear();
+            adminEvents.AddRange(await ApiClient.GetAdminEventsAsync(Session.AdminToken));
+        }
+        finally
+        {
+            eventsLoading = false;
+        }
+    }
+
+    private async Task LoadAdminCoupons()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        couponsLoading = true;
+
+        try
+        {
+            adminCoupons.Clear();
+            adminCoupons.AddRange(await ApiClient.GetAdminCouponsAsync(Session.AdminToken));
+        }
+        finally
+        {
+            couponsLoading = false;
+        }
+    }
+
+    private void StartEdit(EventViewModel item)
+    {
+        editingEvent = new AdminEventEditModel
+        {
+            Id = item.Id,
+            Nome = item.Nome,
+            LocalEvento = item.LocalEvento,
+            CidadeEvento = item.CidadeEvento,
+            Artista = item.Artista,
+            GeneroMusical = item.GeneroMusical,
+            CapacidadeTotal = item.CapacidadeTotal,
+            DataEvento = item.DataEvento,
+            PrecoPadrao = item.PrecoPadrao,
+            ImagemUrl = item.ImagemUrl ?? string.Empty
+        };
+        editDateOnly = item.DataEvento.Date;
+        editTime = item.DataEvento.ToString("HH:mm");
+    }
+
+    private void CancelEdit()
+    {
+        editingEvent = null;
+    }
+
+    private void StartCouponEdit(CouponViewModel item)
+    {
+        editingCoupon = new AdminCouponEditModel
+        {
+            Codigo = item.Codigo,
+            PorcentagemDesconto = item.PorcentagemDesconto,
+            ValorMinimoRegra = item.ValorMinimoRegra
+        };
+    }
+
+    private void CancelCouponEdit()
+    {
+        editingCoupon = null;
+    }
+
+    private async Task HandleUpdateEvent()
+    {
+        if (editingEvent is null || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.UpdateEventAsync(editingEvent.Id, new AdminEventUpdateRequest
+            {
+                Nome = editingEvent.Nome,
+                LocalEvento = editingEvent.LocalEvento,
+                CidadeEvento = editingEvent.CidadeEvento,
+                Artista = editingEvent.Artista,
+                GeneroMusical = editingEvent.GeneroMusical,
+                CapacidadeTotal = editingEvent.CapacidadeTotal,
+                DataEvento = BuildEditEventDateTime(),
+                PrecoPadrao = editingEvent.PrecoPadrao,
+                ImagemUrl = editingEvent.ImagemUrl
+            }, Session.AdminToken);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                editingEvent = null;
+                await LoadAdminEvents();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel atualizar o evento agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleDeleteEvent(int id)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.DeleteEventAsync(id, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                if (editingEvent?.Id == id)
+                    editingEvent = null;
+
+                await LoadAdminEvents();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel remover o evento agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleUpdateCoupon()
+    {
+        if (editingCoupon is null || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.UpdateCouponAsync(editingCoupon.Codigo, new CouponCreateRequest
+            {
+                Codigo = editingCoupon.Codigo,
+                PorcentagemDesconto = editingCoupon.PorcentagemDesconto,
+                ValorMinimoRegra = editingCoupon.ValorMinimoRegra
+            }, Session.AdminToken);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                editingCoupon = null;
+                await LoadAdminCoupons();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel atualizar o cupom agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleDeleteCoupon(string codigo)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.DeleteCouponAsync(codigo, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                if (editingCoupon?.Codigo == codigo)
+                    editingCoupon = null;
+
+                await LoadAdminCoupons();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel remover o cupom agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private DateTime BuildEditEventDateTime()
+    {
+        if (TimeOnly.TryParse(editTime, out var parsedTime))
+            return editDateOnly.Date.Add(parsedTime.ToTimeSpan());
+
+        return editDateOnly.Date.AddHours(20);
+    }
+
+    private void Logout()
+    {
+        Session.Logout();
+        Navigation.NavigateTo("/");
+    }
+}
