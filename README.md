@@ -1,3 +1,11 @@
+# Integrantes:
+
+Raphael Leon Ramos da Silva - 06004469
+João Victor Guimarães - 06006067
+Maurício Alves de Barros Neto - 06014054
+Juarez Costa - 06004451
+Julio Henrique Oliveira Carvalho - 06010951
+
 # TicketPrime
 
 API e interface Blazor para venda e gestao de ingressos de eventos musicais.
