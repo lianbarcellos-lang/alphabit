@@ -202,17 +202,37 @@ public class TicketPrimeApiClient(HttpClient httpClient)
 
     public async Task<List<ReservationViewModel>> GetReservationsAsync(string cpf)
     {
-        return await httpClient.GetFromJsonAsync<List<ReservationViewModel>>($"api/reservas/{cpf}") ?? [];
+        using var message = new HttpRequestMessage(HttpMethod.Get, $"api/reservas/{cpf}");
+        message.Headers.Add("X-User-Cpf", cpf);
+
+        var response = await httpClient.SendAsync(message);
+        if (!response.IsSuccessStatusCode)
+            return [];
+
+        return await response.Content.ReadFromJsonAsync<List<ReservationViewModel>>() ?? [];
     }
 
     public async Task<CustomerProfileViewModel?> GetUserProfileAsync(string cpf)
     {
-        return await httpClient.GetFromJsonAsync<CustomerProfileViewModel>($"api/usuarios/{cpf}/perfil");
+        using var message = new HttpRequestMessage(HttpMethod.Get, $"api/usuarios/{cpf}/perfil");
+        message.Headers.Add("X-User-Cpf", cpf);
+
+        var response = await httpClient.SendAsync(message);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<CustomerProfileViewModel>();
     }
 
     public async Task<ApiResult<CustomerProfileViewModel>> UpdateUserProfileAsync(string cpf, CustomerProfileViewModel request)
     {
-        var response = await httpClient.PutAsJsonAsync($"api/usuarios/{cpf}/perfil", request);
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/usuarios/{cpf}/perfil")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-User-Cpf", cpf);
+
+        var response = await httpClient.SendAsync(message);
 
         if (response.IsSuccessStatusCode)
         {

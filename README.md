@@ -19,7 +19,7 @@ API e interface Blazor para venda e gestao de ingressos de eventos musicais.
 
 ## Funcionalidades implementadas
 
-- cadastro de usuario por `CPF`, `nome` e `email` em `POST /api/usuarios`
+- cadastro basico de usuario por `CPF`, `nome` e `email` em `POST /api/usuarios`
 - cadastro e login de cliente com senha
 - login administrativo com `admin / admin`
 - cadastro, listagem, edicao e exclusao de eventos
@@ -29,6 +29,7 @@ API e interface Blazor para venda e gestao de ingressos de eventos musicais.
 - pre-visualizacao de cupom no carrinho com desconto e total final
 - finalizacao de compra com reservas
 - consulta de reservas por CPF
+- protecao de acesso nas rotas sensiveis de usuarios e reservas
 - validacao de capacidade do evento
 - limite de 2 reservas por CPF no mesmo evento
 - aplicacao de cupom com valor minimo
@@ -66,7 +67,7 @@ dotnet test "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (
 
 Resultado validado:
 
-- `10` testes aprovados
+- `19` testes aprovados
 - `0` falhas
 
 ## Endpoints principais
@@ -77,7 +78,9 @@ Resultado validado:
 - `POST /api/auth/usuarios/cadastro`
 - `POST /api/auth/usuarios/login`
 - `POST /api/auth/admin/login`
-- `GET /api/usuarios`
+- `GET /api/usuarios` - protegido para administrador
+- `GET /api/usuarios/{cpf}/perfil`
+- `PUT /api/usuarios/{cpf}/perfil`
 
 ### Eventos
 
@@ -99,17 +102,19 @@ Resultado validado:
 ### Reservas
 
 - `POST /api/reservas`
-- `GET /api/reservas/{cpf}`
+- `GET /api/reservas/{cpf}` - protegido para o proprio cliente ou administrador
 
 ## Regras de negocio implementadas
 
 - nao cadastrar usuario com CPF duplicado
+- nao cadastrar usuario com email duplicado
 - impedir cupom duplicado
 - validar existencia de usuario e evento antes da reserva
 - limitar a 2 reservas por CPF no mesmo evento
 - bloquear venda acima da capacidade do evento
 - aplicar cupom somente quando o valor do evento atende ao minimo exigido
 - mostrar pre-visualizacao do desconto antes da finalizacao da compra
+- exigir autenticacao nas rotas sensiveis de perfil, usuarios e reservas
 
 ## Credenciais de demonstracao
 
@@ -120,7 +125,8 @@ Resultado validado:
 
 ### Cliente
 
-- pode criar conta na tela inicial do sistema
+- pode criar conta completa na tela inicial do sistema
+- pode concluir o primeiro acesso depois do cadastro basico da rota `POST /api/usuarios`
 
 ## Documentacao complementar
 
@@ -133,4 +139,5 @@ Resultado validado:
 
 - `GET /api/reservas/{cpf}` utiliza `INNER JOIN` para retornar o nome do evento
 - `POST /api/reservas` aplica integridade, limite por `CPF + EventoId`, capacidade e motor de cupons
-- o token administrativo da API foi movido para `appsettings.json` e `appsettings.Development.json`
+- credenciais e token administrativos sao lidos de `appsettings.json` e `appsettings.Development.json`, sem fallback sensivel no `.cs`
+- as rotas sensiveis da API foram protegidas com verificacao de acesso por cliente ou administrador

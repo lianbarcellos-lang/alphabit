@@ -6,10 +6,16 @@ using TicketPrime.API.modelos;
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-var adminToken = builder.Configuration["AdminAccess:Token"] ?? "ticketprime-admin-token";
+var adminToken = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Token");
+var adminLogin = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Login");
+var adminPassword = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Password");
 
 var dbPath = "db/TicketPrime.db";
-var connectionString = $"Data Source={dbPath}";
+var connectionString = new SqliteConnectionStringBuilder
+{
+    DataSource = dbPath,
+    ForeignKeys = true
+}.ToString();
 
 using (var connection = new SqliteConnection(connectionString))
 {
@@ -54,12 +60,15 @@ using (var connection = new SqliteConnection(connectionString))
             Id INTEGER PRIMARY KEY AUTOINCREMENT,
             UsuarioCpf TEXT NOT NULL,
             EventoId INTEGER NOT NULL,
-            CupomUtilizado TEXT NOT NULL DEFAULT '',
+            CupomUtilizado TEXT NULL,
             Assentos TEXT NOT NULL DEFAULT '',
             Quantidade INTEGER NOT NULL DEFAULT 1,
             PrecoUnitario REAL NOT NULL DEFAULT 0,
             ValorFinalPago REAL NOT NULL,
-            DataReserva TEXT NOT NULL DEFAULT ''
+            DataReserva TEXT NOT NULL DEFAULT '',
+            FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE,
+            FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE,
+            FOREIGN KEY (CupomUtilizado) REFERENCES Cupons(Codigo) ON DELETE SET NULL
         );
     ";
     cmd.ExecuteNonQuery();
@@ -77,10 +86,7 @@ using (var connection = new SqliteConnection(connectionString))
     EnsureColumnExists(connection, "Eventos", "CidadeEvento", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "Artista", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "GeneroMusical", "TEXT NOT NULL DEFAULT ''");
-    EnsureColumnExists(connection, "Reservas", "Quantidade", "INTEGER NOT NULL DEFAULT 1");
-    EnsureColumnExists(connection, "Reservas", "PrecoUnitario", "REAL NOT NULL DEFAULT 0");
-    EnsureColumnExists(connection, "Reservas", "DataReserva", "TEXT NOT NULL DEFAULT ''");
-    EnsureColumnExists(connection, "Reservas", "Assentos", "TEXT NOT NULL DEFAULT ''");
+    EnsureReservasSchema(connection);
 
     EnsureDemoEvents(connection);
 }
@@ -106,6 +112,13 @@ app.MapPost("/api/usuarios", (Usuario usuario) =>
     if (cpfExiste > 0)
         return Results.BadRequest("Ja existe um usuario com este CPF.");
 
+    var emailExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Usuarios WHERE lower(Email) = lower(@email)",
+        new { email = usuario.Email });
+
+    if (emailExiste > 0)
+        return Results.BadRequest("Ja existe um usuario com este email.");
+
     connection.Execute(@"
         INSERT INTO Usuarios (Cpf, Nome, Email, SenhaHash)
         VALUES (@cpf, @nome, @email, @senhaHash)", new
@@ -116,7 +129,7 @@ app.MapPost("/api/usuarios", (Usuario usuario) =>
         senhaHash = string.Empty
     });
 
-    return Results.Ok("Usuario criado com sucesso!");
+    return Results.Ok("Usuario criado com sucesso. Para acessar a conta, finalize o cadastro pelo primeiro acesso.");
 });
 
 app.MapPost("/api/auth/usuarios/cadastro", (UsuarioCadastroRequest request) =>
@@ -190,7 +203,7 @@ app.MapPost("/api/auth/usuarios/login", (UsuarioLoginRequest request) =>
     if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrWhiteSpace(request.Senha))
         return Results.BadRequest("Informe seu email ou CPF e a senha.");
 
-    if (TicketPrimeRules.IsAdminCredential(request.Login, request.Senha))
+    if (TicketPrimeRules.IsAdminCredential(request.Login, request.Senha, adminLogin, adminPassword))
     {
         return Results.Ok(new AuthResponse
         {
@@ -230,7 +243,7 @@ app.MapPost("/api/auth/usuarios/login", (UsuarioLoginRequest request) =>
 
 app.MapPost("/api/auth/admin/login", (AdminLoginRequest request) =>
 {
-    if (!TicketPrimeRules.IsAdminCredential(request.Login, request.Senha))
+    if (!TicketPrimeRules.IsAdminCredential(request.Login, request.Senha, adminLogin, adminPassword))
         return Results.BadRequest("Login de administrador invalido.");
 
     return Results.Ok(new AuthResponse
@@ -243,8 +256,12 @@ app.MapPost("/api/auth/admin/login", (AdminLoginRequest request) =>
     });
 });
 
-app.MapGet("/api/usuarios", () =>
+app.MapGet("/api/usuarios", (HttpContext httpContext) =>
 {
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -253,8 +270,12 @@ app.MapGet("/api/usuarios", () =>
     return Results.Ok(usuarios);
 });
 
-app.MapGet("/api/usuarios/{cpf}/perfil", (string cpf) =>
+app.MapGet("/api/usuarios/{cpf}/perfil", (string cpf, HttpContext httpContext) =>
 {
+    var accessResult = EnsureUserAccess(httpContext, cpf);
+    if (accessResult is not null)
+        return accessResult;
+
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -278,8 +299,12 @@ app.MapGet("/api/usuarios/{cpf}/perfil", (string cpf) =>
         : Results.Ok(perfil);
 });
 
-app.MapPut("/api/usuarios/{cpf}/perfil", (string cpf, UsuarioPerfil perfil) =>
+app.MapPut("/api/usuarios/{cpf}/perfil", (string cpf, UsuarioPerfil perfil, HttpContext httpContext) =>
 {
+    var accessResult = EnsureUserAccess(httpContext, cpf);
+    if (accessResult is not null)
+        return accessResult;
+
     if (string.IsNullOrWhiteSpace(perfil.Nome) ||
         string.IsNullOrWhiteSpace(perfil.Email))
     {
@@ -441,7 +466,28 @@ app.MapDelete("/api/admin/eventos/{id:int}", (int id, HttpContext httpContext) =
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
-    var deleted = connection.Execute("DELETE FROM Eventos WHERE Id = @id", new { id });
+    using var transaction = connection.BeginTransaction();
+
+    var eventoExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Eventos WHERE Id = @id",
+        new { id },
+        transaction);
+
+    if (eventoExiste == 0)
+        return Results.NotFound("Evento nao encontrado.");
+
+    connection.Execute(
+        "DELETE FROM Reservas WHERE EventoId = @id",
+        new { id },
+        transaction);
+
+    var deleted = connection.Execute(
+        "DELETE FROM Eventos WHERE Id = @id",
+        new { id },
+        transaction);
+
+    transaction.Commit();
+
     if (deleted == 0)
         return Results.NotFound("Evento nao encontrado.");
 
@@ -578,7 +624,27 @@ app.MapDelete("/api/admin/cupons/{codigo}", (string codigo, HttpContext httpCont
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
-    var deleted = connection.Execute("DELETE FROM Cupons WHERE Codigo = @codigo", new { codigo });
+    using var transaction = connection.BeginTransaction();
+
+    var cupomExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Cupons WHERE Codigo = @codigo",
+        new { codigo },
+        transaction);
+
+    if (cupomExiste == 0)
+        return Results.NotFound("Cupom nao encontrado.");
+
+    connection.Execute(
+        "UPDATE Reservas SET CupomUtilizado = NULL WHERE CupomUtilizado = @codigo",
+        new { codigo },
+        transaction);
+
+    var deleted = connection.Execute(
+        "DELETE FROM Cupons WHERE Codigo = @codigo",
+        new { codigo },
+        transaction);
+
+    transaction.Commit();
 
     if (deleted == 0)
         return Results.NotFound("Cupom nao encontrado.");
@@ -851,8 +917,12 @@ app.MapPost("/api/reservas", (ReservaCheckoutRequest request) =>
     }
 });
 
-app.MapGet("/api/reservas/{cpf}", (string cpf) =>
+app.MapGet("/api/reservas/{cpf}", (string cpf, HttpContext httpContext) =>
 {
+    var accessResult = EnsureUserAccess(httpContext, cpf);
+    if (accessResult is not null)
+        return accessResult;
+
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -886,6 +956,24 @@ IResult? EnsureAdminAccess(HttpContext httpContext)
     return null;
 }
 
+IResult? EnsureUserAccess(HttpContext httpContext, string routeCpf)
+{
+    if (httpContext.Request.Headers.TryGetValue("X-Admin-Token", out var adminHeader) &&
+        adminHeader == adminToken)
+    {
+        return null;
+    }
+
+    if (!httpContext.Request.Headers.TryGetValue("X-User-Cpf", out var userCpf) ||
+        string.IsNullOrWhiteSpace(userCpf) ||
+        !string.Equals(userCpf.ToString(), routeCpf, StringComparison.Ordinal))
+    {
+        return Results.Unauthorized();
+    }
+
+    return null;
+}
+
 static void EnsureColumnExists(SqliteConnection connection, string tableName, string columnName, string sqlDefinition)
 {
     var pragmaCmd = connection.CreateCommand();
@@ -901,6 +989,72 @@ static void EnsureColumnExists(SqliteConnection connection, string tableName, st
     var alterCmd = connection.CreateCommand();
     alterCmd.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {sqlDefinition}";
     alterCmd.ExecuteNonQuery();
+}
+
+static void EnsureReservasSchema(SqliteConnection connection)
+{
+    EnsureColumnExists(connection, "Reservas", "Quantidade", "INTEGER NOT NULL DEFAULT 1");
+    EnsureColumnExists(connection, "Reservas", "PrecoUnitario", "REAL NOT NULL DEFAULT 0");
+    EnsureColumnExists(connection, "Reservas", "DataReserva", "TEXT NOT NULL DEFAULT ''");
+    EnsureColumnExists(connection, "Reservas", "Assentos", "TEXT NOT NULL DEFAULT ''");
+
+    var foreignKeys = connection.Query<(int Id, int Seq, string Table, string From, string To, string OnUpdate, string OnDelete, string Match)>(
+        "PRAGMA foreign_key_list(Reservas)");
+
+    var hasUsuarioFk = foreignKeys.Any(fk =>
+        string.Equals(fk.From, "UsuarioCpf", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(fk.Table, "Usuarios", StringComparison.OrdinalIgnoreCase));
+
+    var hasEventoFk = foreignKeys.Any(fk =>
+        string.Equals(fk.From, "EventoId", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(fk.Table, "Eventos", StringComparison.OrdinalIgnoreCase));
+
+    var hasCupomFk = foreignKeys.Any(fk =>
+        string.Equals(fk.From, "CupomUtilizado", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(fk.Table, "Cupons", StringComparison.OrdinalIgnoreCase));
+
+    if (hasUsuarioFk && hasEventoFk && hasCupomFk)
+        return;
+
+    using var transaction = connection.BeginTransaction();
+
+    connection.Execute("PRAGMA foreign_keys = OFF;", transaction: transaction);
+
+    connection.Execute(@"
+        CREATE TABLE Reservas_new (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            UsuarioCpf TEXT NOT NULL,
+            EventoId INTEGER NOT NULL,
+            CupomUtilizado TEXT NULL,
+            Assentos TEXT NOT NULL DEFAULT '',
+            Quantidade INTEGER NOT NULL DEFAULT 1,
+            PrecoUnitario REAL NOT NULL DEFAULT 0,
+            ValorFinalPago REAL NOT NULL,
+            DataReserva TEXT NOT NULL DEFAULT '',
+            FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE,
+            FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE,
+            FOREIGN KEY (CupomUtilizado) REFERENCES Cupons(Codigo) ON DELETE SET NULL
+        );", transaction: transaction);
+
+    connection.Execute(@"
+        INSERT INTO Reservas_new (Id, UsuarioCpf, EventoId, CupomUtilizado, Assentos, Quantidade, PrecoUnitario, ValorFinalPago, DataReserva)
+        SELECT
+            Id,
+            UsuarioCpf,
+            EventoId,
+            NULLIF(CupomUtilizado, ''),
+            COALESCE(Assentos, ''),
+            COALESCE(Quantidade, 1),
+            COALESCE(PrecoUnitario, 0),
+            ValorFinalPago,
+            COALESCE(DataReserva, '')
+        FROM Reservas;", transaction: transaction);
+
+    connection.Execute("DROP TABLE Reservas;", transaction: transaction);
+    connection.Execute("ALTER TABLE Reservas_new RENAME TO Reservas;", transaction: transaction);
+    connection.Execute("PRAGMA foreign_keys = ON;", transaction: transaction);
+
+    transaction.Commit();
 }
 
 static void EnsureDemoEvents(SqliteConnection connection)
@@ -1005,4 +1159,13 @@ static void EnsureDemoEvents(SqliteConnection connection)
             imagem = evento.ImagemUrl
         });
     }
+}
+
+static string GetRequiredConfiguration(IConfiguration configuration, string key)
+{
+    var value = configuration[key];
+    if (string.IsNullOrWhiteSpace(value))
+        throw new InvalidOperationException($"A configuracao obrigatoria '{key}' nao foi encontrada.");
+
+    return value;
 }

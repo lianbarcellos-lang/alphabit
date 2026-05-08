@@ -18,7 +18,7 @@ public class TicketPrimeRulesTests
     [Fact]
     public void IsAdminCredential_ShouldReturnTrue_ForDefaultAdmin()
     {
-        var actual = TicketPrimeRules.IsAdminCredential("admin", "admin");
+        var actual = TicketPrimeRules.IsAdminCredential("admin", "admin", "admin", "admin");
 
         Assert.True(actual);
     }
@@ -26,7 +26,7 @@ public class TicketPrimeRulesTests
     [Fact]
     public void IsAdminCredential_ShouldReturnFalse_ForWrongPassword()
     {
-        var actual = TicketPrimeRules.IsAdminCredential("admin", "1234");
+        var actual = TicketPrimeRules.IsAdminCredential("admin", "1234", "admin", "admin");
 
         Assert.False(actual);
     }
@@ -115,7 +115,8 @@ public class TicketPrimeRulesTests
                 new ReservaCheckoutItemRequest
                 {
                     EventoId = 1,
-                    Quantidade = 1
+                    Quantidade = 1,
+                    Assentos = ["A1"]
                 }
             ]
         };
@@ -137,6 +138,28 @@ public class TicketPrimeRulesTests
                 {
                     EventoId = 1,
                     Quantidade = 0
+                }
+            ]
+        };
+
+        var actual = TicketPrimeRules.IsValidCheckout(request);
+
+        Assert.False(actual);
+    }
+
+    [Fact]
+    public void IsValidCheckout_ShouldReturnFalse_WhenSeatCountDoesNotMatchQuantity()
+    {
+        var request = new ReservaCheckoutRequest
+        {
+            UsuarioCpf = "12345678900",
+            Itens =
+            [
+                new ReservaCheckoutItemRequest
+                {
+                    EventoId = 1,
+                    Quantidade = 2,
+                    Assentos = ["A1"]
                 }
             ]
         };

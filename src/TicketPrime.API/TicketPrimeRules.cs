@@ -13,9 +13,9 @@ public static class TicketPrimeRules
         return Convert.ToHexString(bytes);
     }
 
-    public static bool IsAdminCredential(string login, string senha)
+    public static bool IsAdminCredential(string login, string senha, string expectedLogin, string expectedSenha)
     {
-        return login == "admin" && senha == "admin";
+        return login == expectedLogin && senha == expectedSenha;
     }
 
     public static bool IsValidUserRegistration(UsuarioCadastroRequest request)

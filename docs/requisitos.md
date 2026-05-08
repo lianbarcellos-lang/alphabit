@@ -45,10 +45,13 @@ Como cliente, quero consultar minhas reservas pelo CPF, para acompanhar meus ing
 ### HU13 - Filtros de descoberta
 Como cliente, quero filtrar eventos por cidade, dia da semana, artista e genero musical, para encontrar opcoes que facam sentido para mim.
 
-### HU14 - Seguranca contra SQL Injection
+### HU14 - Protecao de perfil e reservas
+Como sistema, quero restringir acesso a perfil e reservas do cliente, para evitar exposicao indevida de dados.
+
+### HU15 - Seguranca contra SQL Injection
 Como sistema, quero executar queries parametrizadas com Dapper, para reduzir o risco de SQL Injection.
 
-### HU15 - Testes automatizados com oraculo
+### HU16 - Testes automatizados com oraculo
 Como desenvolvedor, quero testes automatizados com Assert, para validar regras esperadas do sistema.
 
 ## Criterios de aceitacao
@@ -142,6 +145,11 @@ Dado que o cliente adicionou ingressos ao carrinho
 Quando ele informa um cupom valido e clica em aplicar  
 Entao o sistema deve mostrar o desconto e o total final antes da finalizacao
 
+Cenario: proteger consulta de reservas  
+Dado que a rota de reservas pertence a um CPF especifico  
+Quando outro usuario tenta consultar o historico sem permissao  
+Entao a API deve retornar acesso nao autorizado
+
 ### Filtros
 
 Cenario: filtrar por cidade  
@@ -154,6 +162,18 @@ Dado que existem eventos em dias diferentes
 Quando o cliente seleciona um dia da semana  
 Entao a vitrine deve mostrar apenas os eventos compativeis
 
+### Protecao de acesso
+
+Cenario: proteger perfil do cliente  
+Dado que existe um perfil vinculado a um CPF  
+Quando a requisicao nao pertence ao proprio cliente nem ao administrador  
+Entao a API deve bloquear a consulta ou atualizacao
+
+Cenario: proteger listagem de usuarios  
+Dado que a listagem de usuarios contem dados pessoais  
+Quando um usuario sem permissao administrativa tenta acessar a rota  
+Entao a API deve retornar acesso nao autorizado
+
 ## Endpoints implementados
 
 ### Autenticacao e usuarios
@@ -163,6 +183,8 @@ Entao a vitrine deve mostrar apenas os eventos compativeis
 - `POST /api/auth/usuarios/login`
 - `POST /api/auth/admin/login`
 - `GET /api/usuarios`
+- `GET /api/usuarios/{cpf}/perfil`
+- `PUT /api/usuarios/{cpf}/perfil`
 
 ### Eventos
 
@@ -194,6 +216,13 @@ Entao a vitrine deve mostrar apenas os eventos compativeis
 - `Nome` TEXT NOT NULL
 - `Email` TEXT NOT NULL
 - `SenhaHash` TEXT NOT NULL
+- `Sobrenome` TEXT NOT NULL
+- `PaisResidencia` TEXT NOT NULL
+- `TipoDocumento` TEXT NOT NULL
+- `CodigoPais` TEXT NOT NULL
+- `Telefone` TEXT NOT NULL
+- `DataNascimento` TEXT NULL
+- `Sexo` TEXT NOT NULL
 
 ### Tabela `Eventos`
 
@@ -220,6 +249,7 @@ Entao a vitrine deve mostrar apenas os eventos compativeis
 - `UsuarioCpf` TEXT NOT NULL
 - `EventoId` INTEGER NOT NULL
 - `CupomUtilizado` TEXT
+- `Assentos` TEXT NOT NULL
 - `Quantidade` INTEGER NOT NULL
 - `PrecoUnitario` REAL NOT NULL
 - `ValorFinalPago` REAL NOT NULL
@@ -231,12 +261,14 @@ Entao a vitrine deve mostrar apenas os eventos compativeis
 - As queries implementadas estao parametrizadas para reduzir risco de SQL Injection.
 - Nao ha concatenacao com `+` nem interpolacao `$""` nas queries de negocio da API.
 - Senhas de usuarios sao armazenadas como hash SHA-256.
-- O administrador usa credenciais fixas para demonstracao: `admin / admin`.
-- O token administrativo da API e lido de configuracao em `appsettings.json` e `appsettings.Development.json`.
+- O cadastro basico em `POST /api/usuarios` nao define senha previsivel; o cliente conclui o acesso pelo fluxo de primeiro cadastro.
+- O administrador usa credenciais de demonstracao configuradas em `appsettings.json` e `appsettings.Development.json`.
+- O token administrativo da API e lido de configuracao, sem fallback sensivel no codigo C#.
 - Existem eventos iniciais semeados automaticamente para exibicao na vitrine.
 - O projeto possui infraestrutura de testes com xUnit.
-- Existem testes com Assert cobrindo regras principais em `tests/TicketPrime.Tests`.
+- Existem testes com Assert cobrindo regras principais e riscos de seguranca em `tests/TicketPrime.Tests`.
 - A rota `POST /api/reservas` aplica validacao de integridade, limite por CPF no mesmo evento, controle de capacidade e regra de cupom.
+- A rota `GET /api/reservas/{cpf}` utiliza `INNER JOIN` para retornar o nome do evento e exige acesso autorizado.
 - A rota `POST /api/cupons/preview` calcula o desconto no carrinho sem gravar a compra.
 - A interface Blazor permite adicionar eventos ao carrinho, finalizar compra e consultar reservas.
 - A interface Blazor permite selecionar assentos, aplicar cupom e ver o total final antes da compra.

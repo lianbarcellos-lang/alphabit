@@ -1,0 +1,131 @@
+CORRECAO DO PROJETO TICKETPRIME
+Data da revisao: 07/05/2026
+
+1. RESUMO GERAL
+- A solucao compila com sucesso.
+- O projeto NAO esta 100% funcional neste estado.
+- O principal motivo para essa conclusao e que a suite automatizada de testes esta falhando.
+
+2. VALIDACAO EXECUTADA
+- Comando executado: dotnet build .\TicketPrime.sln --no-restore /nr:false -p:BuildInParallel=false -m:1
+- Resultado: compilacao concluida com sucesso.
+- Observacao: apareceu 1 aviso de acesso ao arquivo de cache em obj do projeto de testes.
+
+- Comando executado: dotnet test .\tests\TicketPrime.Tests\TicketPrime.Tests.csproj --no-restore
+- Resultado: 9 testes aprovados e 1 teste com falha.
+- Teste com falha:
+  TicketPrime.Tests.TicketPrimeRulesTests.IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest
+
+3. ERROS E PROBLEMAS ENCONTRADOS
+
+3.1. TESTE DE CHECKOUT QUEBRADO
+Arquivo:
+- tests\TicketPrime.Tests\TicketPrimeRulesTests.cs
+- src\TicketPrime.API\TicketPrimeRules.cs
+
+Problema:
+- O teste espera que um checkout valido passe apenas com EventoId e Quantidade.
+- Porem a regra atual exige que a quantidade de assentos seja igual a quantidade de ingressos.
+- Como o teste nao informa assentos, o metodo retorna false e a suite fica vermelha.
+
+Impacto:
+- O projeto perde confiabilidade automatizada.
+- Nao da para afirmar que o fluxo de checkout esta validado corretamente pelos testes.
+
+4. FALHAS FUNCIONAIS E DE SEGURANCA
+
+4.1. PERFIL DE USUARIO SEM AUTENTICACAO
+Arquivo:
+- src\TicketPrime.API\Program.cs
+
+Rotas afetadas:
+- GET /api/usuarios/{cpf}/perfil
+- PUT /api/usuarios/{cpf}/perfil
+
+Problema:
+- Essas rotas aceitam qualquer CPF recebido na URL.
+- Nao existe validacao de sessao, token ou confirmacao de identidade do usuario.
+
+Impacto:
+- Qualquer pessoa que souber um CPF pode consultar ou alterar dados de outro usuario.
+
+4.2. EXCLUSAO DE EVENTO NAO TRATA REGISTROS RELACIONADOS
+Arquivo:
+- src\TicketPrime.API\Program.cs
+
+Rota afetada:
+- DELETE /api/admin/eventos/{id}
+
+Problema:
+- A exclusao faz apenas DELETE direto na tabela Eventos.
+- Se existir reserva relacionada, ou se o banco estiver com chave estrangeira ativa, a operacao pode falhar com erro SQLite.
+- Esse problema ja apareceu na pratica no painel administrativo.
+
+Impacto:
+- O botao Excluir do ADM pode falhar para eventos que ja tiveram compra ou reserva.
+
+4.3. EXCLUSAO DE CUPOM TAMBEM NAO TRATA VINCULOS
+Arquivo:
+- src\TicketPrime.API\Program.cs
+
+Rota afetada:
+- DELETE /api/admin/cupons/{codigo}
+
+Problema:
+- A exclusao tambem e direta, sem verificar reservas que usaram o cupom.
+- Em bancos com integridade referencial ativa, pode quebrar com erro de banco.
+
+Impacto:
+- O ADM pode ficar com exclusao de cupom instavel dependendo do estado do banco.
+
+4.4. ROTA /api/usuarios CRIA USUARIO SEM SENHA
+Arquivo:
+- src\TicketPrime.API\Program.cs
+
+Rota afetada:
+- POST /api/usuarios
+
+Problema:
+- A rota grava SenhaHash como string vazia.
+- O usuario criado por essa rota nao consegue fazer login imediatamente.
+- Alem disso, essa rota valida apenas CPF duplicado e nao impede email duplicado.
+
+Impacto:
+- O cadastro "oficial" da AV1 fica inconsistente com o fluxo real de autenticacao do sistema.
+- Pode haver mais de um usuario com o mesmo email, o que torna o login por email ambiguo.
+
+4.5. BANCO CRIADO SEM FOREIGN KEYS NA TABELA RESERVAS
+Arquivo:
+- src\TicketPrime.API\Program.cs
+
+Problema:
+- A criacao da tabela Reservas nao define FOREIGN KEY para UsuarioCpf, EventoId e CupomUtilizado.
+- A documentacao do projeto e a regra de negocio assumem tabelas conectadas, mas o banco atual pode nascer sem essa integridade.
+
+Impacto:
+- Em um banco novo, o sistema pode aceitar registros orfaos se alguma validacao de codigo falhar.
+- Em bancos antigos ou montados por script diferente, o comportamento fica inconsistente entre ambientes.
+
+4.6. CREDENCIAL ADMINISTRATIVA FIXA NO CODIGO DE REGRA
+Arquivo:
+- src\TicketPrime.API\TicketPrimeRules.cs
+
+Problema:
+- O login administrativo continua fixo como admin/admin no metodo de regra.
+- Mesmo com token em configuracao, a credencial padrao continua exposta na logica.
+
+Impacto:
+- E um risco de seguranca e nao e adequado para ambiente real.
+
+5. CONCLUSAO
+- O projeto esta compilando.
+- O projeto nao esta totalmente funcional neste estado.
+- O erro mais objetivo hoje e a falha de teste automatizado.
+- Alem disso, existem problemas reais de seguranca e de comportamento nas rotas de perfil e exclusao administrativa.
+
+6. PRIORIDADE DE CORRECAO SUGERIDA
+1. Corrigir a regra/teste de checkout para a suite voltar a ficar verde.
+2. Proteger as rotas de perfil do usuario.
+3. Ajustar exclusao de evento e cupom para tratar registros relacionados.
+4. Corrigir a rota POST /api/usuarios para nao criar usuario inutilizavel no login.
+5. Alinhar a criacao do banco com as chaves estrangeiras esperadas.

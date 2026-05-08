@@ -1,0 +1,87 @@
+MATRIZ DE RISCO - PONTOS LEVANTADOS EM CORRECAO.TXT
+Data: 07/05/2026
+
+Legenda do nivel de risco:
+- Baixo
+- Medio
+- Alto
+
+1. Teste de checkout quebrado
+- Categoria: Qualidade / Confiabilidade
+- Descricao: A suite automatizada tinha um teste de checkout valido inconsistente com a regra atual de assentos.
+- Probabilidade: Alta
+- Impacto: Medio
+- Nivel de risco: Medio
+- Evidencia: o teste IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest falhava.
+- Teste unitario relacionado:
+  - TicketPrimeRulesTests.IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest
+  - TicketPrimeRulesTests.IsValidCheckout_ShouldReturnFalse_WhenSeatCountDoesNotMatchQuantity
+
+2. Perfil de usuario sem autenticacao
+- Categoria: Seguranca
+- Descricao: As rotas de perfil aceitam CPF pela URL sem validacao de sessao, token ou identidade.
+- Probabilidade: Alta
+- Impacto: Alto
+- Nivel de risco: Alto
+- Consequencia: um usuario pode consultar ou alterar dados de outro.
+- Teste unitario relacionado:
+  - TicketPrimeRiskTests.ReviewRisk_ProfileRoutes_ShouldExistWithoutProtectionCheck
+
+3. Exclusao de evento sem tratamento de dependencias
+- Categoria: Integridade / Operacao
+- Descricao: A exclusao administrativa faz DELETE direto e pode falhar se houver reservas vinculadas.
+- Probabilidade: Alta
+- Impacto: Alto
+- Nivel de risco: Alto
+- Consequencia: o painel administrativo pode falhar ao excluir evento real em producao ou apresentacao.
+- Teste unitario relacionado:
+  - TicketPrimeRiskTests.ReviewRisk_DeleteEvent_ShouldUseDirectDeleteWithoutDependencyHandling
+
+4. Exclusao de cupom sem tratamento de dependencias
+- Categoria: Integridade / Operacao
+- Descricao: A exclusao administrativa de cupom tambem e direta e pode quebrar quando existir uso anterior.
+- Probabilidade: Media
+- Impacto: Alto
+- Nivel de risco: Alto
+- Consequencia: falha administrativa e risco de erro de banco.
+- Teste unitario relacionado:
+  - TicketPrimeRiskTests.ReviewRisk_DeleteCoupon_ShouldUseDirectDeleteWithoutDependencyHandling
+
+5. Rota POST /api/usuarios cria usuario sem senha
+- Categoria: Funcionalidade / Consistencia
+- Descricao: A rota da AV1 grava SenhaHash vazio e gera usuario que nao consegue usar o login real do sistema.
+- Probabilidade: Alta
+- Impacto: Medio
+- Nivel de risco: Alto
+- Consequencia: cadastro inconsistente e confusao entre fluxo AV1 e fluxo de autenticacao real.
+- Teste unitario relacionado:
+  - TicketPrimeRiskTests.ReviewRisk_Av1UserRoute_ShouldInsertEmptyPasswordHash
+
+6. Banco criado sem foreign keys em Reservas
+- Categoria: Integridade de dados
+- Descricao: A tabela Reservas nasce sem chaves estrangeiras explicitas na inicializacao atual da API.
+- Probabilidade: Media
+- Impacto: Alto
+- Nivel de risco: Alto
+- Consequencia: possibilidade de registros orfaos e comportamento diferente entre ambientes.
+- Teste unitario relacionado:
+  - TicketPrimeRiskTests.ReviewRisk_ReservationsTable_ShouldBeCreatedWithoutForeignKeys
+
+7. Credencial administrativa fixa na regra
+- Categoria: Seguranca
+- Descricao: O login administrativo continua hardcoded como admin/admin.
+- Probabilidade: Alta
+- Impacto: Alto
+- Nivel de risco: Alto
+- Consequencia: acesso administrativo previsivel e fragil.
+- Teste unitario relacionado:
+  - TicketPrimeRiskTests.ReviewRisk_AdminCredential_ShouldRemainHardcodedInRules
+
+RESUMO FINAL
+- Riscos baixos: 0
+- Riscos medios: 1
+- Riscos altos: 6
+
+OBSERVACAO
+- Os testes adicionados aqui funcionam como testes de revisao e rastreabilidade.
+- Eles nao corrigem os problemas por si so; apenas deixam os riscos detectaveis de forma automatizada.
