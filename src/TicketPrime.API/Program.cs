@@ -1,5 +1,7 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using System.Net;
+using System.Net.Mail;
 using TicketPrime.API;
 using TicketPrime.API.modelos;
 
@@ -9,8 +11,37 @@ var app = builder.Build();
 var adminToken = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Token");
 var adminLogin = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Login");
 var adminPassword = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Password");
+var smtpHost = builder.Configuration["EmailSettings:SmtpHost"];
+var smtpPort = int.TryParse(builder.Configuration["EmailSettings:SmtpPort"], out var parsedSmtpPort) ? parsedSmtpPort : 587;
+var smtpUser = builder.Configuration["EmailSettings:SenderEmail"];
+var smtpPassword = builder.Configuration["EmailSettings:AppPassword"];
+var smtpDisplayName = builder.Configuration["EmailSettings:SenderName"] ?? "TicketPrime";
 
-var dbPath = "db/TicketPrime.db";
+var legacyDbPath = Path.Combine(builder.Environment.ContentRootPath, "db", "TicketPrime.db");
+var runtimeDbDirectory = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "TicketPrime");
+Directory.CreateDirectory(runtimeDbDirectory);
+
+var dbPath = Path.Combine(runtimeDbDirectory, "TicketPrime.db");
+if (!File.Exists(dbPath) && File.Exists(legacyDbPath))
+{
+    File.Copy(legacyDbPath, dbPath);
+}
+
+var staleJournalPath = $"{dbPath}-journal";
+if (File.Exists(staleJournalPath))
+{
+    try
+    {
+        File.Delete(staleJournalPath);
+    }
+    catch
+    {
+        // If the journal is still in use, SQLite will recreate/manage it on demand.
+    }
+}
+
 var connectionString = new SqliteConnectionStringBuilder
 {
     DataSource = dbPath,
@@ -69,6 +100,18 @@ using (var connection = new SqliteConnection(connectionString))
             FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE,
             FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE,
             FOREIGN KEY (CupomUtilizado) REFERENCES Cupons(Codigo) ON DELETE SET NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS RecuperacoesSenha (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            UsuarioCpf TEXT NOT NULL,
+            CodigoHash TEXT NOT NULL,
+            EmailDestino TEXT NOT NULL,
+            ExpiraEm TEXT NOT NULL,
+            CriadoEm TEXT NOT NULL,
+            TentativasInvalidas INTEGER NOT NULL DEFAULT 0,
+            UsadoEm TEXT NULL,
+            FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE
         );
     ";
     cmd.ExecuteNonQuery();
@@ -142,16 +185,27 @@ app.MapPost("/api/auth/usuarios/cadastro", (UsuarioCadastroRequest request) =>
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
-    var existingUser = connection.QueryFirstOrDefault<(string Cpf, string Email, string SenhaHash)>(@"
+    var userByCpf = connection.QueryFirstOrDefault<(string Cpf, string Email, string SenhaHash)>(@"
         SELECT Cpf, Email, SenhaHash
         FROM Usuarios
-        WHERE Cpf = @cpf OR lower(Email) = lower(@email)", new { cpf = request.Cpf, email = request.Email });
+        WHERE Cpf = @cpf", new { cpf = request.Cpf });
 
-    if (!string.IsNullOrWhiteSpace(existingUser.Cpf))
+    var userByEmail = connection.QueryFirstOrDefault<(string Cpf, string Email, string SenhaHash)>(@"
+        SELECT Cpf, Email, SenhaHash
+        FROM Usuarios
+        WHERE lower(Email) = lower(@email)", new { email = request.Email });
+
+    if (!string.IsNullOrWhiteSpace(userByEmail.Cpf) &&
+        !string.Equals(userByEmail.Cpf, request.Cpf, StringComparison.OrdinalIgnoreCase))
     {
-        var senhaHashAtual = existingUser.SenhaHash;
+        return Results.BadRequest("Ja existe uma conta com este email.");
+    }
+
+    if (!string.IsNullOrWhiteSpace(userByCpf.Cpf))
+    {
+        var senhaHashAtual = userByCpf.SenhaHash;
         if (!string.IsNullOrWhiteSpace(senhaHashAtual))
-            return Results.BadRequest("Ja existe um cadastro com este CPF ou email.");
+            return Results.BadRequest("Ja existe uma conta com este CPF.");
 
         connection.Execute(@"
             UPDATE Usuarios
@@ -238,6 +292,224 @@ app.MapPost("/api/auth/usuarios/login", (UsuarioLoginRequest request) =>
         Cpf = usuario.Cpf,
         Nome = usuario.Nome,
         Email = usuario.Email
+    });
+});
+
+app.MapPost("/api/auth/usuarios/recuperar-senha", async (UsuarioRecuperacaoSenhaRequest request) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Login))
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Informe o e-mail ou CPF da conta."
+        });
+
+    if (!CanSendPasswordResetEmail(smtpHost, smtpUser, smtpPassword))
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "O envio de e-mail ainda nao foi configurado no sistema."
+        });
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var usuario = connection.QueryFirstOrDefault<(string Cpf, string Email, string Nome)>(@"
+        SELECT Cpf, Email, Nome
+        FROM Usuarios
+        WHERE Cpf = @login OR lower(Email) = lower(@login)", new { login = request.Login });
+
+    if (string.IsNullOrWhiteSpace(usuario.Cpf) || string.IsNullOrWhiteSpace(usuario.Email))
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Nao encontramos uma conta com esse e-mail ou CPF."
+        });
+
+    connection.Execute(@"
+        UPDATE RecuperacoesSenha
+        SET UsadoEm = @agora
+        WHERE UsuarioCpf = @cpf AND UsadoEm IS NULL",
+        new
+        {
+            cpf = usuario.Cpf,
+            agora = DateTime.UtcNow.ToString("s")
+        });
+
+    var codigo = GenerateResetCode();
+    var agoraUtc = DateTime.UtcNow;
+    var expiraEmUtc = agoraUtc.AddMinutes(15);
+
+    connection.Execute(@"
+        INSERT INTO RecuperacoesSenha (UsuarioCpf, CodigoHash, EmailDestino, ExpiraEm, CriadoEm, TentativasInvalidas, UsadoEm)
+        VALUES (@cpf, @codigoHash, @emailDestino, @expiraEm, @criadoEm, 0, NULL)", new
+    {
+        cpf = usuario.Cpf,
+        codigoHash = TicketPrimeRules.HashPassword(codigo),
+        emailDestino = usuario.Email,
+        expiraEm = expiraEmUtc.ToString("s"),
+        criadoEm = agoraUtc.ToString("s")
+    });
+
+    var corpo = $"""
+Ola, {usuario.Nome}.
+
+Recebemos um pedido para redefinir a senha da sua conta TicketPrime.
+
+Codigo de verificacao: {codigo}
+
+Esse codigo expira em 15 minutos.
+Se voce nao solicitou a redefinicao, ignore esta mensagem.
+""";
+
+    try
+    {
+        await SendPasswordResetEmailAsync(
+            smtpHost!,
+            smtpPort,
+            smtpUser!,
+            smtpPassword!,
+            smtpDisplayName,
+            usuario.Email,
+            "TicketPrime - Codigo para redefinir senha",
+            corpo);
+    }
+    catch (SmtpException)
+    {
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Nao foi possivel enviar o e-mail de redefinicao agora. Revise a configuracao do Gmail e tente novamente."
+        });
+    }
+    catch
+    {
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Nao foi possivel enviar o e-mail de redefinicao agora. Tente novamente em instantes."
+        });
+    }
+
+    return Results.Ok(new RecuperacaoSenhaResponse
+    {
+        Sucesso = true,
+        Mensagem = "Enviamos um codigo de redefinicao para o e-mail cadastrado.",
+        EmailMascarado = MaskEmail(usuario.Email)
+    });
+});
+
+app.MapPost("/api/auth/usuarios/redefinir-senha", (UsuarioRedefinirSenhaRequest request) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Login) ||
+        string.IsNullOrWhiteSpace(request.Codigo) ||
+        string.IsNullOrWhiteSpace(request.NovaSenha))
+    {
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Informe o login, o codigo e a nova senha."
+        });
+    }
+
+    if (request.NovaSenha.Length < 4)
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "A nova senha precisa ter pelo menos 4 caracteres."
+        });
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var usuario = connection.QueryFirstOrDefault<(string Cpf, string Email)>(@"
+        SELECT Cpf, Email
+        FROM Usuarios
+        WHERE Cpf = @login OR lower(Email) = lower(@login)", new { login = request.Login });
+
+    if (string.IsNullOrWhiteSpace(usuario.Cpf))
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Nao encontramos uma conta com esse e-mail ou CPF."
+        });
+
+    var recuperacao = connection.QueryFirstOrDefault<(int Id, string CodigoHash, string ExpiraEm, int TentativasInvalidas, string? UsadoEm)>(@"
+        SELECT Id, CodigoHash, ExpiraEm, TentativasInvalidas, UsadoEm
+        FROM RecuperacoesSenha
+        WHERE UsuarioCpf = @cpf
+        ORDER BY Id DESC
+        LIMIT 1", new { cpf = usuario.Cpf });
+
+    if (recuperacao.Id == 0)
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Solicite um novo codigo de redefinicao."
+        });
+
+    if (!string.IsNullOrWhiteSpace(recuperacao.UsadoEm))
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Esse codigo ja foi utilizado. Solicite um novo codigo."
+        });
+
+    if (!DateTime.TryParse(recuperacao.ExpiraEm, out var expiraEmLocal) || expiraEmLocal < DateTime.UtcNow)
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "O codigo expirou. Solicite um novo envio."
+        });
+
+    if (recuperacao.TentativasInvalidas >= 5)
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "Esse codigo foi bloqueado por excesso de tentativas. Solicite um novo."
+        });
+
+    var codigoHash = TicketPrimeRules.HashPassword(request.Codigo.Trim());
+    if (!string.Equals(codigoHash, recuperacao.CodigoHash, StringComparison.Ordinal))
+    {
+        connection.Execute(@"
+            UPDATE RecuperacoesSenha
+            SET TentativasInvalidas = TentativasInvalidas + 1
+            WHERE Id = @id", new { id = recuperacao.Id });
+
+        return Results.BadRequest(new RecuperacaoSenhaResponse
+        {
+            Sucesso = false,
+            Mensagem = "O codigo informado esta incorreto."
+        });
+    }
+
+    using var transaction = connection.BeginTransaction();
+
+    connection.Execute(@"
+        UPDATE Usuarios
+        SET SenhaHash = @senhaHash
+        WHERE Cpf = @cpf", new
+    {
+        cpf = usuario.Cpf,
+        senhaHash = TicketPrimeRules.HashPassword(request.NovaSenha)
+    }, transaction);
+
+    connection.Execute(@"
+        UPDATE RecuperacoesSenha
+        SET UsadoEm = @agora
+        WHERE Id = @id", new
+    {
+        id = recuperacao.Id,
+        agora = DateTime.UtcNow.ToString("s")
+    }, transaction);
+
+    transaction.Commit();
+
+    return Results.Ok(new RecuperacaoSenhaResponse
+    {
+        Sucesso = true,
+        Mensagem = "Senha redefinida com sucesso. Voce ja pode entrar na sua conta."
     });
 });
 
@@ -1168,4 +1440,59 @@ static string GetRequiredConfiguration(IConfiguration configuration, string key)
         throw new InvalidOperationException($"A configuracao obrigatoria '{key}' nao foi encontrada.");
 
     return value;
+}
+
+static bool CanSendPasswordResetEmail(string? smtpHost, string? smtpUser, string? smtpPassword)
+{
+    return !string.IsNullOrWhiteSpace(smtpHost) &&
+           !string.IsNullOrWhiteSpace(smtpUser) &&
+           !string.IsNullOrWhiteSpace(smtpPassword);
+}
+
+static string GenerateResetCode()
+{
+    return Random.Shared.Next(100000, 999999).ToString();
+}
+
+static string MaskEmail(string email)
+{
+    var atIndex = email.IndexOf('@');
+    if (atIndex <= 1)
+        return email;
+
+    var localPart = email[..atIndex];
+    var domain = email[atIndex..];
+    var visiblePrefix = localPart[..Math.Min(2, localPart.Length)];
+    return $"{visiblePrefix}{new string('*', Math.Max(2, localPart.Length - visiblePrefix.Length))}{domain}";
+}
+
+static async Task SendPasswordResetEmailAsync(
+    string smtpHost,
+    int smtpPort,
+    string smtpUser,
+    string smtpPassword,
+    string senderName,
+    string recipientEmail,
+    string subject,
+    string body)
+{
+    using var message = new MailMessage
+    {
+        From = new MailAddress(smtpUser, senderName),
+        Subject = subject,
+        Body = body,
+        IsBodyHtml = false
+    };
+
+    message.To.Add(recipientEmail);
+
+    using var client = new SmtpClient(smtpHost, smtpPort)
+    {
+        EnableSsl = true,
+        DeliveryMethod = SmtpDeliveryMethod.Network,
+        UseDefaultCredentials = false,
+        Credentials = new NetworkCredential(smtpUser, smtpPassword)
+    };
+
+    await client.SendMailAsync(message);
 }

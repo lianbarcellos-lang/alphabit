@@ -15,6 +15,11 @@ artifacts/
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
+
+# Local debug/temp artifacts
+temp-*/
+temp-*.log
 
 # OS files
 Thumbs.db

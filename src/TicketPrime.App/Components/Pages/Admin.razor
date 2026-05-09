@@ -2,6 +2,7 @@
 @inject TicketPrimeApiClient ApiClient
 @inject UserSessionState Session
 @inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Forms
 
 <PageTitle>Area ADM</PageTitle>
 
@@ -116,9 +117,14 @@ else
                         </div>
                     </div>
                     <div class="field">
-                        <label for="eventoImagem">URL da imagem</label>
+                        <label for="eventoImagem">Imagem (URL ou arquivo)</label>
                         <InputText id="eventoImagem" class="field__input" @bind-Value="eventModel.ImagemUrl" />
                         <ValidationMessage For="() => eventModel.ImagemUrl" />
+                    </div>
+                    <div class="field">
+                        <label for="eventoImagemArquivo">Selecionar imagem do computador</label>
+                        <InputFile id="eventoImagemArquivo" OnChange="HandleCreateImageSelected" accept="image/*" class="field__file-input" />
+                        <span class="field__hint">Escolha uma imagem do PC do administrador para preencher automaticamente a capa do evento.</span>
                     </div>
 
                     @if (!string.IsNullOrWhiteSpace(eventModel.ImagemUrl))
@@ -268,8 +274,6 @@ else
                 <div class="admin-event-list">
                     @foreach (var item in adminEvents)
                     {
-                        var isEditing = editingEvent is not null && editingEvent.Id == item.Id;
-
                         <article class="admin-event-card">
                             @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
                             {
@@ -277,96 +281,123 @@ else
                             }
 
                             <div class="admin-event-card__body">
-                                @if (isEditing)
-                                {
-                                    <EditForm Model="@editingEvent" OnValidSubmit="HandleUpdateEvent" FormName="@($"edit-event-{item.Id}")" class="admin-form">
-                                        <DataAnnotationsValidator />
-                                        <div class="admin-form__grid">
-                                            <div class="field">
-                                                <label>Nome</label>
-                                                <InputText class="field__input" @bind-Value="editingEvent!.Nome" />
-                                                <ValidationMessage For="() => editingEvent!.Nome" />
-                                            </div>
-                                            <div class="field">
-                                                <label>Artista</label>
-                                                <InputText class="field__input" @bind-Value="editingEvent!.Artista" />
-                                                <ValidationMessage For="() => editingEvent!.Artista" />
-                                            </div>
-                                        </div>
-                                        <div class="admin-form__grid">
-                                            <div class="field">
-                                                <label>Local</label>
-                                                <InputText class="field__input" @bind-Value="editingEvent!.LocalEvento" />
-                                                <ValidationMessage For="() => editingEvent!.LocalEvento" />
-                                            </div>
-                                            <div class="field">
-                                                <label>Cidade</label>
-                                                <InputText class="field__input" @bind-Value="editingEvent!.CidadeEvento" />
-                                                <ValidationMessage For="() => editingEvent!.CidadeEvento" />
-                                            </div>
-                                        </div>
-                                        <div class="admin-form__grid admin-form__grid--triple">
-                                            <div class="field">
-                                                <label>Genero musical</label>
-                                                <InputText class="field__input" @bind-Value="editingEvent!.GeneroMusical" />
-                                                <ValidationMessage For="() => editingEvent!.GeneroMusical" />
-                                            </div>
-                                            <div class="field">
-                                                <label>Capacidade</label>
-                                                <InputNumber class="field__input" @bind-Value="editingEvent!.CapacidadeTotal" />
-                                                <ValidationMessage For="() => editingEvent!.CapacidadeTotal" />
-                                            </div>
-                                            <div class="field">
-                                                <label>Preco</label>
-                                                <InputNumber class="field__input" @bind-Value="editingEvent!.PrecoPadrao" />
-                                                <ValidationMessage For="() => editingEvent!.PrecoPadrao" />
-                                            </div>
-                                        </div>
-                                        <div class="admin-form__grid">
-                                            <div class="field">
-                                                <label>Data</label>
-                                                <InputDate class="field__input" @bind-Value="editDateOnly" />
-                                            </div>
-                                            <div class="field">
-                                                <label>Horario</label>
-                                                <InputText class="field__input" @bind-Value="editTime" />
-                                            </div>
-                                        </div>
-                                        <div class="field">
-                                            <label>Imagem</label>
-                                            <InputText class="field__input" @bind-Value="editingEvent!.ImagemUrl" />
-                                            <ValidationMessage For="() => editingEvent!.ImagemUrl" />
-                                        </div>
+                                <div class="admin-event-card__meta">
+                                    <span class="pill">@item.DataEvento.ToString("dd/MM/yyyy")</span>
+                                    <span class="pill pill--muted">@item.CapacidadeTotal lugares</span>
+                                </div>
+                                <h3>@item.Nome</h3>
+                                <p class="admin-event-card__copy">@item.LocalEvento, @item.CidadeEvento</p>
+                                <p class="admin-event-card__copy">@item.Artista • @item.GeneroMusical</p>
+                                <p class="admin-event-card__copy">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                                <p class="admin-event-card__copy">R$ @item.PrecoPadrao.ToString("0.00")</p>
 
-                                        <div class="admin-event-card__actions">
-                                            <button class="secondary-button" type="submit" disabled="@isBusy">Salvar</button>
-                                            <button class="ghost-button" type="button" @onclick="CancelEdit">Cancelar</button>
-                                        </div>
-                                    </EditForm>
-                                }
-                                else
-                                {
-                                    <div class="admin-event-card__meta">
-                                        <span class="pill">@item.DataEvento.ToString("dd/MM/yyyy")</span>
-                                        <span class="pill pill--muted">@item.CapacidadeTotal lugares</span>
-                                    </div>
-                                    <h3>@item.Nome</h3>
-                                    <p class="admin-event-card__copy">@item.LocalEvento, @item.CidadeEvento</p>
-                                    <p class="admin-event-card__copy">@item.Artista • @item.GeneroMusical</p>
-                                    <p class="admin-event-card__copy">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
-                                    <p class="admin-event-card__copy">R$ @item.PrecoPadrao.ToString("0.00")</p>
-
-                                    <div class="admin-event-card__actions">
-                                        <button class="ghost-button" type="button" @onclick='() => StartEdit(item)'>Editar</button>
-                                        <button class="danger-button" type="button" @onclick='() => HandleDeleteEvent(item.Id)'>Excluir</button>
-                                    </div>
-                                }
+                                <div class="admin-event-card__actions">
+                                    <button class="ghost-button" type="button" @onclick='() => StartEdit(item)'>Editar</button>
+                                    <button class="danger-button" type="button" @onclick='() => HandleDeleteEvent(item.Id)'>Excluir</button>
+                                </div>
                             </div>
                         </article>
                     }
                 </div>
             }
         </section>
+
+        @if (editingEvent is not null)
+        {
+            <div class="admin-modal-backdrop" @onclick="CancelEdit">
+                <div class="admin-modal" @onclick:stopPropagation="true">
+                    <div class="admin-modal__header">
+                        <div>
+                            <span class="admin-panel__pill">Edicao</span>
+                            <h3>Editar evento</h3>
+                            <p>Atualize os dados do show sem perder a visao da agenda.</p>
+                        </div>
+                        <button class="admin-modal__close" type="button" @onclick="CancelEdit" aria-label="Fechar edicao">×</button>
+                    </div>
+
+                    <EditForm Model="@editingEvent" OnValidSubmit="HandleUpdateEvent" FormName="@($"edit-event-{editingEvent.Id}")" class="admin-form">
+                        <DataAnnotationsValidator />
+                        <div class="admin-form__grid">
+                            <div class="field">
+                                <label>Nome</label>
+                                <InputText class="field__input" @bind-Value="editingEvent.Nome" />
+                                <ValidationMessage For="() => editingEvent.Nome" />
+                            </div>
+                            <div class="field">
+                                <label>Artista</label>
+                                <InputText class="field__input" @bind-Value="editingEvent.Artista" />
+                                <ValidationMessage For="() => editingEvent.Artista" />
+                            </div>
+                        </div>
+                        <div class="admin-form__grid">
+                            <div class="field">
+                                <label>Local</label>
+                                <InputText class="field__input" @bind-Value="editingEvent.LocalEvento" />
+                                <ValidationMessage For="() => editingEvent.LocalEvento" />
+                            </div>
+                            <div class="field">
+                                <label>Cidade</label>
+                                <InputText class="field__input" @bind-Value="editingEvent.CidadeEvento" />
+                                <ValidationMessage For="() => editingEvent.CidadeEvento" />
+                            </div>
+                        </div>
+                        <div class="admin-form__grid admin-form__grid--triple">
+                            <div class="field">
+                                <label>Genero musical</label>
+                                <InputText class="field__input" @bind-Value="editingEvent.GeneroMusical" />
+                                <ValidationMessage For="() => editingEvent.GeneroMusical" />
+                            </div>
+                            <div class="field">
+                                <label>Capacidade</label>
+                                <InputNumber class="field__input" @bind-Value="editingEvent.CapacidadeTotal" />
+                                <ValidationMessage For="() => editingEvent.CapacidadeTotal" />
+                            </div>
+                            <div class="field">
+                                <label>Preco</label>
+                                <InputNumber class="field__input" @bind-Value="editingEvent.PrecoPadrao" />
+                                <ValidationMessage For="() => editingEvent.PrecoPadrao" />
+                            </div>
+                        </div>
+                        <div class="admin-form__grid">
+                            <div class="field">
+                                <label>Data</label>
+                                <InputDate class="field__input" @bind-Value="editDateOnly" />
+                            </div>
+                            <div class="field">
+                                <label>Horario</label>
+                                <InputText class="field__input" @bind-Value="editTime" />
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Imagem (URL ou arquivo)</label>
+                            <InputText class="field__input" @bind-Value="editingEvent.ImagemUrl" />
+                            <ValidationMessage For="() => editingEvent.ImagemUrl" />
+                        </div>
+                        <div class="field">
+                            <label>Selecionar imagem do computador</label>
+                            <InputFile OnChange="HandleEditImageSelected" accept="image/*" class="field__file-input" />
+                            <span class="field__hint">Voce tambem pode escolher uma imagem local do computador para atualizar a capa do evento.</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(editingEvent.ImagemUrl))
+                        {
+                            <div class="admin-image-preview">
+                                <img src="@editingEvent.ImagemUrl" alt="Preview do evento em edicao" />
+                                <div>
+                                    <strong>Preview da capa</strong>
+                                    <span>Confira como a imagem atualizada vai aparecer na vitrine.</span>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="admin-modal__actions">
+                            <button class="secondary-button" type="submit" disabled="@isBusy">Salvar alteracoes</button>
+                            <button class="ghost-button" type="button" @onclick="CancelEdit">Cancelar</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(statusMessage))
         {
@@ -498,6 +529,24 @@ else
         return eventDateOnly.Date.AddHours(20);
     }
 
+    private async Task HandleCreateImageSelected(InputFileChangeEventArgs args)
+    {
+        if (args.FileCount == 0)
+            return;
+
+        try
+        {
+            eventModel.ImagemUrl = await ConvertFileToDataUrlAsync(args.File);
+            statusMessage = "Imagem carregada do computador com sucesso.";
+            isError = false;
+        }
+        catch
+        {
+            statusMessage = "Nao foi possivel carregar a imagem selecionada.";
+            isError = true;
+        }
+    }
+
     private async Task LoadAdminEvents()
     {
         if (string.IsNullOrWhiteSpace(Session.AdminToken))
@@ -556,6 +605,24 @@ else
     private void CancelEdit()
     {
         editingEvent = null;
+    }
+
+    private async Task HandleEditImageSelected(InputFileChangeEventArgs args)
+    {
+        if (editingEvent is null || args.FileCount == 0)
+            return;
+
+        try
+        {
+            editingEvent.ImagemUrl = await ConvertFileToDataUrlAsync(args.File);
+            statusMessage = "Imagem da edicao carregada com sucesso.";
+            isError = false;
+        }
+        catch
+        {
+            statusMessage = "Nao foi possivel carregar a imagem selecionada para a edicao.";
+            isError = true;
+        }
     }
 
     private void StartCouponEdit(CouponViewModel item)
@@ -729,6 +796,19 @@ else
             return editDateOnly.Date.Add(parsedTime.ToTimeSpan());
 
         return editDateOnly.Date.AddHours(20);
+    }
+
+    private static async Task<string> ConvertFileToDataUrlAsync(IBrowserFile file)
+    {
+        const long maxFileSize = 5 * 1024 * 1024;
+
+        await using var stream = file.OpenReadStream(maxFileSize);
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+
+        var bytes = memoryStream.ToArray();
+        var contentType = string.IsNullOrWhiteSpace(file.ContentType) ? "image/png" : file.ContentType;
+        return $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
     }
 
     private void Logout()

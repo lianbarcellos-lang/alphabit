@@ -196,6 +196,22 @@
     box-shadow: 0 0 0 4px rgba(15, 130, 255, 0.12);
 }
 
+.field__file-input {
+    width: 100%;
+    min-height: 3.25rem;
+    border: 1px dashed rgba(17, 33, 63, 0.18);
+    background: rgba(248, 251, 255, 0.96);
+    border-radius: 1rem;
+    padding: 0.85rem 1rem;
+    color: #11213f;
+}
+
+.field__hint {
+    color: #5d6676;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
 .admin-form__grid {
     display: grid;
     gap: 1rem;
@@ -362,6 +378,72 @@
     margin-top: 0.2rem;
 }
 
+.admin-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1rem;
+    background: rgba(10, 19, 38, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+.admin-modal {
+    width: min(880px, 100%);
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    padding: 1.6rem;
+    border-radius: 1.8rem;
+    background: linear-gradient(180deg, rgba(255, 251, 245, 0.98), #fff);
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    box-shadow: 0 28px 70px rgba(9, 20, 39, 0.24);
+}
+
+.admin-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.admin-modal__header h3 {
+    margin: 0.4rem 0 0.3rem;
+    color: #18202d;
+    font-size: 1.8rem;
+}
+
+.admin-modal__header p {
+    margin: 0;
+    color: #5d6676;
+}
+
+.admin-modal__close {
+    width: 2.7rem;
+    height: 2.7rem;
+    border: none;
+    border-radius: 999px;
+    background: rgba(15, 130, 255, 0.12);
+    color: #0a66d1;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.admin-modal__close:hover {
+    transform: scale(1.03);
+    background: rgba(15, 130, 255, 0.18);
+}
+
+.admin-modal__actions {
+    display: flex;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
 ::deep .validation-message {
     color: #b42318;
     font-size: 0.84rem;
@@ -405,5 +487,14 @@
     .admin-subsection__head {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .admin-modal {
+        max-height: calc(100vh - 2rem);
+        padding: 1.2rem;
+    }
+
+    .admin-modal__header {
+        flex-direction: column;
     }
 }

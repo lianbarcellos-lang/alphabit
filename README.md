@@ -39,6 +39,16 @@ API e interface Blazor para venda e gestao de ingressos de eventos musicais.
 
 ## Como rodar a API
 
+Antes de subir a API com recuperacao de senha por Gmail, configure os segredos locais do projeto:
+
+```powershell
+dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj" set "EmailSettings:SmtpHost" "smtp.gmail.com"
+dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj" set "EmailSettings:SmtpPort" "587"
+dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj" set "EmailSettings:SenderEmail" "ticketprimeshows@gmail.com"
+dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj" set "EmailSettings:AppPassword" "SUA_APP_PASSWORD_AQUI"
+dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj" set "EmailSettings:SenderName" "TicketPrime"
+```
+
 ```powershell
 dotnet run --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj"
 ```

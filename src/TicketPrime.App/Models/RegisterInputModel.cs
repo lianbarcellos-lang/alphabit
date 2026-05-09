@@ -14,7 +14,15 @@ public class RegisterInputModel
     [EmailAddress(ErrorMessage = "Informe um email valido.")]
     public string Email { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Confirme o email.")]
+    [EmailAddress(ErrorMessage = "Informe um email valido.")]
+    public string ConfirmarEmail { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "Informe uma senha.")]
     [MinLength(4, ErrorMessage = "Use pelo menos 4 caracteres.")]
     public string Senha { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Confirme a senha.")]
+    [MinLength(4, ErrorMessage = "Use pelo menos 4 caracteres.")]
+    public string ConfirmarSenha { get; set; } = string.Empty;
 }

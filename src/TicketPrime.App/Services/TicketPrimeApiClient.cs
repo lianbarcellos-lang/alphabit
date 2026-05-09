@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using TicketPrime.App.Models;
 
 namespace TicketPrime.App.Services;
@@ -18,6 +19,16 @@ public class TicketPrimeApiClient(HttpClient httpClient)
     public async Task<AuthResponseViewModel> LoginAdminAsync(AdminLoginRequest request)
     {
         return await PostJsonAsync<AdminLoginRequest, AuthResponseViewModel>("api/auth/admin/login", request);
+    }
+
+    public async Task<PasswordRecoveryResponseViewModel> RequestPasswordResetAsync(ForgotPasswordRequest request)
+    {
+        return await PostJsonAsync<ForgotPasswordRequest, PasswordRecoveryResponseViewModel>("api/auth/usuarios/recuperar-senha", request);
+    }
+
+    public async Task<PasswordRecoveryResponseViewModel> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        return await PostJsonAsync<ResetPasswordRequest, PasswordRecoveryResponseViewModel>("api/auth/usuarios/redefinir-senha", request);
     }
 
     public async Task<List<EventViewModel>> GetEventsAsync()
@@ -281,7 +292,36 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         if (string.IsNullOrWhiteSpace(rawMessage))
             return fallback;
 
-        return rawMessage.Trim().Trim('"');
+        var trimmed = rawMessage.Trim();
+
+        if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(trimmed);
+                if (document.RootElement.TryGetProperty("mensagem", out var mensagemElement) &&
+                    mensagemElement.ValueKind == JsonValueKind.String)
+                {
+                    var mensagem = mensagemElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(mensagem))
+                        return mensagem;
+                }
+
+                if (document.RootElement.TryGetProperty("Mensagem", out var mensagemUpperElement) &&
+                    mensagemUpperElement.ValueKind == JsonValueKind.String)
+                {
+                    var mensagem = mensagemUpperElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(mensagem))
+                        return mensagem;
+                }
+            }
+            catch
+            {
+                // Fallback to raw text below when the payload is not valid JSON.
+            }
+        }
+
+        return trimmed.Trim('"');
     }
 }
 
