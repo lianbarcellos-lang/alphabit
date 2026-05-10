@@ -14,4 +14,15 @@
     <PackageReference Include="System.Data.SQLite" Version="2.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="TicketPrime\**\*.cs" />
+    <Compile Remove="temp-*\**\*.cs" />
+    <Content Remove="TicketPrime\**\*" />
+    <Content Remove="temp-*\**\*" />
+    <EmbeddedResource Remove="TicketPrime\**\*" />
+    <EmbeddedResource Remove="temp-*\**\*" />
+    <None Remove="TicketPrime\**\*" />
+    <None Remove="temp-*\**\*" />
+  </ItemGroup>
+
 </Project>

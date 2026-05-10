@@ -19,7 +19,7 @@ else
             <div>
                 <span class="eyebrow">Minhas reservas</span>
                 <h1>Seus ingressos confirmados</h1>
-                <p>Acompanhe as compras ja registradas no seu CPF e veja o resumo de cada reserva.</p>
+                <p>Acompanhe as compras já registradas no seu CPF e veja o resumo de cada reserva.</p>
             </div>
             <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar aos eventos</button>
         </section>
@@ -34,7 +34,7 @@ else
         }
         else if (reservations.Count == 0)
         {
-            <div class="status-box">Voce ainda nao possui reservas confirmadas.</div>
+            <div class="status-box">Você ainda não possui reservas confirmadas.</div>
         }
         else
         {
@@ -78,7 +78,7 @@ else
         }
         catch
         {
-            errorMessage = "Nao foi possivel carregar suas reservas agora.";
+            errorMessage = "Não foi possível carregar suas reservas agora.";
         }
         finally
         {

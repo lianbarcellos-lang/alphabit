@@ -80,6 +80,50 @@ Resultado validado:
 - `19` testes aprovados
 - `0` falhas
 
+## Publicacao no Railway
+
+Para publicar no Railway sem quebrar o sistema, configure:
+
+- um servico para a API
+- um servico para o Blazor
+- um volume persistente ligado na API
+
+### Volume da API
+
+Monte um volume na API. O Railway fornece automaticamente a variavel:
+
+- `RAILWAY_VOLUME_MOUNT_PATH`
+
+A API ja usa esse caminho quando ele existir e salva o banco SQLite dentro dele.
+
+### Variaveis da API no Railway
+
+- `AdminAccess__Token`
+- `AdminAccess__Login`
+- `AdminAccess__Password`
+- `EmailSettings__SmtpHost`
+- `EmailSettings__SmtpPort`
+- `EmailSettings__SenderEmail`
+- `EmailSettings__AppPassword`
+- `EmailSettings__SenderName`
+
+### Variavel do Blazor no Railway
+
+- `TicketPrimeApi__BaseUrl`
+
+Exemplo:
+
+- URL publica da API: `https://sua-api.up.railway.app/`
+- valor no App: `TicketPrimeApi__BaseUrl=https://sua-api.up.railway.app/`
+
+### Recuperacao de senha
+
+O fluxo `Esqueci minha senha` funciona no Railway desde que:
+
+- o Gmail SMTP esteja configurado nas variaveis da API
+- a conta Gmail use `App Password`
+- o banco esteja em volume persistente para guardar os codigos de redefinicao
+
 ## Endpoints principais
 
 ### Usuarios e autenticacao

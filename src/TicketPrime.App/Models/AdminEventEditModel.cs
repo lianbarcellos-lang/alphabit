@@ -18,7 +18,7 @@ public class AdminEventEditModel
     [Required(ErrorMessage = "Informe o artista do evento.")]
     public string Artista { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Informe o genero musical.")]
+    [Required(ErrorMessage = "Informe o gênero musical.")]
     public string GeneroMusical { get; set; } = string.Empty;
 
     [Range(1, int.MaxValue, ErrorMessage = "A capacidade deve ser maior que zero.")]

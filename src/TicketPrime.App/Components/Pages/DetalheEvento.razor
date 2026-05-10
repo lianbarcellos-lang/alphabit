@@ -15,7 +15,7 @@
 else if (eventItem is null)
 {
     <div class="event-detail-shell">
-        <div class="status-box status-box--error">Evento nao encontrado.</div>
+        <div class="status-box status-box--error">Evento não encontrado.</div>
         <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para eventos</button>
     </div>
 }
@@ -71,7 +71,7 @@ else
                 <span class="eyebrow">Ingressos</span>
                 <h2>Escolha seus assentos e siga para o checkout</h2>
                 <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
-                <p>Veja os assentos disponiveis, monte o carrinho e confirme a reserva na sua conta.</p>
+                <p>Veja os assentos disponíveis, monte o carrinho e confirme a reserva na sua conta.</p>
 
                 <button class="secondary-button" type="button" @onclick="GoToSeats">Comprar agora</button>
                 <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para agenda</button>
@@ -111,6 +111,6 @@ else
 
     private static string GetDescription(EventViewModel item)
     {
-        return $"Prepare-se para {item.Nome}: um evento de {item.GeneroMusical.ToLowerInvariant()} com atmosfera forte, informacoes claras e fluxo de compra mais direto para o publico.";
+        return $"Prepare-se para {item.Nome}: um evento de {item.GeneroMusical.ToLowerInvariant()} com atmosfera forte, informações claras e fluxo de compra mais direto para o público.";
     }
 }

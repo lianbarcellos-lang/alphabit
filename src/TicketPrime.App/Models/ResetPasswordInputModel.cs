@@ -6,7 +6,7 @@ public class ResetPasswordInputModel
 {
     public string Login { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Informe o codigo enviado por e-mail.")]
+    [Required(ErrorMessage = "Informe o código enviado por e-mail.")]
     public string Codigo { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Informe a nova senha.")]

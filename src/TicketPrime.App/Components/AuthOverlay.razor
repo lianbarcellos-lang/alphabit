@@ -25,7 +25,7 @@
                         </article>
                         <article>
                             <strong>Eventos em alta</strong>
-                            <span>Shows, festivais e experiencias com curadoria visual.</span>
+                            <span>Shows, festivais e experiências com curadoria visual.</span>
                         </article>
                         <article>
                             <strong>Sua conta centralizada</strong>
@@ -41,11 +41,11 @@
                         <p>
                             @if (IsLogin)
                             {
-                                <span>Nao tem uma conta? <button class="auth-switch" type="button" @onclick="OpenRegister">Cadastre-se agora</button></span>
+                                <span>Não tem uma conta? <button class="auth-switch" type="button" @onclick="OpenRegister">Cadastre-se agora</button></span>
                             }
                             else if (IsRegister)
                             {
-                                <span>Ja tem uma conta? <button class="auth-switch" type="button" @onclick="OpenLogin">Entrar agora</button></span>
+                                <span>Já tem uma conta? <button class="auth-switch" type="button" @onclick="OpenLogin">Entrar agora</button></span>
                             }
                             else if (IsForgot)
                             {
@@ -53,7 +53,7 @@
                             }
                             else
                             {
-                                <span>Recebeu o codigo? <button class="auth-switch" type="button" @onclick="OpenLogin">Voltar para o login</button></span>
+                                <span>Recebeu o código? <button class="auth-switch" type="button" @onclick="OpenLogin">Voltar para o login</button></span>
                             }
                         </p>
                     </div>
@@ -84,7 +84,14 @@
 
                             <div class="field">
                                 <label for="overlaySenha">Senha</label>
-                                <InputText id="overlaySenha" class="field__input" type="password" @bind-Value="loginModel.Senha" placeholder="Digite sua senha" />
+                                <div class="field__password">
+                                    <InputText id="overlaySenha" class="field__input field__input--password" type="@(showLoginPassword ? "text" : "password")" @bind-Value="loginModel.Senha" placeholder="Digite sua senha" />
+                                    <div class="field__toggle-row">
+                                        <button class="field__toggle" type="button" @onclick="ToggleLoginPassword" aria-label="Exibir ou ocultar senha">
+                                            @(showLoginPassword ? "Ocultar senha" : "Mostrar senha")
+                                        </button>
+                                    </div>
+                                </div>
                                 <ValidationMessage For="() => loginModel.Senha" />
                             </div>
 
@@ -111,43 +118,55 @@
                                 <ValidationMessage For="() => registerModel.Cpf" />
                             </div>
 
-                            <div class="field auth-form__grid">
-                                <div>
-                                    <label for="overlayNome">Nome</label>
-                                    <InputText id="overlayNome" class="field__input" @bind-Value="registerModel.Nome" placeholder="Seu nome" />
-                                    <ValidationMessage For="() => registerModel.Nome" />
-                                </div>
-                                <div>
-                                    <label for="overlayEmail">E-mail</label>
-                                    <InputText id="overlayEmail" class="field__input" @bind-Value="registerModel.Email" placeholder="voce@email.com" />
-                                    <ValidationMessage For="() => registerModel.Email" />
-                                </div>
+                            <div class="field">
+                                <label for="overlayNome">Nome</label>
+                                <InputText id="overlayNome" class="field__input" @bind-Value="registerModel.Nome" placeholder="Seu nome" />
+                                <ValidationMessage For="() => registerModel.Nome" />
                             </div>
 
-                            <div class="field auth-form__grid">
-                                <div>
-                                    <label for="overlayConfirmarEmail">Confirmar e-mail</label>
-                                    <InputText id="overlayConfirmarEmail" class="field__input" @bind-Value="registerModel.ConfirmarEmail" placeholder="Repita seu e-mail" />
-                                    <ValidationMessage For="() => registerModel.ConfirmarEmail" />
-                                    @if (EmailConfirmationMismatch)
-                                    {
-                                        <span class="field__hint field__hint--error">Os e-mails informados nao coincidem.</span>
-                                    }
+                            <div class="field">
+                                <label for="overlayEmail">E-mail</label>
+                                <InputText id="overlayEmail" class="field__input" @bind-Value="registerModel.Email" placeholder="voce@email.com" />
+                                <ValidationMessage For="() => registerModel.Email" />
+                            </div>
+
+                            <div class="field">
+                                <label for="overlayConfirmarEmail">Confirmar e-mail</label>
+                                <InputText id="overlayConfirmarEmail" class="field__input" @bind-Value="registerModel.ConfirmarEmail" placeholder="Repita seu e-mail" />
+                                <ValidationMessage For="() => registerModel.ConfirmarEmail" />
+                                @if (EmailConfirmationMismatch)
+                                {
+                                    <span class="field__hint field__hint--error">Os e-mails informados não coincidem.</span>
+                                }
+                            </div>
+
+                            <div class="field">
+                                <label for="overlayCadastroSenha">Senha</label>
+                                <div class="field__password">
+                                    <InputText id="overlayCadastroSenha" class="field__input field__input--password" type="@(showRegisterPassword ? "text" : "password")" @bind-Value="registerModel.Senha" placeholder="Crie uma senha segura" />
+                                    <div class="field__toggle-row">
+                                        <button class="field__toggle" type="button" @onclick="ToggleRegisterPassword" aria-label="Exibir ou ocultar senha">
+                                            @(showRegisterPassword ? "Ocultar senha" : "Mostrar senha")
+                                        </button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label for="overlayCadastroSenha">Senha</label>
-                                    <InputText id="overlayCadastroSenha" class="field__input" type="password" @bind-Value="registerModel.Senha" placeholder="Crie uma senha segura" />
-                                    <ValidationMessage For="() => registerModel.Senha" />
-                                </div>
+                                <ValidationMessage For="() => registerModel.Senha" />
                             </div>
 
                             <div class="field">
                                 <label for="overlayConfirmarSenha">Confirmar senha</label>
-                                <InputText id="overlayConfirmarSenha" class="field__input" type="password" @bind-Value="registerModel.ConfirmarSenha" placeholder="Repita sua senha" />
+                                <div class="field__password">
+                                    <InputText id="overlayConfirmarSenha" class="field__input field__input--password" type="@(showRegisterConfirmPassword ? "text" : "password")" @bind-Value="registerModel.ConfirmarSenha" placeholder="Repita sua senha" />
+                                    <div class="field__toggle-row">
+                                        <button class="field__toggle" type="button" @onclick="ToggleRegisterConfirmPassword" aria-label="Exibir ou ocultar senha">
+                                            @(showRegisterConfirmPassword ? "Ocultar senha" : "Mostrar senha")
+                                        </button>
+                                    </div>
+                                </div>
                                 <ValidationMessage For="() => registerModel.ConfirmarSenha" />
                                 @if (PasswordConfirmationMismatch)
                                 {
-                                    <span class="field__hint field__hint--error">As senhas informadas nao coincidem.</span>
+                                        <span class="field__hint field__hint--error">As senhas informadas não coincidem.</span>
                                 }
                             </div>
 
@@ -157,7 +176,7 @@
 
                             @if (CanSuggestPasswordReset)
                             {
-                                <button class="auth-secondary" type="button" @onclick="OpenForgotPasswordWithRegisterEmail">Ja tenho uma conta e quero redefinir a senha</button>
+                                <button class="auth-secondary" type="button" @onclick="OpenForgotPasswordWithRegisterEmail">Já tenho uma conta e quero redefinir a senha</button>
                             }
                         </EditForm>
                     }
@@ -173,7 +192,7 @@
                             </div>
 
                             <button class="auth-submit" type="submit" disabled="@isBusy">
-                                @(isBusy ? "Enviando codigo..." : "Enviar codigo de redefinicao")
+                                @(isBusy ? "Enviando código..." : "Enviar código de redefinição")
                             </button>
                         </EditForm>
                     }
@@ -184,28 +203,42 @@
 
                             @if (!string.IsNullOrWhiteSpace(recoveryMaskedEmail))
                             {
-                                <div class="status-box status-box--success">Enviamos um codigo para @recoveryMaskedEmail.</div>
+                                <div class="status-box status-box--success">Enviamos um código para @recoveryMaskedEmail.</div>
                             }
 
                             <div class="field">
                                 <label for="overlayResetCode">Codigo recebido por e-mail</label>
-                                <InputText id="overlayResetCode" class="field__input" @bind-Value="resetPasswordModel.Codigo" placeholder="Digite o codigo de 6 digitos" />
+                                <InputText id="overlayResetCode" class="field__input" @bind-Value="resetPasswordModel.Codigo" placeholder="Digite o código de 6 dígitos" />
                                 <ValidationMessage For="() => resetPasswordModel.Codigo" />
                             </div>
 
                             <div class="field auth-form__grid">
                                 <div>
                                     <label for="overlayNovaSenha">Nova senha</label>
-                                    <InputText id="overlayNovaSenha" class="field__input" type="password" @bind-Value="resetPasswordModel.NovaSenha" placeholder="Crie sua nova senha" />
+                                    <div class="field__password">
+                                        <InputText id="overlayNovaSenha" class="field__input field__input--password" type="@(showResetPassword ? "text" : "password")" @bind-Value="resetPasswordModel.NovaSenha" placeholder="Crie sua nova senha" />
+                                        <div class="field__toggle-row">
+                                            <button class="field__toggle" type="button" @onclick="ToggleResetPassword" aria-label="Exibir ou ocultar senha">
+                                                @(showResetPassword ? "Ocultar senha" : "Mostrar senha")
+                                            </button>
+                                        </div>
+                                    </div>
                                     <ValidationMessage For="() => resetPasswordModel.NovaSenha" />
                                 </div>
                                 <div>
                                     <label for="overlayConfirmarNovaSenha">Confirmar nova senha</label>
-                                    <InputText id="overlayConfirmarNovaSenha" class="field__input" type="password" @bind-Value="resetPasswordModel.ConfirmarSenha" placeholder="Repita a nova senha" />
+                                    <div class="field__password">
+                                        <InputText id="overlayConfirmarNovaSenha" class="field__input field__input--password" type="@(showResetConfirmPassword ? "text" : "password")" @bind-Value="resetPasswordModel.ConfirmarSenha" placeholder="Repita a nova senha" />
+                                        <div class="field__toggle-row">
+                                            <button class="field__toggle" type="button" @onclick="ToggleResetConfirmPassword" aria-label="Exibir ou ocultar senha">
+                                                @(showResetConfirmPassword ? "Ocultar senha" : "Mostrar senha")
+                                            </button>
+                                        </div>
+                                    </div>
                                     <ValidationMessage For="() => resetPasswordModel.ConfirmarSenha" />
                                     @if (ResetPasswordMismatch)
                                     {
-                                        <span class="field__hint field__hint--error">As novas senhas nao coincidem.</span>
+                                        <span class="field__hint field__hint--error">As novas senhas não coincidem.</span>
                                     }
                                 </div>
                             </div>
@@ -215,7 +248,7 @@
                             </button>
 
                             <button class="auth-secondary" type="button" @onclick="ResendResetCodeAsync" disabled="@isBusy">
-                                Solicitar novo codigo
+                                Solicitar novo código
                             </button>
                         </EditForm>
                     }
@@ -232,6 +265,11 @@
     private readonly ResetPasswordInputModel resetPasswordModel = new();
     private bool isBusy;
     private bool isError;
+    private bool showLoginPassword;
+    private bool showRegisterPassword;
+    private bool showRegisterConfirmPassword;
+    private bool showResetPassword;
+    private bool showResetConfirmPassword;
     private string statusMessage = string.Empty;
     private string recoveryMaskedEmail = string.Empty;
 
@@ -245,18 +283,18 @@
         IsForgot ? "Recupere sua senha" :
         "Defina uma nova senha";
     private string AsideTitle =>
-        IsLogin ? "Seu proximo evento comeca aqui." :
+        IsLogin ? "Seu próximo evento começa aqui." :
         IsRegister ? "Crie sua conta e entre no ritmo." :
         IsForgot ? "Recupere o acesso a sua conta." :
-        "Escolha uma nova senha com seguranca.";
+        "Escolha uma nova senha com segurança.";
     private string AsideDescription =>
         IsLogin
             ? "Acesse seus ingressos, acompanhe reservas e continue a compra sem perder tempo."
             : IsRegister
                 ? "Monte sua conta em poucos passos para garantir assentos, acompanhar pedidos e explorar a agenda completa."
                 : IsForgot
-                    ? "Informe o e-mail ou CPF cadastrado para receber um codigo de verificacao no Gmail configurado da sua conta."
-                    : "Use o codigo enviado por e-mail para confirmar sua identidade e concluir a redefinicao da senha.";
+                    ? "Informe o e-mail ou CPF cadastrado para receber um código de verificação no Gmail configurado da sua conta."
+                    : "Use o código enviado por e-mail para confirmar sua identidade e concluir a redefinição da senha.";
     private bool EmailConfirmationMismatch =>
         !string.IsNullOrWhiteSpace(registerModel.Email) &&
         !string.IsNullOrWhiteSpace(registerModel.ConfirmarEmail) &&
@@ -290,6 +328,7 @@
         statusMessage = string.Empty;
         isError = false;
         recoveryMaskedEmail = string.Empty;
+        ResetPasswordVisibility();
         Overlay.OpenLogin();
     }
 
@@ -298,6 +337,7 @@
         statusMessage = string.Empty;
         isError = false;
         recoveryMaskedEmail = string.Empty;
+        ResetPasswordVisibility();
         Overlay.OpenRegister();
     }
 
@@ -306,6 +346,7 @@
         statusMessage = string.Empty;
         isError = false;
         recoveryMaskedEmail = string.Empty;
+        ResetPasswordVisibility();
         forgotPasswordModel.Login = loginModel.Login;
         Overlay.OpenForgotPassword();
     }
@@ -315,6 +356,7 @@
         statusMessage = string.Empty;
         isError = false;
         recoveryMaskedEmail = string.Empty;
+        ResetPasswordVisibility();
         forgotPasswordModel.Login = !string.IsNullOrWhiteSpace(registerModel.Email)
             ? registerModel.Email
             : registerModel.Cpf;
@@ -325,6 +367,7 @@
     {
         statusMessage = string.Empty;
         isError = false;
+        ResetPasswordVisibility();
         Overlay.OpenResetPassword();
     }
 
@@ -333,7 +376,23 @@
         statusMessage = string.Empty;
         isError = false;
         recoveryMaskedEmail = string.Empty;
+        ResetPasswordVisibility();
         Overlay.Close();
+    }
+
+    private void ToggleLoginPassword() => showLoginPassword = !showLoginPassword;
+    private void ToggleRegisterPassword() => showRegisterPassword = !showRegisterPassword;
+    private void ToggleRegisterConfirmPassword() => showRegisterConfirmPassword = !showRegisterConfirmPassword;
+    private void ToggleResetPassword() => showResetPassword = !showResetPassword;
+    private void ToggleResetConfirmPassword() => showResetConfirmPassword = !showResetConfirmPassword;
+
+    private void ResetPasswordVisibility()
+    {
+        showLoginPassword = false;
+        showRegisterPassword = false;
+        showRegisterConfirmPassword = false;
+        showResetPassword = false;
+        showResetConfirmPassword = false;
     }
 
     private async Task HandleLogin()
@@ -378,7 +437,7 @@
         catch
         {
             isError = true;
-            statusMessage = "Nao conseguimos conectar ao sistema neste momento.";
+            statusMessage = "Não conseguimos conectar ao sistema neste momento.";
         }
         finally
         {
@@ -394,14 +453,14 @@
         if (EmailConfirmationMismatch)
         {
             isError = true;
-            statusMessage = "Os e-mails informados nao coincidem.";
+            statusMessage = "Os e-mails informados não coincidem.";
             return;
         }
 
         if (PasswordConfirmationMismatch)
         {
             isError = true;
-            statusMessage = "As senhas informadas nao coincidem.";
+            statusMessage = "As senhas informadas não coincidem.";
             return;
         }
 
@@ -437,7 +496,7 @@
         catch
         {
             isError = true;
-            statusMessage = "Seu cadastro nao foi concluido agora.";
+            statusMessage = "Seu cadastro não foi concluído agora.";
         }
         finally
         {
@@ -479,7 +538,7 @@
         catch
         {
             isError = true;
-            statusMessage = "Nao conseguimos iniciar a recuperacao agora.";
+            statusMessage = "Não conseguimos iniciar a recuperação agora.";
         }
         finally
         {
@@ -495,7 +554,7 @@
         if (ResetPasswordMismatch)
         {
             isError = true;
-            statusMessage = "As novas senhas nao coincidem.";
+            statusMessage = "As novas senhas não coincidem.";
             return;
         }
 
@@ -531,7 +590,7 @@
         catch
         {
             isError = true;
-            statusMessage = "Nao conseguimos redefinir a senha agora.";
+            statusMessage = "Não conseguimos redefinir a senha agora.";
         }
         finally
         {

@@ -8,7 +8,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddHttpClient<TicketPrimeApiClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["TicketPrimeApi:BaseUrl"] ?? "http://localhost:5238/");
+    var configuredBaseUrl = builder.Configuration["TicketPrimeApi:BaseUrl"];
+    if (string.IsNullOrWhiteSpace(configuredBaseUrl))
+    {
+        throw new InvalidOperationException(
+            "A configuracao 'TicketPrimeApi:BaseUrl' precisa ser definida para iniciar o TicketPrime.App.");
+    }
+
+    client.BaseAddress = new Uri(configuredBaseUrl);
 });
 builder.Services.AddScoped<UserSessionState>();
 builder.Services.AddScoped<CartState>();

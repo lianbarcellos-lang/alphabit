@@ -59,6 +59,132 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<List<EventViewModel>>() ?? [];
     }
 
+    public async Task<List<string>> GetAdminGenresAsync(string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Get, "api/admin/generos");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        if (!response.IsSuccessStatusCode)
+            return [];
+
+        return await response.Content.ReadFromJsonAsync<List<string>>() ?? [];
+    }
+
+    public async Task<List<string>> GetAdminCitiesAsync(string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Get, "api/admin/cidades");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        if (!response.IsSuccessStatusCode)
+            return [];
+
+        return await response.Content.ReadFromJsonAsync<List<string>>() ?? [];
+    }
+
+    public async Task<ApiResult> CreateGenreAsync(MusicGenreCreateRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, "api/admin/generos")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Genero musical cadastrado com sucesso." : "Não foi possível cadastrar o gênero musical.")
+        };
+    }
+
+    public async Task<ApiResult> UpdateGenreAsync(string currentName, MusicGenreCreateRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/generos/{Uri.EscapeDataString(currentName)}")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Genero musical atualizado com sucesso." : "Não foi possível atualizar o gênero musical.")
+        };
+    }
+
+    public async Task<ApiResult> DeleteGenreAsync(string currentName, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Delete, $"api/admin/generos/{Uri.EscapeDataString(currentName)}");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Genero musical excluido com sucesso." : "Não foi possível excluir o gênero musical.")
+        };
+    }
+
+    public async Task<ApiResult> CreateCityAsync(CityCreateRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, "api/admin/cidades")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cidade cadastrada com sucesso." : "Não foi possível cadastrar a cidade.")
+        };
+    }
+
+    public async Task<ApiResult> UpdateCityAsync(string currentName, CityCreateRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/cidades/{Uri.EscapeDataString(currentName)}")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cidade atualizada com sucesso." : "Não foi possível atualizar a cidade.")
+        };
+    }
+
+    public async Task<ApiResult> DeleteCityAsync(string currentName, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Delete, $"api/admin/cidades/{Uri.EscapeDataString(currentName)}");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cidade excluida com sucesso." : "Não foi possível excluir a cidade.")
+        };
+    }
+
     public async Task<ApiResult> CreateEventAsync(EventCreateRequest request, string adminToken)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, "api/eventos")
@@ -73,7 +199,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult
         {
             Success = response.IsSuccessStatusCode,
-            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento criado com sucesso." : "Nao foi possivel criar o evento.")
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento criado com sucesso." : "Não foi possível criar o evento.")
         };
     }
 
@@ -91,7 +217,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult
         {
             Success = response.IsSuccessStatusCode,
-            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cupom criado com sucesso." : "Nao foi possivel criar o cupom.")
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cupom criado com sucesso." : "Não foi possível criar o cupom.")
         };
     }
 
@@ -121,7 +247,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult
         {
             Success = response.IsSuccessStatusCode,
-            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cupom atualizado com sucesso." : "Nao foi possivel atualizar o cupom.")
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cupom atualizado com sucesso." : "Não foi possível atualizar o cupom.")
         };
     }
 
@@ -136,7 +262,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult
         {
             Success = response.IsSuccessStatusCode,
-            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cupom removido com sucesso." : "Nao foi possivel remover o cupom.")
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Cupom removido com sucesso." : "Não foi possível remover o cupom.")
         };
     }
 
@@ -154,7 +280,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult
         {
             Success = response.IsSuccessStatusCode,
-            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento atualizado com sucesso." : "Nao foi possivel atualizar o evento.")
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento atualizado com sucesso." : "Não foi possível atualizar o evento.")
         };
     }
 
@@ -169,7 +295,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult
         {
             Success = response.IsSuccessStatusCode,
-            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento removido com sucesso." : "Nao foi possivel remover o evento.")
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento removido com sucesso." : "Não foi possível remover o evento.")
         };
     }
 
@@ -188,7 +314,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ReservationCheckoutResponseViewModel
         {
             Sucesso = false,
-            Mensagem = TrimMessage(content, "Nao foi possivel concluir a compra.")
+            Mensagem = TrimMessage(content, "Não foi possível concluir a compra.")
         };
     }
 
@@ -207,7 +333,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ReservationCheckoutResponseViewModel
         {
             Sucesso = false,
-            Mensagem = TrimMessage(content, "Nao foi possivel validar o cupom.")
+            Mensagem = TrimMessage(content, "Não foi possível validar o cupom.")
         };
     }
 
@@ -260,7 +386,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new ApiResult<CustomerProfileViewModel>
         {
             Success = false,
-            Message = TrimMessage(content, "Nao foi possivel atualizar o perfil.")
+            Message = TrimMessage(content, "Não foi possível atualizar o perfil.")
         };
     }
 
@@ -283,7 +409,7 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return new TResponse
         {
             Sucesso = false,
-            Mensagem = TrimMessage(content, "Nao foi possivel concluir a operacao.")
+            Mensagem = TrimMessage(content, "Não foi possível concluir a operação.")
         };
     }
 

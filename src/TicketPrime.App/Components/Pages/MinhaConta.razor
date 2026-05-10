@@ -8,7 +8,7 @@
 @if (Session.CurrentUser is null)
 {
     <div class="account-shell">
-        <div class="status-box status-box--error">Entre com uma conta de cliente para acessar sua area.</div>
+        <div class="status-box status-box--error">Entre com uma conta de cliente para acessar sua área.</div>
         <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
     </div>
 }
@@ -18,8 +18,8 @@ else
         <section class="account-hero">
             <div>
                 <span class="eyebrow">Area do cliente</span>
-                <h1>Seu perfil e seus ingressos em um so lugar</h1>
-                <p>Atualize seus dados, acompanhe compras recentes e mantenha sua conta pronta para os proximos eventos.</p>
+                <h1>Seu perfil e seus ingressos em um só lugar</h1>
+                <p>Atualize seus dados, acompanhe compras recentes e mantenha sua conta pronta para os próximos eventos.</p>
             </div>
             <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/reservas")'>Ver todas as reservas</button>
         </section>
@@ -67,13 +67,13 @@ else
 
                         <div class="form-grid form-grid--three">
                             <div class="field">
-                                <label for="pais">Pais de residencia</label>
+                                <label for="pais">País de residência</label>
                                 <InputSelect id="pais" class="field__input" @bind-Value="profile.PaisResidencia">
                                     <option value="Brasil">Brasil</option>
                                     <option value="Portugal">Portugal</option>
                                     <option value="Argentina">Argentina</option>
                                 </InputSelect>
-                                <small>O pais onde voce mora.</small>
+                                <small>O país onde você mora.</small>
                             </div>
 
                             <div class="field">
@@ -95,7 +95,7 @@ else
 
                         <div class="form-grid form-grid--four">
                             <div class="field">
-                                <label for="codigoPais">Codigo do pais</label>
+                                <label for="codigoPais">Código do país</label>
                                 <InputSelect id="codigoPais" class="field__input" @bind-Value="profile.CodigoPais">
                                     <option value="+55">+55</option>
                                     <option value="+351">+351</option>
@@ -124,14 +124,14 @@ else
                                     <option value="">Selecione</option>
                                     <option value="Masculino">Masculino</option>
                                     <option value="Feminino">Feminino</option>
-                                    <option value="Nao informar">Nao informar</option>
+                                    <option value="Nao informar">Não informar</option>
                                 </InputSelect>
                                 <small>Campo opcional do perfil.</small>
                             </div>
                         </div>
 
                         <div class="account-actions">
-                            <button class="secondary-button" type="submit" disabled="@isSaving">Salvar alteracoes</button>
+                            <button class="secondary-button" type="submit" disabled="@isSaving">Salvar alterações</button>
                         </div>
                     </EditForm>
                 </section>
@@ -162,12 +162,12 @@ else
                     <article class="account-card account-card--tickets">
                         <div class="section-heading">
                             <span class="pill">Compras recentes</span>
-                            <h2>O que voce ja garantiu</h2>
+                            <h2>O que você já garantiu</h2>
                         </div>
 
                         @if (reservations.Count == 0)
                         {
-                            <div class="status-box">Voce ainda nao possui compras confirmadas.</div>
+                            <div class="status-box">Você ainda não possui compras confirmadas.</div>
                         }
                         else
                         {
@@ -242,7 +242,7 @@ else
         catch
         {
             isError = true;
-            statusMessage = "Nao foi possivel carregar sua area do cliente agora.";
+            statusMessage = "Não foi possível carregar sua área do cliente agora.";
         }
         finally
         {
@@ -273,7 +273,7 @@ else
         catch
         {
             isError = true;
-            statusMessage = "Nao foi possivel salvar seu perfil agora.";
+            statusMessage = "Não foi possível salvar seu perfil agora.";
         }
         finally
         {

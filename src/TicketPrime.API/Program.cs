@@ -18,9 +18,15 @@ var smtpPassword = builder.Configuration["EmailSettings:AppPassword"];
 var smtpDisplayName = builder.Configuration["EmailSettings:SenderName"] ?? "TicketPrime";
 
 var legacyDbPath = Path.Combine(builder.Environment.ContentRootPath, "db", "TicketPrime.db");
-var runtimeDbDirectory = Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "TicketPrime");
+var configuredDbDirectory = builder.Configuration["DatabaseSettings:Directory"];
+var railwayVolumeMountPath = Environment.GetEnvironmentVariable("RAILWAY_VOLUME_MOUNT_PATH");
+var runtimeDbDirectory = !string.IsNullOrWhiteSpace(configuredDbDirectory)
+    ? configuredDbDirectory
+    : !string.IsNullOrWhiteSpace(railwayVolumeMountPath)
+        ? Path.Combine(railwayVolumeMountPath, "ticketprime-data")
+        : Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TicketPrime");
 Directory.CreateDirectory(runtimeDbDirectory);
 
 var dbPath = Path.Combine(runtimeDbDirectory, "TicketPrime.db");
@@ -87,6 +93,16 @@ using (var connection = new SqliteConnection(connectionString))
             ValorMinimoRegra REAL NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS GenerosMusicais (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Nome TEXT NOT NULL COLLATE NOCASE UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS CidadesEventos (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Nome TEXT NOT NULL COLLATE NOCASE UNIQUE
+        );
+
         CREATE TABLE IF NOT EXISTS Reservas (
             Id INTEGER PRIMARY KEY AUTOINCREMENT,
             UsuarioCpf TEXT NOT NULL,
@@ -130,8 +146,12 @@ using (var connection = new SqliteConnection(connectionString))
     EnsureColumnExists(connection, "Eventos", "Artista", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "GeneroMusical", "TEXT NOT NULL DEFAULT ''");
     EnsureReservasSchema(connection);
+    EnsureMusicGenresCatalog(connection);
+    EnsureCitiesCatalog(connection);
 
     EnsureDemoEvents(connection);
+    EnsureMusicGenresCatalog(connection);
+    EnsureCitiesCatalog(connection);
 }
 
 app.MapGet("/", () => "API funcionando!");
@@ -308,7 +328,7 @@ app.MapPost("/api/auth/usuarios/recuperar-senha", async (UsuarioRecuperacaoSenha
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "O envio de e-mail ainda nao foi configurado no sistema."
+            Mensagem = "O envio de e-mail ainda não foi configurado no sistema."
         });
 
     using var connection = new SqliteConnection(connectionString);
@@ -323,7 +343,7 @@ app.MapPost("/api/auth/usuarios/recuperar-senha", async (UsuarioRecuperacaoSenha
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Nao encontramos uma conta com esse e-mail ou CPF."
+            Mensagem = "Não encontramos uma conta com esse e-mail ou CPF."
         });
 
     connection.Execute(@"
@@ -356,10 +376,10 @@ Ola, {usuario.Nome}.
 
 Recebemos um pedido para redefinir a senha da sua conta TicketPrime.
 
-Codigo de verificacao: {codigo}
+Código de verificação: {codigo}
 
-Esse codigo expira em 15 minutos.
-Se voce nao solicitou a redefinicao, ignore esta mensagem.
+Esse código expira em 15 minutos.
+Se você não solicitou a redefinição, ignore esta mensagem.
 """;
 
     try
@@ -371,7 +391,7 @@ Se voce nao solicitou a redefinicao, ignore esta mensagem.
             smtpPassword!,
             smtpDisplayName,
             usuario.Email,
-            "TicketPrime - Codigo para redefinir senha",
+            "TicketPrime - Código para redefinir senha",
             corpo);
     }
     catch (SmtpException)
@@ -379,7 +399,7 @@ Se voce nao solicitou a redefinicao, ignore esta mensagem.
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Nao foi possivel enviar o e-mail de redefinicao agora. Revise a configuracao do Gmail e tente novamente."
+            Mensagem = "Não foi possível enviar o e-mail de redefinição agora. Revise a configuração do Gmail e tente novamente."
         });
     }
     catch
@@ -387,14 +407,14 @@ Se voce nao solicitou a redefinicao, ignore esta mensagem.
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Nao foi possivel enviar o e-mail de redefinicao agora. Tente novamente em instantes."
+            Mensagem = "Não foi possível enviar o e-mail de redefinição agora. Tente novamente em instantes."
         });
     }
 
     return Results.Ok(new RecuperacaoSenhaResponse
     {
         Sucesso = true,
-        Mensagem = "Enviamos um codigo de redefinicao para o e-mail cadastrado.",
+        Mensagem = "Enviamos um código de redefinição para o e-mail cadastrado.",
         EmailMascarado = MaskEmail(usuario.Email)
     });
 });
@@ -431,7 +451,7 @@ app.MapPost("/api/auth/usuarios/redefinir-senha", (UsuarioRedefinirSenhaRequest 
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Nao encontramos uma conta com esse e-mail ou CPF."
+            Mensagem = "Não encontramos uma conta com esse e-mail ou CPF."
         });
 
     var recuperacao = connection.QueryFirstOrDefault<(int Id, string CodigoHash, string ExpiraEm, int TentativasInvalidas, string? UsadoEm)>(@"
@@ -445,28 +465,28 @@ app.MapPost("/api/auth/usuarios/redefinir-senha", (UsuarioRedefinirSenhaRequest 
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Solicite um novo codigo de redefinicao."
+            Mensagem = "Solicite um novo código de redefinição."
         });
 
     if (!string.IsNullOrWhiteSpace(recuperacao.UsadoEm))
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Esse codigo ja foi utilizado. Solicite um novo codigo."
+            Mensagem = "Esse código já foi utilizado. Solicite um novo código."
         });
 
     if (!DateTime.TryParse(recuperacao.ExpiraEm, out var expiraEmLocal) || expiraEmLocal < DateTime.UtcNow)
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "O codigo expirou. Solicite um novo envio."
+            Mensagem = "O código expirou. Solicite um novo envio."
         });
 
     if (recuperacao.TentativasInvalidas >= 5)
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "Esse codigo foi bloqueado por excesso de tentativas. Solicite um novo."
+            Mensagem = "Esse código foi bloqueado por excesso de tentativas. Solicite um novo."
         });
 
     var codigoHash = TicketPrimeRules.HashPassword(request.Codigo.Trim());
@@ -480,7 +500,7 @@ app.MapPost("/api/auth/usuarios/redefinir-senha", (UsuarioRedefinirSenhaRequest 
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
-            Mensagem = "O codigo informado esta incorreto."
+            Mensagem = "O código informado está incorreto."
         });
     }
 
@@ -509,7 +529,7 @@ app.MapPost("/api/auth/usuarios/redefinir-senha", (UsuarioRedefinirSenhaRequest 
     return Results.Ok(new RecuperacaoSenhaResponse
     {
         Sucesso = true,
-        Mensagem = "Senha redefinida com sucesso. Voce ja pode entrar na sua conta."
+        Mensagem = "Senha redefinida com sucesso. Você já pode entrar na sua conta."
     });
 });
 
@@ -659,6 +679,20 @@ app.MapPost("/api/eventos", (Evento evento, HttpContext httpContext) =>
         imagem = string.IsNullOrWhiteSpace(evento.ImagemUrl) ? null : evento.ImagemUrl
     });
 
+    if (!string.IsNullOrWhiteSpace(evento.GeneroMusical))
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO GenerosMusicais (Nome) VALUES (@nome)",
+            new { nome = evento.GeneroMusical.Trim() });
+    }
+
+    if (!string.IsNullOrWhiteSpace(evento.CidadeEvento))
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO CidadesEventos (Nome) VALUES (@nome)",
+            new { nome = evento.CidadeEvento.Trim() });
+    }
+
     return Results.Ok("Evento criado com sucesso!");
 });
 
@@ -674,6 +708,272 @@ app.MapGet("/api/admin/eventos", (HttpContext httpContext) =>
     var eventos = connection.Query<Evento>("SELECT Id, Nome, LocalEvento, CidadeEvento, Artista, GeneroMusical, CapacidadeTotal, DataEvento, PrecoPadrao, ImagemUrl FROM Eventos ORDER BY DataEvento").ToList();
 
     return Results.Ok(eventos);
+});
+
+app.MapGet("/api/admin/generos", (HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var generos = connection.Query<string>(
+        "SELECT Nome FROM GenerosMusicais ORDER BY Nome").ToList();
+
+    return Results.Ok(generos);
+});
+
+app.MapPost("/api/admin/generos", (GeneroMusicalCatalogoRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nome = (request.Nome ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(nome))
+        return Results.BadRequest("Informe o nome do genero musical.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var existente = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM GenerosMusicais WHERE lower(Nome) = lower(@nome)",
+        new { nome });
+
+    if (!string.IsNullOrWhiteSpace(existente))
+        return Results.Ok(new { mensagem = "Genero musical ja cadastrado.", nome = existente });
+
+    connection.Execute(
+        "INSERT INTO GenerosMusicais (Nome) VALUES (@nome)",
+        new { nome });
+
+    return Results.Ok(new { mensagem = "Genero musical cadastrado com sucesso.", nome });
+});
+
+app.MapPut("/api/admin/generos/{nomeAtual}", (string nomeAtual, GeneroMusicalCatalogoRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nomeOriginal = Uri.UnescapeDataString(nomeAtual).Trim();
+    var novoNome = (request.Nome ?? string.Empty).Trim();
+
+    if (string.IsNullOrWhiteSpace(nomeOriginal))
+        return Results.BadRequest("Informe o genero musical atual.");
+
+    if (string.IsNullOrWhiteSpace(novoNome))
+        return Results.BadRequest("Informe o novo nome do genero musical.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var existente = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM GenerosMusicais WHERE lower(Nome) = lower(@nome)",
+        new { nome = nomeOriginal });
+
+    if (string.IsNullOrWhiteSpace(existente))
+        return Results.NotFound("Genero musical nao encontrado.");
+
+    var conflito = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM GenerosMusicais WHERE lower(Nome) = lower(@nome) AND lower(Nome) <> lower(@original)",
+        new { nome = novoNome, original = nomeOriginal });
+
+    if (!string.IsNullOrWhiteSpace(conflito))
+        return Results.BadRequest("Ja existe um genero musical com esse nome.");
+
+    using var transaction = connection.BeginTransaction();
+
+    connection.Execute(
+        "UPDATE GenerosMusicais SET Nome = @novoNome WHERE lower(Nome) = lower(@nomeOriginal)",
+        new { novoNome, nomeOriginal },
+        transaction);
+
+    connection.Execute(
+        "UPDATE Eventos SET GeneroMusical = @novoNome WHERE lower(GeneroMusical) = lower(@nomeOriginal)",
+        new { novoNome, nomeOriginal },
+        transaction);
+
+    transaction.Commit();
+
+    return Results.Ok(new { mensagem = "Genero musical atualizado com sucesso.", nome = novoNome });
+});
+
+app.MapDelete("/api/admin/generos/{nomeAtual}", (string nomeAtual, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nomeOriginal = Uri.UnescapeDataString(nomeAtual).Trim();
+    if (string.IsNullOrWhiteSpace(nomeOriginal))
+        return Results.BadRequest("Informe o genero musical que sera excluido.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    using var transaction = connection.BeginTransaction();
+
+    var proximoGenero = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM GenerosMusicais WHERE lower(Nome) <> lower(@nome) ORDER BY Nome LIMIT 1",
+        new { nome = nomeOriginal },
+        transaction);
+
+    connection.Execute(
+        "UPDATE Eventos SET GeneroMusical = @novoGenero WHERE lower(GeneroMusical) = lower(@nome)",
+        new { nome = nomeOriginal, novoGenero = proximoGenero ?? string.Empty },
+        transaction);
+
+    var deleted = connection.Execute(
+        "DELETE FROM GenerosMusicais WHERE lower(Nome) = lower(@nome)",
+        new { nome = nomeOriginal },
+        transaction);
+
+    if (deleted == 0)
+        return Results.NotFound("Genero musical nao encontrado.");
+
+    transaction.Commit();
+
+    var mensagem = string.IsNullOrWhiteSpace(proximoGenero)
+        ? "Genero musical excluido com sucesso."
+        : $"Genero musical excluido com sucesso. Eventos vinculados foram atualizados para {proximoGenero}.";
+
+    return Results.Ok(new { mensagem });
+});
+
+app.MapGet("/api/admin/cidades", (HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var cidades = connection.Query<string>(
+        "SELECT Nome FROM CidadesEventos ORDER BY Nome").ToList();
+
+    return Results.Ok(cidades);
+});
+
+app.MapPost("/api/admin/cidades", (CidadeCatalogoRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nome = (request.Nome ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(nome))
+        return Results.BadRequest("Informe o nome da cidade.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var existente = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM CidadesEventos WHERE lower(Nome) = lower(@nome)",
+        new { nome });
+
+    if (!string.IsNullOrWhiteSpace(existente))
+        return Results.Ok(new { mensagem = "Cidade ja cadastrada.", nome = existente });
+
+    connection.Execute(
+        "INSERT INTO CidadesEventos (Nome) VALUES (@nome)",
+        new { nome });
+
+    return Results.Ok(new { mensagem = "Cidade cadastrada com sucesso.", nome });
+});
+
+app.MapPut("/api/admin/cidades/{nomeAtual}", (string nomeAtual, CidadeCatalogoRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nomeOriginal = Uri.UnescapeDataString(nomeAtual).Trim();
+    var novoNome = (request.Nome ?? string.Empty).Trim();
+
+    if (string.IsNullOrWhiteSpace(nomeOriginal))
+        return Results.BadRequest("Informe a cidade atual.");
+
+    if (string.IsNullOrWhiteSpace(novoNome))
+        return Results.BadRequest("Informe o novo nome da cidade.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var existente = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM CidadesEventos WHERE lower(Nome) = lower(@nome)",
+        new { nome = nomeOriginal });
+
+    if (string.IsNullOrWhiteSpace(existente))
+        return Results.NotFound("Cidade nao encontrada.");
+
+    var conflito = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM CidadesEventos WHERE lower(Nome) = lower(@nome) AND lower(Nome) <> lower(@original)",
+        new { nome = novoNome, original = nomeOriginal });
+
+    if (!string.IsNullOrWhiteSpace(conflito))
+        return Results.BadRequest("Ja existe uma cidade com esse nome.");
+
+    using var transaction = connection.BeginTransaction();
+
+    connection.Execute(
+        "UPDATE CidadesEventos SET Nome = @novoNome WHERE lower(Nome) = lower(@nomeOriginal)",
+        new { novoNome, nomeOriginal },
+        transaction);
+
+    connection.Execute(
+        "UPDATE Eventos SET CidadeEvento = @novoNome WHERE lower(CidadeEvento) = lower(@nomeOriginal)",
+        new { novoNome, nomeOriginal },
+        transaction);
+
+    transaction.Commit();
+
+    return Results.Ok(new { mensagem = "Cidade atualizada com sucesso.", nome = novoNome });
+});
+
+app.MapDelete("/api/admin/cidades/{nomeAtual}", (string nomeAtual, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nomeOriginal = Uri.UnescapeDataString(nomeAtual).Trim();
+    if (string.IsNullOrWhiteSpace(nomeOriginal))
+        return Results.BadRequest("Informe a cidade que sera excluida.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    using var transaction = connection.BeginTransaction();
+
+    var proximaCidade = connection.QueryFirstOrDefault<string>(
+        "SELECT Nome FROM CidadesEventos WHERE lower(Nome) <> lower(@nome) ORDER BY Nome LIMIT 1",
+        new { nome = nomeOriginal },
+        transaction);
+
+    connection.Execute(
+        "UPDATE Eventos SET CidadeEvento = @novaCidade WHERE lower(CidadeEvento) = lower(@nome)",
+        new { nome = nomeOriginal, novaCidade = proximaCidade ?? string.Empty },
+        transaction);
+
+    var deleted = connection.Execute(
+        "DELETE FROM CidadesEventos WHERE lower(Nome) = lower(@nome)",
+        new { nome = nomeOriginal },
+        transaction);
+
+    if (deleted == 0)
+        return Results.NotFound("Cidade nao encontrada.");
+
+    transaction.Commit();
+
+    var mensagem = string.IsNullOrWhiteSpace(proximaCidade)
+        ? "Cidade excluida com sucesso."
+        : $"Cidade excluida com sucesso. Eventos vinculados foram atualizados para {proximaCidade}.";
+
+    return Results.Ok(new { mensagem });
 });
 
 app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, HttpContext httpContext) =>
@@ -725,6 +1025,20 @@ app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, Ht
     });
     if (updated == 0)
         return Results.NotFound("Evento nao encontrado.");
+
+    if (!string.IsNullOrWhiteSpace(evento.GeneroMusical))
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO GenerosMusicais (Nome) VALUES (@nome)",
+            new { nome = evento.GeneroMusical.Trim() });
+    }
+
+    if (!string.IsNullOrWhiteSpace(evento.CidadeEvento))
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO CidadesEventos (Nome) VALUES (@nome)",
+            new { nome = evento.CidadeEvento.Trim() });
+    }
 
     return Results.Ok("Evento atualizado com sucesso!");
 });
@@ -1327,6 +1641,66 @@ static void EnsureReservasSchema(SqliteConnection connection)
     connection.Execute("PRAGMA foreign_keys = ON;", transaction: transaction);
 
     transaction.Commit();
+}
+
+static void EnsureMusicGenresCatalog(SqliteConnection connection)
+{
+    var defaultGenres = new[]
+    {
+        "Festival",
+        "Rock",
+        "Pop",
+        "Samba",
+        "Eletronica",
+        "MPB"
+    };
+
+    foreach (var genre in defaultGenres)
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO GenerosMusicais (Nome) VALUES (@nome)",
+            new { nome = genre });
+    }
+
+    var existingGenres = connection.Query<string>(
+        "SELECT DISTINCT trim(GeneroMusical) FROM Eventos WHERE trim(GeneroMusical) <> ''");
+
+    foreach (var genre in existingGenres)
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO GenerosMusicais (Nome) VALUES (@nome)",
+            new { nome = genre.Trim() });
+    }
+}
+
+static void EnsureCitiesCatalog(SqliteConnection connection)
+{
+    var defaultCities = new[]
+    {
+        "Sao Paulo",
+        "Rio de Janeiro",
+        "Belo Horizonte",
+        "Curitiba",
+        "Porto Alegre",
+        "Salvador"
+    };
+
+    foreach (var city in defaultCities)
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO CidadesEventos (Nome) VALUES (@nome)",
+            new { nome = city });
+    }
+
+    var existingCities = connection.Query<string>(
+        "SELECT DISTINCT trim(CidadeEvento) FROM Eventos WHERE trim(CidadeEvento) <> ''");
+
+    foreach (var city in existingCities)
+    {
+        connection.Execute(
+            "INSERT OR IGNORE INTO CidadesEventos (Nome) VALUES (@nome)",
+            new { nome = city.Trim() });
+    }
 }
 
 static void EnsureDemoEvents(SqliteConnection connection)

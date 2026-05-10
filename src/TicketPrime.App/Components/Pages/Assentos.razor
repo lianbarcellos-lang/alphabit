@@ -22,7 +22,7 @@ else if (isLoading)
 else if (eventItem is null)
 {
     <div class="seats-shell">
-        <div class="status-box status-box--error">Evento nao encontrado.</div>
+        <div class="status-box status-box--error">Evento não encontrado.</div>
         <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar</button>
     </div>
 }
@@ -69,7 +69,7 @@ else
 
             <section class="seats-panel seats-panel--summary">
                 <h2>Seu pedido</h2>
-                <p>Escolha ate 2 assentos para este evento.</p>
+                <p>Escolha até 2 assentos para este evento.</p>
 
                 <div class="summary-row">
                     <span>Assentos</span>
@@ -120,7 +120,7 @@ else
         catch
         {
             isError = true;
-            statusMessage = "Nao foi possivel carregar os assentos agora.";
+            statusMessage = "Não foi possível carregar os assentos agora.";
         }
         finally
         {
@@ -160,7 +160,7 @@ else
         if (selectedSeats.Count >= 2)
         {
             isError = true;
-            statusMessage = "Voce pode selecionar no maximo 2 assentos por evento.";
+            statusMessage = "Você pode selecionar no máximo 2 assentos por evento.";
             return;
         }
 

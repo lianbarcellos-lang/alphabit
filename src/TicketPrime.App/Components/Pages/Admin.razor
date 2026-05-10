@@ -85,14 +85,22 @@ else
                         </div>
                         <div class="field">
                             <label for="eventoCidade">Cidade do evento</label>
-                            <InputText id="eventoCidade" class="field__input" @bind-Value="eventModel.CidadeEvento" />
+                            <input id="eventoCidade" type="hidden" @bind="eventModel.CidadeEvento" />
+                            <button class="field__input genre-picker-trigger" type="button" @onclick="OpenCreateCityModal">
+                                <span>@(string.IsNullOrWhiteSpace(eventModel.CidadeEvento) ? "Selecionar cidade do evento" : eventModel.CidadeEvento)</span>
+                                <strong>Selecionar</strong>
+                            </button>
                             <ValidationMessage For="() => eventModel.CidadeEvento" />
                         </div>
                     </div>
                     <div class="admin-form__grid admin-form__grid--triple">
                         <div class="field">
                             <label for="eventoGenero">Genero musical</label>
-                            <InputText id="eventoGenero" class="field__input" @bind-Value="eventModel.GeneroMusical" />
+                            <input id="eventoGenero" type="hidden" @bind="eventModel.GeneroMusical" />
+                            <button class="field__input genre-picker-trigger" type="button" @onclick="OpenCreateGenreModal">
+                                <span>@(string.IsNullOrWhiteSpace(eventModel.GeneroMusical) ? "Selecionar genero musical" : eventModel.GeneroMusical)</span>
+                                <strong>Selecionar</strong>
+                            </button>
                             <ValidationMessage For="() => eventModel.GeneroMusical" />
                         </div>
                         <div class="field">
@@ -337,14 +345,22 @@ else
                             </div>
                             <div class="field">
                                 <label>Cidade</label>
-                                <InputText class="field__input" @bind-Value="editingEvent.CidadeEvento" />
+                                <input type="hidden" @bind="editingEvent.CidadeEvento" />
+                                <button class="field__input genre-picker-trigger" type="button" @onclick="OpenEditCityModal">
+                                    <span>@(string.IsNullOrWhiteSpace(editingEvent.CidadeEvento) ? "Selecionar cidade do evento" : editingEvent.CidadeEvento)</span>
+                                    <strong>Selecionar</strong>
+                                </button>
                                 <ValidationMessage For="() => editingEvent.CidadeEvento" />
                             </div>
                         </div>
                         <div class="admin-form__grid admin-form__grid--triple">
                             <div class="field">
                                 <label>Genero musical</label>
-                                <InputText class="field__input" @bind-Value="editingEvent.GeneroMusical" />
+                                <input type="hidden" @bind="editingEvent.GeneroMusical" />
+                                <button class="field__input genre-picker-trigger" type="button" @onclick="OpenEditGenreModal">
+                                    <span>@(string.IsNullOrWhiteSpace(editingEvent.GeneroMusical) ? "Selecionar genero musical" : editingEvent.GeneroMusical)</span>
+                                    <strong>Selecionar</strong>
+                                </button>
                                 <ValidationMessage For="() => editingEvent.GeneroMusical" />
                             </div>
                             <div class="field">
@@ -399,6 +415,124 @@ else
             </div>
         }
 
+        @if (isGenreModalOpen)
+        {
+            <div class="admin-modal-backdrop" @onclick="CloseGenreModal">
+                <div class="admin-modal admin-modal--genre" @onclick:stopPropagation="true">
+                    <div class="admin-modal__header">
+                        <div>
+                            <span class="admin-panel__pill">Genero musical</span>
+                            <h3>Selecionar ou adicionar genero</h3>
+                            <p>Escolha um genero salvo ou cadastre um novo para reutilizar sempre no painel.</p>
+                        </div>
+                        <button class="admin-modal__close" type="button" @onclick="CloseGenreModal" aria-label="Fechar genero musical">×</button>
+                    </div>
+
+                    <div class="catalog-modal">
+                        <div class="catalog-modal__list">
+                            @foreach (var genre in availableGenres)
+                            {
+                                var isSelected = isSelectingGenreForCreate
+                                    ? eventModel.GeneroMusical == genre
+                                    : editingEvent?.GeneroMusical == genre;
+
+                                <div class="catalog-option-row">
+                                    <button class="genre-selector__option @(isSelected ? "genre-selector__option--selected" : null)"
+                                            type="button"
+                                            @onclick='() => SelectGenreFromModal(genre)'>
+                                        <span class="genre-selector__check">@(isSelected ? "✓" : "")</span>
+                                        <span>@genre</span>
+                                    </button>
+
+                                    <div class="catalog-option-row__actions">
+                                        <button class="ghost-button" type="button" @onclick='() => StartGenreCatalogEdit(genre)'>Editar</button>
+                                        <button class="danger-button" type="button" @onclick='() => HandleDeleteGenre(genre)'>Excluir</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="catalog-modal__composer">
+                            <div class="field">
+                                <label>@(editingGenreOriginalName is null ? "Novo genero musical" : "Editar genero musical")</label>
+                                <InputText class="field__input" @bind-Value="genreModalInput" placeholder="Ex.: Indie, Jazz, Forro..." />
+                            </div>
+
+                            <div class="catalog-modal__actions">
+                                <button class="ghost-button" type="button" @onclick="HandleGenreModalSubmit" disabled="@isBusy">
+                                    @(editingGenreOriginalName is null ? "Adicionar genero" : "Salvar alteracao")
+                                </button>
+                                @if (editingGenreOriginalName is not null)
+                                {
+                                    <button class="secondary-button" type="button" @onclick="CancelGenreCatalogEdit" disabled="@isBusy">Cancelar edicao</button>
+                                }
+                                <button class="secondary-button" type="button" @onclick="CloseGenreModal">Concluir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (isCityModalOpen)
+        {
+            <div class="admin-modal-backdrop" @onclick="CloseCityModal">
+                <div class="admin-modal admin-modal--genre" @onclick:stopPropagation="true">
+                    <div class="admin-modal__header">
+                        <div>
+                            <span class="admin-panel__pill">Cidade do evento</span>
+                            <h3>Selecionar ou adicionar cidade</h3>
+                            <p>Escolha uma cidade salva ou cadastre uma nova para reutilizar sempre no painel.</p>
+                        </div>
+                        <button class="admin-modal__close" type="button" @onclick="CloseCityModal" aria-label="Fechar cidade do evento">×</button>
+                    </div>
+
+                    <div class="catalog-modal">
+                        <div class="catalog-modal__list">
+                            @foreach (var city in availableCities)
+                            {
+                                var isSelected = isSelectingCityForCreate
+                                    ? eventModel.CidadeEvento == city
+                                    : editingEvent?.CidadeEvento == city;
+
+                                <div class="catalog-option-row">
+                                    <button class="genre-selector__option @(isSelected ? "genre-selector__option--selected" : null)"
+                                            type="button"
+                                            @onclick='() => SelectCityFromModal(city)'>
+                                        <span class="genre-selector__check">@(isSelected ? "✓" : "")</span>
+                                        <span>@city</span>
+                                    </button>
+
+                                    <div class="catalog-option-row__actions">
+                                        <button class="ghost-button" type="button" @onclick='() => StartCityCatalogEdit(city)'>Editar</button>
+                                        <button class="danger-button" type="button" @onclick='() => HandleDeleteCity(city)'>Excluir</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="catalog-modal__composer">
+                            <div class="field">
+                                <label>@(editingCityOriginalName is null ? "Nova cidade" : "Editar cidade")</label>
+                                <InputText class="field__input" @bind-Value="cityModalInput" placeholder="Ex.: Recife, Campinas, Fortaleza..." />
+                            </div>
+
+                            <div class="catalog-modal__actions">
+                                <button class="ghost-button" type="button" @onclick="HandleCityModalSubmit" disabled="@isBusy">
+                                    @(editingCityOriginalName is null ? "Adicionar cidade" : "Salvar alteracao")
+                                </button>
+                                @if (editingCityOriginalName is not null)
+                                {
+                                    <button class="secondary-button" type="button" @onclick="CancelCityCatalogEdit" disabled="@isBusy">Cancelar edicao</button>
+                                }
+                                <button class="secondary-button" type="button" @onclick="CloseCityModal">Concluir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
         @if (!string.IsNullOrWhiteSpace(statusMessage))
         {
             <div class="status-box @(isError ? "status-box--error" : "status-box--success")">
@@ -413,6 +547,8 @@ else
     private readonly AdminCouponInputModel couponModel = new();
     private readonly List<EventViewModel> adminEvents = new();
     private readonly List<CouponViewModel> adminCoupons = new();
+    private readonly List<string> availableGenres = new();
+    private readonly List<string> availableCities = new();
     private bool isBusy;
     private bool isError;
     private bool eventsLoading;
@@ -424,11 +560,21 @@ else
     private AdminCouponEditModel? editingCoupon;
     private DateTime editDateOnly = DateTime.Today;
     private string editTime = "20:00";
+    private bool isGenreModalOpen;
+    private bool isSelectingGenreForCreate = true;
+    private string genreModalInput = string.Empty;
+    private string? editingGenreOriginalName;
+    private bool isCityModalOpen;
+    private bool isSelectingCityForCreate = true;
+    private string cityModalInput = string.Empty;
+    private string? editingCityOriginalName;
 
     protected override async Task OnInitializedAsync()
     {
         eventDateOnly = eventModel.DataEvento.Date;
         eventTime = eventModel.DataEvento.ToString("HH:mm");
+        await LoadGenresAsync();
+        await LoadCitiesAsync();
         await LoadAdminEvents();
         await LoadAdminCoupons();
     }
@@ -470,6 +616,10 @@ else
                 eventModel.ImagemUrl = string.Empty;
                 eventDateOnly = DateTime.Today.AddDays(15);
                 eventTime = "20:00";
+                if (availableGenres.Count > 0)
+                    eventModel.GeneroMusical = availableGenres[0];
+                if (availableCities.Count > 0)
+                    eventModel.CidadeEvento = availableCities[0];
                 await LoadAdminEvents();
             }
         }
@@ -565,6 +715,58 @@ else
         }
     }
 
+    private async Task LoadGenresAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        availableGenres.Clear();
+        availableGenres.AddRange(await ApiClient.GetAdminGenresAsync(Session.AdminToken));
+
+        if (string.IsNullOrWhiteSpace(eventModel.GeneroMusical) && availableGenres.Count > 0)
+            eventModel.GeneroMusical = availableGenres[0];
+
+        if (editingEvent is not null &&
+            !string.IsNullOrWhiteSpace(editingEvent.GeneroMusical) &&
+            !availableGenres.Contains(editingEvent.GeneroMusical))
+        {
+            availableGenres.Add(editingEvent.GeneroMusical);
+        }
+
+        if (!string.IsNullOrWhiteSpace(eventModel.GeneroMusical) &&
+            !availableGenres.Contains(eventModel.GeneroMusical) &&
+            availableGenres.Count > 0)
+        {
+            eventModel.GeneroMusical = availableGenres[0];
+        }
+    }
+
+    private async Task LoadCitiesAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        availableCities.Clear();
+        availableCities.AddRange(await ApiClient.GetAdminCitiesAsync(Session.AdminToken));
+
+        if (string.IsNullOrWhiteSpace(eventModel.CidadeEvento) && availableCities.Count > 0)
+            eventModel.CidadeEvento = availableCities[0];
+
+        if (editingEvent is not null &&
+            !string.IsNullOrWhiteSpace(editingEvent.CidadeEvento) &&
+            !availableCities.Contains(editingEvent.CidadeEvento))
+        {
+            availableCities.Add(editingEvent.CidadeEvento);
+        }
+
+        if (!string.IsNullOrWhiteSpace(eventModel.CidadeEvento) &&
+            !availableCities.Contains(eventModel.CidadeEvento) &&
+            availableCities.Count > 0)
+        {
+            eventModel.CidadeEvento = availableCities[0];
+        }
+    }
+
     private async Task LoadAdminCoupons()
     {
         if (string.IsNullOrWhiteSpace(Session.AdminToken))
@@ -600,11 +802,465 @@ else
         };
         editDateOnly = item.DataEvento.Date;
         editTime = item.DataEvento.ToString("HH:mm");
+
+        if (!string.IsNullOrWhiteSpace(editingEvent.GeneroMusical) &&
+            !availableGenres.Contains(editingEvent.GeneroMusical))
+        {
+            availableGenres.Add(editingEvent.GeneroMusical);
+        }
+
+        if (!string.IsNullOrWhiteSpace(editingEvent.CidadeEvento) &&
+            !availableCities.Contains(editingEvent.CidadeEvento))
+        {
+            availableCities.Add(editingEvent.CidadeEvento);
+        }
     }
 
     private void CancelEdit()
     {
         editingEvent = null;
+    }
+
+    private void OpenCreateGenreModal()
+    {
+        isSelectingGenreForCreate = true;
+        editingGenreOriginalName = null;
+        genreModalInput = string.Empty;
+        isGenreModalOpen = true;
+    }
+
+    private void OpenEditGenreModal()
+    {
+        if (editingEvent is null)
+            return;
+
+        isSelectingGenreForCreate = false;
+        editingGenreOriginalName = null;
+        genreModalInput = string.Empty;
+        isGenreModalOpen = true;
+    }
+
+    private void CloseGenreModal()
+    {
+        isGenreModalOpen = false;
+        editingGenreOriginalName = null;
+        genreModalInput = string.Empty;
+    }
+
+    private void OpenCreateCityModal()
+    {
+        isSelectingCityForCreate = true;
+        editingCityOriginalName = null;
+        cityModalInput = string.Empty;
+        isCityModalOpen = true;
+    }
+
+    private void OpenEditCityModal()
+    {
+        if (editingEvent is null)
+            return;
+
+        isSelectingCityForCreate = false;
+        editingCityOriginalName = null;
+        cityModalInput = string.Empty;
+        isCityModalOpen = true;
+    }
+
+    private void CloseCityModal()
+    {
+        isCityModalOpen = false;
+        editingCityOriginalName = null;
+        cityModalInput = string.Empty;
+    }
+
+    private void SelectGenreFromModal(string genre)
+    {
+        if (isSelectingGenreForCreate)
+        {
+            eventModel.GeneroMusical = genre;
+            return;
+        }
+
+        if (editingEvent is not null)
+            editingEvent.GeneroMusical = genre;
+    }
+
+    private void SelectCityFromModal(string city)
+    {
+        if (isSelectingCityForCreate)
+        {
+            eventModel.CidadeEvento = city;
+            return;
+        }
+
+        if (editingEvent is not null)
+            editingEvent.CidadeEvento = city;
+    }
+
+    private void StartGenreCatalogEdit(string genre)
+    {
+        editingGenreOriginalName = genre;
+        genreModalInput = genre;
+    }
+
+    private void CancelGenreCatalogEdit()
+    {
+        editingGenreOriginalName = null;
+        genreModalInput = string.Empty;
+    }
+
+    private async Task HandleGenreModalSubmit()
+    {
+        if (editingGenreOriginalName is null)
+        {
+            await AddGenreAsync(genreModalInput, genre =>
+            {
+                if (isSelectingGenreForCreate)
+                {
+                    eventModel.GeneroMusical = genre;
+                }
+                else if (editingEvent is not null)
+                {
+                    editingEvent.GeneroMusical = genre;
+                }
+
+                genreModalInput = string.Empty;
+            });
+
+            return;
+        }
+
+        await UpdateGenreAsync(editingGenreOriginalName, genreModalInput);
+    }
+
+    private void StartCityCatalogEdit(string city)
+    {
+        editingCityOriginalName = city;
+        cityModalInput = city;
+    }
+
+    private void CancelCityCatalogEdit()
+    {
+        editingCityOriginalName = null;
+        cityModalInput = string.Empty;
+    }
+
+    private async Task HandleCityModalSubmit()
+    {
+        if (editingCityOriginalName is null)
+        {
+            await AddCityAsync(cityModalInput, city =>
+            {
+                if (isSelectingCityForCreate)
+                {
+                    eventModel.CidadeEvento = city;
+                }
+                else if (editingEvent is not null)
+                {
+                    editingEvent.CidadeEvento = city;
+                }
+
+                cityModalInput = string.Empty;
+            });
+
+            return;
+        }
+
+        await UpdateCityAsync(editingCityOriginalName, cityModalInput);
+    }
+
+    private async Task AddGenreAsync(string genreName, Action<string> onSuccess)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var trimmedGenre = genreName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedGenre))
+        {
+            isError = true;
+            statusMessage = "Informe um genero musical para cadastrar.";
+            return;
+        }
+
+        isBusy = true;
+        statusMessage = string.Empty;
+        isError = false;
+
+        try
+        {
+            var result = await ApiClient.CreateGenreAsync(new MusicGenreCreateRequest
+            {
+                Nome = trimmedGenre
+            }, Session.AdminToken);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadGenresAsync();
+                var selectedGenre = availableGenres.FirstOrDefault(genre =>
+                    string.Equals(genre, trimmedGenre, StringComparison.OrdinalIgnoreCase)) ?? trimmedGenre;
+
+                onSuccess(selectedGenre);
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel cadastrar o genero musical agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task UpdateGenreAsync(string currentGenre, string updatedGenre)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var trimmedGenre = updatedGenre.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedGenre))
+        {
+            isError = true;
+            statusMessage = "Informe um genero musical para atualizar.";
+            return;
+        }
+
+        isBusy = true;
+        statusMessage = string.Empty;
+        isError = false;
+
+        try
+        {
+            var result = await ApiClient.UpdateGenreAsync(currentGenre, new MusicGenreCreateRequest
+            {
+                Nome = trimmedGenre
+            }, Session.AdminToken);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadGenresAsync();
+
+                if (string.Equals(eventModel.GeneroMusical, currentGenre, StringComparison.OrdinalIgnoreCase))
+                    eventModel.GeneroMusical = trimmedGenre;
+
+                if (editingEvent is not null &&
+                    string.Equals(editingEvent.GeneroMusical, currentGenre, StringComparison.OrdinalIgnoreCase))
+                {
+                    editingEvent.GeneroMusical = trimmedGenre;
+                }
+
+                editingGenreOriginalName = null;
+                genreModalInput = string.Empty;
+                await LoadAdminEvents();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel atualizar o genero musical agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleDeleteGenre(string genre)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        isBusy = true;
+        statusMessage = string.Empty;
+        isError = false;
+
+        try
+        {
+            var result = await ApiClient.DeleteGenreAsync(genre, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                if (string.Equals(editingGenreOriginalName, genre, StringComparison.OrdinalIgnoreCase))
+                    CancelGenreCatalogEdit();
+
+                await LoadGenresAsync();
+                await LoadAdminEvents();
+
+                if (string.Equals(eventModel.GeneroMusical, genre, StringComparison.OrdinalIgnoreCase))
+                    eventModel.GeneroMusical = availableGenres.FirstOrDefault() ?? string.Empty;
+
+                if (editingEvent is not null &&
+                    string.Equals(editingEvent.GeneroMusical, genre, StringComparison.OrdinalIgnoreCase))
+                {
+                    editingEvent.GeneroMusical = availableGenres.FirstOrDefault() ?? string.Empty;
+                }
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel excluir o genero musical agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task AddCityAsync(string cityName, Action<string> onSuccess)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var trimmedCity = cityName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedCity))
+        {
+            isError = true;
+            statusMessage = "Informe uma cidade para cadastrar.";
+            return;
+        }
+
+        isBusy = true;
+        statusMessage = string.Empty;
+        isError = false;
+
+        try
+        {
+            var result = await ApiClient.CreateCityAsync(new CityCreateRequest
+            {
+                Nome = trimmedCity
+            }, Session.AdminToken);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadCitiesAsync();
+                var selectedCity = availableCities.FirstOrDefault(city =>
+                    string.Equals(city, trimmedCity, StringComparison.OrdinalIgnoreCase)) ?? trimmedCity;
+
+                onSuccess(selectedCity);
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel cadastrar a cidade agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task UpdateCityAsync(string currentCity, string updatedCity)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var trimmedCity = updatedCity.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedCity))
+        {
+            isError = true;
+            statusMessage = "Informe uma cidade para atualizar.";
+            return;
+        }
+
+        isBusy = true;
+        statusMessage = string.Empty;
+        isError = false;
+
+        try
+        {
+            var result = await ApiClient.UpdateCityAsync(currentCity, new CityCreateRequest
+            {
+                Nome = trimmedCity
+            }, Session.AdminToken);
+
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadCitiesAsync();
+
+                if (string.Equals(eventModel.CidadeEvento, currentCity, StringComparison.OrdinalIgnoreCase))
+                    eventModel.CidadeEvento = trimmedCity;
+
+                if (editingEvent is not null &&
+                    string.Equals(editingEvent.CidadeEvento, currentCity, StringComparison.OrdinalIgnoreCase))
+                {
+                    editingEvent.CidadeEvento = trimmedCity;
+                }
+
+                editingCityOriginalName = null;
+                cityModalInput = string.Empty;
+                await LoadAdminEvents();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel atualizar a cidade agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleDeleteCity(string city)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        isBusy = true;
+        statusMessage = string.Empty;
+        isError = false;
+
+        try
+        {
+            var result = await ApiClient.DeleteCityAsync(city, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                if (string.Equals(editingCityOriginalName, city, StringComparison.OrdinalIgnoreCase))
+                    CancelCityCatalogEdit();
+
+                await LoadCitiesAsync();
+                await LoadAdminEvents();
+
+                if (string.Equals(eventModel.CidadeEvento, city, StringComparison.OrdinalIgnoreCase))
+                    eventModel.CidadeEvento = availableCities.FirstOrDefault() ?? string.Empty;
+
+                if (editingEvent is not null &&
+                    string.Equals(editingEvent.CidadeEvento, city, StringComparison.OrdinalIgnoreCase))
+                {
+                    editingEvent.CidadeEvento = availableCities.FirstOrDefault() ?? string.Empty;
+                }
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Nao foi possivel excluir a cidade agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
     }
 
     private async Task HandleEditImageSelected(InputFileChangeEventArgs args)

@@ -15,18 +15,18 @@
             <p>
                 @if (Session.CurrentUser is not null)
                 {
-                    <span>Bem-vindo, <strong>@Session.CurrentUser.Nome</strong>. Explore a agenda, compare opcoes e siga para os detalhes do evento.</span>
+                    <span>Bem-vindo, <strong>@Session.CurrentUser.Nome</strong>. Explore a agenda, compare opções e siga para os detalhes do evento.</span>
                 }
                 else
                 {
-                    <span>Confira eventos recomendados, veja os destaques da agenda e encontre a melhor opcao para voce.</span>
+                    <span>Confira eventos recomendados, veja os destaques da agenda e encontre a melhor opção para você.</span>
                 }
             </p>
 
             <div class="events-hero__search">
                 <div>
                     <span>Busca rapida</span>
-                    <strong>Shows, festivais, experiencias e ingressos em destaque</strong>
+                    <strong>Shows, festivais, experiências e ingressos em destaque</strong>
                 </div>
                 <button class="search-button" type="button" @onclick="ResetFilters">Limpar filtros</button>
             </div>
@@ -47,11 +47,11 @@
     <section class="events-highlight">
         <article class="highlight-panel">
             <span class="eyebrow">Escolha melhor</span>
-            <strong>Cards grandes, informacao clara e caminho rapido para ver os ingressos.</strong>
+            <strong>Cards grandes, informação clara e caminho rápido para ver os ingressos.</strong>
         </article>
         <article class="highlight-panel highlight-panel--dark">
-            <span class="eyebrow">Proximo passo</span>
-            <strong>Clique em um evento para abrir a pagina de detalhes e seguir para os assentos.</strong>
+            <span class="eyebrow">Próximo passo</span>
+            <strong>Clique em um evento para abrir a página de detalhes e seguir para os assentos.</strong>
         </article>
     </section>
 
@@ -87,7 +87,7 @@
             </select>
         </div>
         <div class="field">
-            <label for="filtroGenero">Genero musical</label>
+            <label for="filtroGenero">Gênero musical</label>
             <select id="filtroGenero" class="field__input" @bind="selectedGenre">
                 <option value="">Todos</option>
                 @foreach (var genre in availableGenres)
@@ -179,7 +179,7 @@
         }
         catch
         {
-            errorMessage = "Nao foi possivel carregar a agenda neste momento. Tente novamente em instantes.";
+            errorMessage = "Não foi possível carregar a agenda neste momento. Tente novamente em instantes.";
         }
         finally
         {
@@ -243,15 +243,15 @@
         var name = item.GeneroMusical.ToLowerInvariant();
 
         if (name.Contains("festival"))
-            return "Um encontro para viver grandes shows, ativações de marca e uma atmosfera vibrante do inicio ao fim.";
+            return "Um encontro para viver grandes shows, ativações de marca e uma atmosfera vibrante do início ao fim.";
         if (name.Contains("rock"))
-            return "Guitarras, luzes e uma producao intensa para quem quer sentir a energia da pista.";
+            return "Guitarras, luzes e uma produção intensa para quem quer sentir a energia da pista.";
         if (name.Contains("pop"))
-            return "Performance cenica, repertorio de hits e uma experiencia perfeita para cantar cada faixa.";
+            return "Performance cênica, repertório de hits e uma experiência perfeita para cantar cada faixa.";
         if (name.Contains("samba"))
-            return "Um clima elegante e envolvente para curtir musica ao vivo com conforto e boa companhia.";
+            return "Um clima elegante e envolvente para curtir música ao vivo com conforto e boa companhia.";
 
-        return "Uma noite especial para quem ama musica ao vivo e quer garantir seu lugar com antecedencia.";
+        return "Uma noite especial para quem ama música ao vivo e quer garantir seu lugar com antecedência.";
     }
 
     private static string GetDayLabel(DayOfWeek dayOfWeek)
@@ -260,11 +260,11 @@
         {
             DayOfWeek.Sunday => "Domingo",
             DayOfWeek.Monday => "Segunda-feira",
-            DayOfWeek.Tuesday => "Terca-feira",
+            DayOfWeek.Tuesday => "Terça-feira",
             DayOfWeek.Wednesday => "Quarta-feira",
             DayOfWeek.Thursday => "Quinta-feira",
             DayOfWeek.Friday => "Sexta-feira",
-            DayOfWeek.Saturday => "Sabado",
+            DayOfWeek.Saturday => "Sábado",
             _ => string.Empty
         };
     }

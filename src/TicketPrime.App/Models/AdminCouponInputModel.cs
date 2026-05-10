@@ -4,7 +4,7 @@ namespace TicketPrime.App.Models;
 
 public class AdminCouponInputModel
 {
-    [Required(ErrorMessage = "Informe o codigo do cupom.")]
+    [Required(ErrorMessage = "Informe o código do cupom.")]
     public string Codigo { get; set; } = string.Empty;
 
     [Range(1, 100, ErrorMessage = "Informe um percentual valido.")]
