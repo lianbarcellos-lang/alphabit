@@ -1,43 +1,48 @@
-# Integrantes:
+# Integrantes
 
-João Victor Guimarães - 06006067
-Juarez Costa - 06004451
-Julio Henrique Oliveira Carvalho - 06010951
-Maurício Alves de Barros Neto - 06014054
-Raphael Leon Ramos da Silva - 06004469
+- Raphael Leon Ramos da Silva - 06004469
+- Joao Victor Guimaraes - 06006067
+- Mauricio Alves de Barros Neto - 06014054
+- Juarez Costa - 06004451
+- Julio Henrique Oliveira Carvalho - 06010951
 
 # TicketPrime
 
-API e interface Blazor para venda e gestao de ingressos de eventos musicais.
+API em .NET 9 com Dapper, SQLite e interface Blazor Server para venda de ingressos de eventos musicais.
 
 ## Estrutura do repositorio
 
-- `docs`: documentos de requisitos, arquitetura e operacao
+- `docs`: requisitos, operacao e arquitetura
 - `db`: script SQL manual
-- `src`: codigo-fonte da API e do Blazor
+- `src`: API e interface Blazor
 - `tests`: testes automatizados com xUnit
 
-## Funcionalidades implementadas
+## Funcionalidades atuais
 
-- cadastro basico de usuario por `CPF`, `nome` e `email` em `POST /api/usuarios`
-- cadastro e login de cliente com senha
-- login administrativo com `admin / admin`
-- cadastro, listagem, edicao e exclusao de eventos
-- cadastro, listagem, edicao e exclusao de cupons
-- carrinho de compras
-- selecao de assentos por evento
-- pre-visualizacao de cupom no carrinho com desconto e total final
-- finalizacao de compra com reservas
-- consulta de reservas por CPF
-- protecao de acesso nas rotas sensiveis de usuarios e reservas
-- validacao de capacidade do evento
-- limite de 2 reservas por CPF no mesmo evento
-- aplicacao de cupom com valor minimo
-- filtros por cidade, dia da semana, artista e genero musical
-- consultas com Dapper parametrizado
-- testes automatizados com `Assert`
+- cadastro basico de usuario em `POST /api/usuarios`
+- cadastro completo de cliente com senha
+- login de cliente por email ou CPF
+- login administrativo
+- recuperacao de senha por codigo enviado por email
+- perfil do cliente com dados pessoais
+- listagem publica de eventos
+- detalhe do evento
+- selecao de assentos
+- carrinho com pre-visualizacao de cupom
+- selecao de forma de pagamento no carrinho
+- finalizacao de compra
+- consulta protegida de reservas
+- cadastro, edicao e exclusao de eventos
+- cadastro, edicao e exclusao de cupons
+- catalogo administrativo de cidades
+- catalogo administrativo de generos musicais
+- painel administrativo com duas visoes: controle de ingressos e relatorio de vendas
+- dashboard comercial com totais, ranking de shows e ultimas compras
+- filtros por cidade, artista, genero musical e dia da semana
+- Dapper com parametros nomeados
+- testes automatizados com Assert
 
-## Como rodar a API
+## Como rodar a API localmente
 
 Antes de subir a API com recuperacao de senha por Gmail, configure os segredos locais do projeto:
 
@@ -49,6 +54,8 @@ dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_V
 dotnet user-secrets --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj" set "EmailSettings:SenderName" "TicketPrime"
 ```
 
+Depois rode:
+
 ```powershell
 dotnet run --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj"
 ```
@@ -57,7 +64,7 @@ API disponivel em:
 
 - `http://localhost:5238`
 
-## Como rodar o Blazor
+## Como rodar o Blazor localmente
 
 ```powershell
 dotnet run --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.App\TicketPrime.App.csproj"
@@ -69,7 +76,7 @@ Site disponivel em:
 
 ## Como rodar os testes
 
-Feche a API e o Blazor antes de executar os testes para evitar bloqueio dos arquivos.
+Feche API e Blazor antes dos testes para evitar bloqueio de arquivos.
 
 ```powershell
 dotnet test "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\tests\TicketPrime.Tests\TicketPrime.Tests.csproj" --no-restore
@@ -80,23 +87,13 @@ Resultado validado:
 - `19` testes aprovados
 - `0` falhas
 
-## Publicacao no Railway
+## Deploy no Railway
 
-Para publicar no Railway sem quebrar o sistema, configure:
+O projeto foi ajustado para deploy no Railway sem prender a aplicacao ao `localhost`.
 
-- um servico para a API
-- um servico para o Blazor
-- um volume persistente ligado na API
+### API no Railway
 
-### Volume da API
-
-Monte um volume na API. O Railway fornece automaticamente a variavel:
-
-- `RAILWAY_VOLUME_MOUNT_PATH`
-
-A API ja usa esse caminho quando ele existir e salva o banco SQLite dentro dele.
-
-### Variaveis da API no Railway
+Configure estas variaveis:
 
 - `AdminAccess__Token`
 - `AdminAccess__Login`
@@ -107,36 +104,48 @@ A API ja usa esse caminho quando ele existir e salva o banco SQLite dentro dele.
 - `EmailSettings__AppPassword`
 - `EmailSettings__SenderName`
 
-### Variavel do Blazor no Railway
+Se for usar envio por API HTTP em vez de SMTP:
+
+- `EmailApiSettings__BaseUrl`
+- `EmailApiSettings__ApiKey`
+- `EmailApiSettings__SenderEmail`
+- `EmailApiSettings__SenderName`
+
+A API suporta volume persistente automaticamente por `RAILWAY_VOLUME_MOUNT_PATH`.
+
+### App no Railway
+
+Configure:
 
 - `TicketPrimeApi__BaseUrl`
 
 Exemplo:
 
-- URL publica da API: `https://sua-api.up.railway.app/`
-- valor no App: `TicketPrimeApi__BaseUrl=https://sua-api.up.railway.app/`
+- `TicketPrimeApi__BaseUrl=https://sua-api.up.railway.app/`
 
-### Recuperacao de senha
+### Recuperacao de senha em producao
 
-O fluxo `Esqueci minha senha` funciona no Railway desde que:
+O fluxo `Esqueci minha senha` funciona em producao desde que:
 
 - o Gmail SMTP esteja configurado nas variaveis da API
-- a conta Gmail use `App Password`
-- o banco esteja em volume persistente para guardar os codigos de redefinicao
+- ou exista um provedor HTTP configurado em `EmailApiSettings__...`
+- a API esteja com volume persistente para manter banco e codigos de redefinicao
 
 ## Endpoints principais
 
 ### Usuarios e autenticacao
 
 - `POST /api/usuarios`
-- `POST /api/auth/usuarios/cadastro`
-- `POST /api/auth/usuarios/login`
-- `POST /api/auth/admin/login`
-- `GET /api/usuarios` - protegido para administrador
+- `GET /api/usuarios`
 - `GET /api/usuarios/{cpf}/perfil`
 - `PUT /api/usuarios/{cpf}/perfil`
+- `POST /api/auth/usuarios/cadastro`
+- `POST /api/auth/usuarios/login`
+- `POST /api/auth/usuarios/recuperar-senha`
+- `POST /api/auth/usuarios/redefinir-senha`
+- `POST /api/auth/admin/login`
 
-### Eventos
+### Eventos e catalogos administrativos
 
 - `GET /api/eventos`
 - `GET /api/eventos/{id}`
@@ -144,21 +153,30 @@ O fluxo `Esqueci minha senha` funciona no Railway desde que:
 - `GET /api/admin/eventos`
 - `PUT /api/admin/eventos/{id}`
 - `DELETE /api/admin/eventos/{id}`
+- `GET /api/admin/generos`
+- `POST /api/admin/generos`
+- `PUT /api/admin/generos/{nomeAtual}`
+- `DELETE /api/admin/generos/{nomeAtual}`
+- `GET /api/admin/cidades`
+- `POST /api/admin/cidades`
+- `PUT /api/admin/cidades/{nomeAtual}`
+- `DELETE /api/admin/cidades/{nomeAtual}`
+- `GET /api/admin/vendas/dashboard`
 
 ### Cupons
 
 - `POST /api/cupons`
+- `POST /api/cupons/preview`
 - `GET /api/admin/cupons`
 - `PUT /api/admin/cupons/{codigo}`
 - `DELETE /api/admin/cupons/{codigo}`
-- `POST /api/cupons/preview`
 
 ### Reservas
 
 - `POST /api/reservas`
-- `GET /api/reservas/{cpf}` - protegido para o proprio cliente ou administrador
+- `GET /api/reservas/{cpf}`
 
-## Regras de negocio implementadas
+## Regras de negocio principais
 
 - nao cadastrar usuario com CPF duplicado
 - nao cadastrar usuario com email duplicado
@@ -166,9 +184,11 @@ O fluxo `Esqueci minha senha` funciona no Railway desde que:
 - validar existencia de usuario e evento antes da reserva
 - limitar a 2 reservas por CPF no mesmo evento
 - bloquear venda acima da capacidade do evento
-- aplicar cupom somente quando o valor do evento atende ao minimo exigido
-- mostrar pre-visualizacao do desconto antes da finalizacao da compra
-- exigir autenticacao nas rotas sensiveis de perfil, usuarios e reservas
+- aplicar cupom apenas quando o valor minimo for atendido
+- registrar forma de pagamento, status e codigo do pedido em cada compra
+- proteger perfil, usuarios e reservas por autenticacao
+- manter codigo de redefinicao temporario, com expiracao e bloqueio por tentativas
+- converter datas de compra para o horario de Brasilia no historico e no relatorio
 
 ## Credenciais de demonstracao
 
@@ -179,19 +199,12 @@ O fluxo `Esqueci minha senha` funciona no Railway desde que:
 
 ### Cliente
 
-- pode criar conta completa na tela inicial do sistema
-- pode concluir o primeiro acesso depois do cadastro basico da rota `POST /api/usuarios`
+- pode criar conta pelo fluxo de cadastro da tela inicial
+- pode concluir o primeiro acesso depois do cadastro basico de `POST /api/usuarios`
 
 ## Documentacao complementar
 
-- requisitos: `docs/requisitos.md`
-- adr: `docs/adr.md`
-- operacao: `docs/operacao.md`
-- checklist final: `release_checklist_final.md`
-
-## Observacoes da AV2
-
-- `GET /api/reservas/{cpf}` utiliza `INNER JOIN` para retornar o nome do evento
-- `POST /api/reservas` aplica integridade, limite por `CPF + EventoId`, capacidade e motor de cupons
-- credenciais e token administrativos sao lidos de `appsettings.json` e `appsettings.Development.json`, sem fallback sensivel no `.cs`
-- as rotas sensiveis da API foram protegidas com verificacao de acesso por cliente ou administrador
+- [requisitos.md](C:\Users\rapha\OneDrive\Área%20de%20Trabalho\Curso_Video\TicketPrime%20(1)\TicketPrime\docs\requisitos.md)
+- [adr.md](C:\Users\rapha\OneDrive\Área%20de%20Trabalho\Curso_Video\TicketPrime%20(1)\TicketPrime\docs\adr.md)
+- [operacao.md](C:\Users\rapha\OneDrive\Área%20de%20Trabalho\Curso_Video\TicketPrime%20(1)\TicketPrime\docs\operacao.md)
+- [release_checklist_final.md](C:\Users\rapha\OneDrive\Área%20de%20Trabalho\Curso_Video\TicketPrime%20(1)\TicketPrime\release_checklist_final.md)

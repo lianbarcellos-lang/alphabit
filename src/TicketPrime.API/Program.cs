@@ -2,10 +2,13 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using System.Net;
 using System.Net.Mail;
+using System.Text;
+using System.Text.Json;
 using TicketPrime.API;
 using TicketPrime.API.modelos;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
 var app = builder.Build();
 
 var adminToken = GetRequiredConfiguration(builder.Configuration, "AdminAccess:Token");
@@ -16,6 +19,10 @@ var smtpPort = int.TryParse(builder.Configuration["EmailSettings:SmtpPort"], out
 var smtpUser = builder.Configuration["EmailSettings:SenderEmail"];
 var smtpPassword = builder.Configuration["EmailSettings:AppPassword"];
 var smtpDisplayName = builder.Configuration["EmailSettings:SenderName"] ?? "TicketPrime";
+var emailApiBaseUrl = builder.Configuration["EmailApiSettings:BaseUrl"];
+var emailApiKey = builder.Configuration["EmailApiSettings:ApiKey"];
+var emailApiSenderEmail = builder.Configuration["EmailApiSettings:SenderEmail"];
+var emailApiSenderName = builder.Configuration["EmailApiSettings:SenderName"] ?? "TicketPrime";
 
 var legacyDbPath = Path.Combine(builder.Environment.ContentRootPath, "db", "TicketPrime.db");
 var configuredDbDirectory = builder.Configuration["DatabaseSettings:Directory"];
@@ -315,7 +322,7 @@ app.MapPost("/api/auth/usuarios/login", (UsuarioLoginRequest request) =>
     });
 });
 
-app.MapPost("/api/auth/usuarios/recuperar-senha", async (UsuarioRecuperacaoSenhaRequest request) =>
+app.MapPost("/api/auth/usuarios/recuperar-senha", async (UsuarioRecuperacaoSenhaRequest request, IHttpClientFactory httpClientFactory) =>
 {
     if (string.IsNullOrWhiteSpace(request.Login))
         return Results.BadRequest(new RecuperacaoSenhaResponse
@@ -324,7 +331,7 @@ app.MapPost("/api/auth/usuarios/recuperar-senha", async (UsuarioRecuperacaoSenha
             Mensagem = "Informe o e-mail ou CPF da conta."
         });
 
-    if (!CanSendPasswordResetEmail(smtpHost, smtpUser, smtpPassword))
+    if (!CanSendPasswordResetEmail(emailApiBaseUrl, emailApiKey, emailApiSenderEmail, smtpHost, smtpUser, smtpPassword))
         return Results.BadRequest(new RecuperacaoSenhaResponse
         {
             Sucesso = false,
@@ -384,15 +391,30 @@ Se você não solicitou a redefinição, ignore esta mensagem.
 
     try
     {
-        await SendPasswordResetEmailAsync(
-            smtpHost!,
-            smtpPort,
-            smtpUser!,
-            smtpPassword!,
-            smtpDisplayName,
-            usuario.Email,
-            "TicketPrime - Código para redefinir senha",
-            corpo);
+        if (CanSendPasswordResetEmailApi(emailApiBaseUrl, emailApiKey, emailApiSenderEmail))
+        {
+            await SendPasswordResetEmailByApiAsync(
+                httpClientFactory.CreateClient(),
+                emailApiBaseUrl!,
+                emailApiKey!,
+                emailApiSenderEmail!,
+                emailApiSenderName,
+                usuario.Email,
+                "TicketPrime - Código para redefinir senha",
+                corpo);
+        }
+        else
+        {
+            await SendPasswordResetEmailBySmtpAsync(
+                smtpHost!,
+                smtpPort,
+                smtpUser!,
+                smtpPassword!,
+                smtpDisplayName,
+                usuario.Email,
+                "TicketPrime - Código para redefinir senha",
+                corpo);
+        }
     }
     catch (SmtpException)
     {
@@ -1816,7 +1838,26 @@ static string GetRequiredConfiguration(IConfiguration configuration, string key)
     return value;
 }
 
-static bool CanSendPasswordResetEmail(string? smtpHost, string? smtpUser, string? smtpPassword)
+static bool CanSendPasswordResetEmail(
+    string? emailApiBaseUrl,
+    string? emailApiKey,
+    string? emailApiSenderEmail,
+    string? smtpHost,
+    string? smtpUser,
+    string? smtpPassword)
+{
+    return CanSendPasswordResetEmailApi(emailApiBaseUrl, emailApiKey, emailApiSenderEmail) ||
+           CanSendPasswordResetEmailSmtp(smtpHost, smtpUser, smtpPassword);
+}
+
+static bool CanSendPasswordResetEmailApi(string? emailApiBaseUrl, string? emailApiKey, string? emailApiSenderEmail)
+{
+    return !string.IsNullOrWhiteSpace(emailApiBaseUrl) &&
+           !string.IsNullOrWhiteSpace(emailApiKey) &&
+           !string.IsNullOrWhiteSpace(emailApiSenderEmail);
+}
+
+static bool CanSendPasswordResetEmailSmtp(string? smtpHost, string? smtpUser, string? smtpPassword)
 {
     return !string.IsNullOrWhiteSpace(smtpHost) &&
            !string.IsNullOrWhiteSpace(smtpUser) &&
@@ -1840,7 +1881,40 @@ static string MaskEmail(string email)
     return $"{visiblePrefix}{new string('*', Math.Max(2, localPart.Length - visiblePrefix.Length))}{domain}";
 }
 
-static async Task SendPasswordResetEmailAsync(
+static async Task SendPasswordResetEmailByApiAsync(
+    HttpClient httpClient,
+    string baseUrl,
+    string apiKey,
+    string senderEmail,
+    string senderName,
+    string recipientEmail,
+    string subject,
+    string body)
+{
+    var payload = new
+    {
+        from = $"{senderName} <{senderEmail}>",
+        to = new[] { recipientEmail },
+        subject,
+        text = body
+    };
+
+    using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/emails")
+    {
+        Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+    };
+    request.Headers.Add("Authorization", $"Bearer {apiKey}");
+
+    using var response = await httpClient.SendAsync(request);
+    if (!response.IsSuccessStatusCode)
+    {
+        var errorContent = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException(
+            $"Falha ao enviar e-mail por API. Status: {(int)response.StatusCode}. Resposta: {errorContent}");
+    }
+}
+
+static async Task SendPasswordResetEmailBySmtpAsync(
     string smtpHost,
     int smtpPort,
     string smtpUser,
