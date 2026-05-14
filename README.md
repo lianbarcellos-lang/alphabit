@@ -5,6 +5,7 @@
 - Mauricio Alves de Barros Neto - 06014054
 - Juarez Costa - 06004451
 - Julio Henrique Oliveira Carvalho - 06010951
+- Lian da Silva - 06010870
 
 # TicketPrime
 
