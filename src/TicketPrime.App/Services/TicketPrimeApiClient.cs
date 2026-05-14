@@ -233,6 +233,18 @@ public class TicketPrimeApiClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<List<CouponViewModel>>() ?? [];
     }
 
+    public async Task<AdminSalesDashboardViewModel?> GetAdminSalesDashboardAsync(string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Get, "api/admin/vendas/dashboard");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<AdminSalesDashboardViewModel>();
+    }
+
     public async Task<ApiResult> UpdateCouponAsync(string codigo, CouponCreateRequest request, string adminToken)
     {
         using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/cupons/{Uri.EscapeDataString(codigo)}")

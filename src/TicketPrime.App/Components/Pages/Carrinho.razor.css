@@ -115,6 +115,11 @@
     color: #11213f;
 }
 
+.cart-panel--summary select.field__input {
+    appearance: none;
+    cursor: pointer;
+}
+
 .summary-row {
     display: flex;
     justify-content: space-between;

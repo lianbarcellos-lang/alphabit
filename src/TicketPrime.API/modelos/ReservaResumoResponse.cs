@@ -11,5 +11,8 @@ public class ReservaResumoResponse
     public int Quantidade { get; set; }
     public decimal PrecoUnitario { get; set; }
     public decimal ValorFinalPago { get; set; }
+    public string FormaPagamento { get; set; } = "Pix";
+    public string StatusPagamento { get; set; } = "Pago";
+    public string CodigoPedido { get; set; } = string.Empty;
     public DateTime DataReserva { get; set; }
 }

@@ -32,12 +32,12 @@ API em .NET 9 com Dapper, SQLite e interface Blazor Server para venda de ingress
 - selecao de forma de pagamento no carrinho
 - finalizacao de compra
 - consulta protegida de reservas
+- painel administrativo com duas visoes: controle de ingressos e relatorio de vendas
+- dashboard administrativo de vendas com cards, ranking de shows e ultimas compras
 - cadastro, edicao e exclusao de eventos
 - cadastro, edicao e exclusao de cupons
 - catalogo administrativo de cidades
 - catalogo administrativo de generos musicais
-- painel administrativo com duas visoes: controle de ingressos e relatorio de vendas
-- dashboard comercial com totais, ranking de shows e ultimas compras
 - filtros por cidade, artista, genero musical e dia da semana
 - Dapper com parametros nomeados
 - testes automatizados com Assert

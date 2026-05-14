@@ -119,6 +119,9 @@ using (var connection = new SqliteConnection(connectionString))
             Quantidade INTEGER NOT NULL DEFAULT 1,
             PrecoUnitario REAL NOT NULL DEFAULT 0,
             ValorFinalPago REAL NOT NULL,
+            FormaPagamento TEXT NOT NULL DEFAULT 'Pix',
+            StatusPagamento TEXT NOT NULL DEFAULT 'Pago',
+            CodigoPedido TEXT NOT NULL DEFAULT '',
             DataReserva TEXT NOT NULL DEFAULT '',
             FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE,
             FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE,
@@ -1447,6 +1450,8 @@ app.MapPost("/api/reservas", (ReservaCheckoutRequest request) =>
     decimal totalOriginal = 0;
     decimal totalComDesconto = 0;
     var reservasParaInserir = new List<Reserva>();
+    var formaPagamento = NormalizePaymentMethod(request.FormaPagamento);
+    var statusPagamento = DeterminePaymentStatus(formaPagamento);
 
     foreach (var item in request.Itens)
     {
@@ -1471,6 +1476,9 @@ app.MapPost("/api/reservas", (ReservaCheckoutRequest request) =>
             Quantidade = item.Quantidade,
             PrecoUnitario = evento.PrecoPadrao,
             ValorFinalPago = decimal.Round(subtotalComDesconto, 2),
+            FormaPagamento = formaPagamento,
+            StatusPagamento = statusPagamento,
+            CodigoPedido = GenerateOrderCode(),
             DataReserva = DateTime.UtcNow
         });
     }
@@ -1480,8 +1488,8 @@ app.MapPost("/api/reservas", (ReservaCheckoutRequest request) =>
     foreach (var reserva in reservasParaInserir)
     {
         connection.Execute(@"
-            INSERT INTO Reservas (UsuarioCpf, EventoId, CupomUtilizado, Assentos, Quantidade, PrecoUnitario, ValorFinalPago, DataReserva)
-            VALUES (@UsuarioCpf, @EventoId, @CupomUtilizado, @Assentos, @Quantidade, @PrecoUnitario, @ValorFinalPago, @DataReserva)",
+            INSERT INTO Reservas (UsuarioCpf, EventoId, CupomUtilizado, Assentos, Quantidade, PrecoUnitario, ValorFinalPago, FormaPagamento, StatusPagamento, CodigoPedido, DataReserva)
+            VALUES (@UsuarioCpf, @EventoId, @CupomUtilizado, @Assentos, @Quantidade, @PrecoUnitario, @ValorFinalPago, @FormaPagamento, @StatusPagamento, @CodigoPedido, @DataReserva)",
             new
             {
                 reserva.UsuarioCpf,
@@ -1491,6 +1499,9 @@ app.MapPost("/api/reservas", (ReservaCheckoutRequest request) =>
                 reserva.Quantidade,
                 reserva.PrecoUnitario,
                 reserva.ValorFinalPago,
+                reserva.FormaPagamento,
+                reserva.StatusPagamento,
+                reserva.CodigoPedido,
                 DataReserva = reserva.DataReserva.ToString("s")
             }, transaction);
     }
@@ -1545,13 +1556,95 @@ app.MapGet("/api/reservas/{cpf}", (string cpf, HttpContext httpContext) =>
             r.Quantidade,
             r.PrecoUnitario,
             r.ValorFinalPago,
+            COALESCE(r.FormaPagamento, 'Pix') AS FormaPagamento,
+            COALESCE(r.StatusPagamento, 'Pago') AS StatusPagamento,
+            COALESCE(r.CodigoPedido, '') AS CodigoPedido,
             r.DataReserva
         FROM Reservas r
         INNER JOIN Eventos e ON e.Id = r.EventoId
         WHERE r.UsuarioCpf = @cpf
         ORDER BY r.DataReserva DESC", new { cpf }).ToList();
 
+    foreach (var reserva in reservas)
+    {
+        reserva.DataReserva = ConvertUtcLikeToBrasilia(reserva.DataReserva);
+    }
+
     return Results.Ok(reservas);
+});
+
+app.MapGet("/api/admin/vendas/dashboard", (HttpContext httpContext) =>
+{
+    var accessResult = EnsureAdminAccess(httpContext);
+    if (accessResult is not null)
+        return accessResult;
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var compras = connection.Query<AdminSaleResponse>(@"
+        SELECT
+            r.Id,
+            u.Nome AS Cliente,
+            u.Email AS ClienteEmail,
+            r.UsuarioCpf AS ClienteCpf,
+            e.Nome AS Show,
+            r.DataReserva AS DataCompra,
+            COALESCE(NULLIF(r.FormaPagamento, ''), 'Pix') AS FormaPagamento,
+            COALESCE(NULLIF(r.StatusPagamento, ''), 'Pago') AS StatusPagamento,
+            r.ValorFinalPago AS ValorPago,
+            r.Quantidade AS QuantidadeIngressos,
+            CASE
+                WHEN trim(COALESCE(r.Assentos, '')) <> '' THEN r.Assentos
+                ELSE 'Lote unico'
+            END AS SetorCadeiraLote,
+            COALESCE(r.CodigoPedido, '') AS CodigoPedido
+        FROM Reservas r
+        INNER JOIN Usuarios u ON u.Cpf = r.UsuarioCpf
+        INNER JOIN Eventos e ON e.Id = r.EventoId
+        ORDER BY r.DataReserva DESC").ToList();
+
+    foreach (var compra in compras)
+    {
+        compra.DataCompra = ConvertUtcLikeToBrasilia(compra.DataCompra);
+    }
+
+    var hoje = ConvertUtcLikeToBrasilia(DateTime.UtcNow).Date;
+    var totalVendidoHoje = compras
+        .Where(compra => compra.DataCompra.Date == hoje)
+        .Sum(compra => compra.ValorPago);
+
+    var totalIngressosVendidos = compras.Sum(compra => compra.QuantidadeIngressos);
+    var pagamentosPix = compras.Count(compra => string.Equals(compra.FormaPagamento, "Pix", StringComparison.OrdinalIgnoreCase));
+    var pagamentosCartao = compras.Count(compra => string.Equals(compra.FormaPagamento, "Cartao", StringComparison.OrdinalIgnoreCase));
+    var pagamentosBoleto = compras.Count(compra => string.Equals(compra.FormaPagamento, "Boleto", StringComparison.OrdinalIgnoreCase));
+
+    var showsMaisVendidos = compras
+        .GroupBy(compra => compra.Show)
+        .Select(group => new AdminTopShowResponse
+        {
+            Show = group.Key,
+            IngressosVendidos = group.Sum(item => item.QuantidadeIngressos),
+            ValorArrecadado = group.Sum(item => item.ValorPago)
+        })
+        .OrderByDescending(item => item.IngressosVendidos)
+        .ThenByDescending(item => item.ValorArrecadado)
+        .Take(5)
+        .ToList();
+
+    var dashboard = new AdminSalesDashboardResponse
+    {
+        TotalVendidoHoje = decimal.Round(totalVendidoHoje, 2),
+        TotalIngressosVendidos = totalIngressosVendidos,
+        PagamentosPix = pagamentosPix,
+        PagamentosCartao = pagamentosCartao,
+        PagamentosBoleto = pagamentosBoleto,
+        Compras = compras,
+        UltimasCompras = compras.Take(5).ToList(),
+        ShowsMaisVendidos = showsMaisVendidos
+    };
+
+    return Results.Ok(dashboard);
 });
 
 app.Run();
@@ -1605,6 +1698,9 @@ static void EnsureReservasSchema(SqliteConnection connection)
     EnsureColumnExists(connection, "Reservas", "PrecoUnitario", "REAL NOT NULL DEFAULT 0");
     EnsureColumnExists(connection, "Reservas", "DataReserva", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Reservas", "Assentos", "TEXT NOT NULL DEFAULT ''");
+    EnsureColumnExists(connection, "Reservas", "FormaPagamento", "TEXT NOT NULL DEFAULT 'Pix'");
+    EnsureColumnExists(connection, "Reservas", "StatusPagamento", "TEXT NOT NULL DEFAULT 'Pago'");
+    EnsureColumnExists(connection, "Reservas", "CodigoPedido", "TEXT NOT NULL DEFAULT ''");
 
     var foreignKeys = connection.Query<(int Id, int Seq, string Table, string From, string To, string OnUpdate, string OnDelete, string Match)>(
         "PRAGMA foreign_key_list(Reservas)");
@@ -1638,6 +1734,9 @@ static void EnsureReservasSchema(SqliteConnection connection)
             Quantidade INTEGER NOT NULL DEFAULT 1,
             PrecoUnitario REAL NOT NULL DEFAULT 0,
             ValorFinalPago REAL NOT NULL,
+            FormaPagamento TEXT NOT NULL DEFAULT 'Pix',
+            StatusPagamento TEXT NOT NULL DEFAULT 'Pago',
+            CodigoPedido TEXT NOT NULL DEFAULT '',
             DataReserva TEXT NOT NULL DEFAULT '',
             FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE,
             FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE,
@@ -1645,7 +1744,7 @@ static void EnsureReservasSchema(SqliteConnection connection)
         );", transaction: transaction);
 
     connection.Execute(@"
-        INSERT INTO Reservas_new (Id, UsuarioCpf, EventoId, CupomUtilizado, Assentos, Quantidade, PrecoUnitario, ValorFinalPago, DataReserva)
+        INSERT INTO Reservas_new (Id, UsuarioCpf, EventoId, CupomUtilizado, Assentos, Quantidade, PrecoUnitario, ValorFinalPago, FormaPagamento, StatusPagamento, CodigoPedido, DataReserva)
         SELECT
             Id,
             UsuarioCpf,
@@ -1655,6 +1754,9 @@ static void EnsureReservasSchema(SqliteConnection connection)
             COALESCE(Quantidade, 1),
             COALESCE(PrecoUnitario, 0),
             ValorFinalPago,
+            COALESCE(NULLIF(FormaPagamento, ''), 'Pix'),
+            COALESCE(NULLIF(StatusPagamento, ''), 'Pago'),
+            COALESCE(CodigoPedido, ''),
             COALESCE(DataReserva, '')
         FROM Reservas;", transaction: transaction);
 
@@ -1867,6 +1969,54 @@ static bool CanSendPasswordResetEmailSmtp(string? smtpHost, string? smtpUser, st
 static string GenerateResetCode()
 {
     return Random.Shared.Next(100000, 999999).ToString();
+}
+
+static string NormalizePaymentMethod(string? paymentMethod)
+{
+    var normalized = paymentMethod?.Trim().ToLowerInvariant();
+
+    return normalized switch
+    {
+        "cartao" or "cartão" => "Cartao",
+        "boleto" => "Boleto",
+        _ => "Pix"
+    };
+}
+
+static string DeterminePaymentStatus(string paymentMethod)
+{
+    return string.Equals(paymentMethod, "Boleto", StringComparison.OrdinalIgnoreCase)
+        ? "Pendente"
+        : "Pago";
+}
+
+static string GenerateOrderCode()
+{
+    return $"TP-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(100000, 999999)}";
+}
+
+static DateTime ConvertUtcLikeToBrasilia(DateTime value)
+{
+    var utcValue = value.Kind switch
+    {
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+    };
+
+    return TimeZoneInfo.ConvertTimeFromUtc(utcValue, GetBrasiliaTimeZone());
+}
+
+static TimeZoneInfo GetBrasiliaTimeZone()
+{
+    try
+    {
+        return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+    }
+    catch (TimeZoneNotFoundException)
+    {
+        return TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+    }
 }
 
 static string MaskEmail(string email)

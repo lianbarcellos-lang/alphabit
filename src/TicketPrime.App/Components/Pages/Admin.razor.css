@@ -51,6 +51,42 @@
     font-weight: 700;
 }
 
+.admin-view-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 0.2rem;
+}
+
+.admin-view-switcher .ghost-button,
+.admin-view-switcher .secondary-button {
+    min-height: 3.65rem;
+    padding: 0.95rem 1.45rem;
+    border-radius: 1.2rem;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    box-shadow: 0 14px 30px rgba(9, 20, 39, 0.14);
+}
+
+.admin-view-switcher .ghost-button {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(7, 40, 89, 0.34);
+    color: #e8f1ff;
+}
+
+.admin-view-switcher .ghost-button:hover {
+    background: rgba(7, 40, 89, 0.48);
+    transform: translateY(-1px);
+}
+
+.admin-view-switcher .secondary-button {
+    border: 1px solid rgba(108, 184, 255, 0.38);
+    background: linear-gradient(135deg, #1f87ff 0%, #0b63d8 100%);
+    color: #fff;
+    box-shadow: 0 18px 34px rgba(11, 99, 216, 0.28);
+}
+
 .admin-hero__actions {
     display: grid;
     align-content: space-between;
@@ -446,6 +482,137 @@
 .admin-panel--list {
     display: grid;
     gap: 1rem;
+}
+
+.admin-panel--sales {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-sales-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.admin-sales-card {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.15rem;
+    border-radius: 1.35rem;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.admin-sales-card h3 {
+    margin: 0;
+    color: #18202d;
+}
+
+.admin-sales-card p {
+    margin: 0;
+}
+
+.admin-sales-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.admin-sales-list__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.85rem;
+    align-items: start;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(24, 32, 45, 0.08);
+}
+
+.admin-sales-list__row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.admin-sales-list__row div {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.admin-sales-list__row strong {
+    color: #18202d;
+}
+
+.admin-sales-list__row span {
+    color: #5d6676;
+    font-size: 0.9rem;
+}
+
+.admin-sales-table-wrap {
+    overflow-x: auto;
+    border-radius: 1.35rem;
+    border: 1px solid rgba(24, 32, 45, 0.08);
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.admin-sales-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+}
+
+.admin-sales-table th,
+.admin-sales-table td {
+    padding: 0.95rem 1rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(24, 32, 45, 0.08);
+}
+
+.admin-sales-table th {
+    color: #5d6676;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: rgba(244, 250, 255, 0.92);
+}
+
+.admin-sales-table td {
+    color: #18202d;
+}
+
+.admin-sales-table td strong,
+.admin-sales-table td span {
+    display: block;
+}
+
+.admin-sales-table td span {
+    margin-top: 0.22rem;
+    color: #5d6676;
+    font-size: 0.88rem;
+}
+
+.admin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.42rem 0.72rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.admin-status-pill--paid {
+    background: rgba(20, 184, 116, 0.12);
+    color: #117a4f;
+}
+
+.admin-status-pill--pending {
+    background: rgba(245, 158, 11, 0.14);
+    color: #9a6700;
+}
+
+.admin-status-pill--cancelled,
+.admin-status-pill--refunded {
+    background: rgba(220, 38, 38, 0.12);
+    color: #b42318;
 }
 
 .admin-list-header {

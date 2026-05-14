@@ -29,6 +29,11 @@ else
                     <span>Cupons promocionais</span>
                     <span>Atualizacao rapida</span>
                 </div>
+
+                <div class="admin-view-switcher">
+                    <button class="@(activeAdminView == "operacao" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("operacao")'>Controle de ingressos</button>
+                    <button class="@(activeAdminView == "vendas" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("vendas")'>Relatorio de vendas</button>
+                </div>
             </div>
 
             <div class="admin-hero__actions">
@@ -40,21 +45,172 @@ else
             </div>
         </section>
 
-        <section class="admin-stats">
-            <article class="admin-stat-card">
-                <span>Eventos ativos</span>
-                <strong>@adminEvents.Count</strong>
-            </article>
-            <article class="admin-stat-card">
-                <span>Operacao</span>
-                <strong>Agenda viva</strong>
-            </article>
-            <article class="admin-stat-card admin-stat-card--accent">
-                <span>Foco</span>
-                <strong>Venda com impacto visual</strong>
-            </article>
-        </section>
+        @if (activeAdminView == "operacao")
+        {
+            <section class="admin-stats">
+                <article class="admin-stat-card">
+                    <span>Eventos ativos</span>
+                    <strong>@adminEvents.Count</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span>Operacao</span>
+                    <strong>Agenda viva</strong>
+                </article>
+                <article class="admin-stat-card admin-stat-card--accent">
+                    <span>Foco</span>
+                    <strong>Controle de ingressos</strong>
+                </article>
+            </section>
+        }
 
+        @if (activeAdminView == "vendas")
+        {
+            <section class="admin-stats">
+                <article class="admin-stat-card">
+                    <span>Total vendido hoje</span>
+                    <strong>R$ @((salesDashboard?.TotalVendidoHoje ?? 0).ToString("0.00"))</strong>
+                </article>
+                <article class="admin-stat-card admin-stat-card--accent">
+                    <span>Ingressos vendidos</span>
+                    <strong>@(salesDashboard?.TotalIngressosVendidos ?? 0)</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span>Pagamentos Pix</span>
+                    <strong>@(salesDashboard?.PagamentosPix ?? 0)</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span>Pagamentos Cartao</span>
+                    <strong>@(salesDashboard?.PagamentosCartao ?? 0)</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span>Pagamentos Boleto</span>
+                    <strong>@(salesDashboard?.PagamentosBoleto ?? 0)</strong>
+                </article>
+            </section>
+        }
+
+        @if (activeAdminView == "vendas")
+        {
+        <section class="admin-panel admin-panel--sales">
+            <div class="admin-list-header">
+                <div>
+                    <h2>Radar comercial</h2>
+                    <p>Acompanhe as ultimas compras, os shows que mais giram receita e o status do caixa em tempo real.</p>
+                </div>
+                <button class="ghost-button" @onclick="LoadAdminSalesDashboard" disabled="@isBusy">Atualizar vendas</button>
+            </div>
+
+            @if (salesLoading)
+            {
+                <div class="status-box">Carregando movimentacao comercial...</div>
+            }
+            else if (salesDashboard is null)
+            {
+                <div class="status-box">Nao foi possivel carregar o painel de vendas agora.</div>
+            }
+            else
+            {
+                <div class="admin-sales-grid">
+                    <article class="admin-sales-card">
+                        <h3>Shows mais vendidos</h3>
+                        @if (salesDashboard.ShowsMaisVendidos.Count == 0)
+                        {
+                            <p>Ainda nao houve compras suficientes para montar um ranking.</p>
+                        }
+                        else
+                        {
+                            <div class="admin-sales-list">
+                                @foreach (var item in salesDashboard.ShowsMaisVendidos)
+                                {
+                                    <div class="admin-sales-list__row">
+                                        <div>
+                                            <strong>@item.Show</strong>
+                                            <span>@item.IngressosVendidos ingresso(s)</span>
+                                        </div>
+                                        <strong>R$ @item.ValorArrecadado.ToString("0.00")</strong>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </article>
+
+                    <article class="admin-sales-card">
+                        <h3>Ultimas compras realizadas</h3>
+                        @if (salesDashboard.UltimasCompras.Count == 0)
+                        {
+                            <p>Nenhuma compra registrada ainda.</p>
+                        }
+                        else
+                        {
+                            <div class="admin-sales-list">
+                                @foreach (var item in salesDashboard.UltimasCompras)
+                                {
+                                    <div class="admin-sales-list__row">
+                                        <div>
+                                            <strong>@item.Cliente</strong>
+                                            <span>@item.Show • @item.DataCompra.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        <strong>R$ @item.ValorPago.ToString("0.00")</strong>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </article>
+                </div>
+
+                @if (salesDashboard.Compras.Count == 0)
+                {
+                    <div class="status-box">Ainda nao existem compras para exibir na tabela comercial.</div>
+                }
+                else
+                {
+                    <div class="admin-sales-table-wrap">
+                        <table class="admin-sales-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Show</th>
+                                    <th>Data da compra</th>
+                                    <th>Forma de pagamento</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                    <th>Qtd</th>
+                                    <th>Setor / cadeira / lote</th>
+                                    <th>Pedido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in salesDashboard.Compras)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.Cliente</strong>
+                                            <span>@item.ClienteEmail</span>
+                                        </td>
+                                        <td>@item.Show</td>
+                                        <td>@item.DataCompra.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@GetPaymentMethodLabel(item.FormaPagamento)</td>
+                                        <td>
+                                            <span class="admin-status-pill @GetPaymentStatusClass(item.StatusPagamento)">
+                                                @GetPaymentStatusLabel(item.StatusPagamento)
+                                            </span>
+                                        </td>
+                                        <td>R$ @item.ValorPago.ToString("0.00")</td>
+                                        <td>@item.QuantidadeIngressos</td>
+                                        <td>@item.SetorCadeiraLote</td>
+                                        <td>@item.CodigoPedido</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </section>
+        }
+
+        @if (activeAdminView == "operacao")
+        {
         <div class="admin-grid">
             <section class="admin-panel">
                 <div class="admin-panel__head">
@@ -309,6 +465,7 @@ else
                 </div>
             }
         </section>
+        }
 
         @if (editingEvent is not null)
         {
@@ -549,10 +706,13 @@ else
     private readonly List<CouponViewModel> adminCoupons = new();
     private readonly List<string> availableGenres = new();
     private readonly List<string> availableCities = new();
+    private AdminSalesDashboardViewModel? salesDashboard;
+    private string activeAdminView = "operacao";
     private bool isBusy;
     private bool isError;
     private bool eventsLoading;
     private bool couponsLoading;
+    private bool salesLoading;
     private string statusMessage = string.Empty;
     private DateTime eventDateOnly = DateTime.Today.AddDays(15);
     private string eventTime = "20:00";
@@ -577,6 +737,7 @@ else
         await LoadCitiesAsync();
         await LoadAdminEvents();
         await LoadAdminCoupons();
+        await LoadAdminSalesDashboard();
     }
 
     private async Task HandleCreateEvent()
@@ -621,6 +782,7 @@ else
                 if (availableCities.Count > 0)
                     eventModel.CidadeEvento = availableCities[0];
                 await LoadAdminEvents();
+                await LoadAdminSalesDashboard();
             }
         }
         catch
@@ -713,6 +875,28 @@ else
         {
             eventsLoading = false;
         }
+    }
+
+    private async Task LoadAdminSalesDashboard()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        salesLoading = true;
+
+        try
+        {
+            salesDashboard = await ApiClient.GetAdminSalesDashboardAsync(Session.AdminToken);
+        }
+        finally
+        {
+            salesLoading = false;
+        }
+    }
+
+    private void SetAdminView(string view)
+    {
+        activeAdminView = view;
     }
 
     private async Task LoadGenresAsync()
@@ -1327,6 +1511,7 @@ else
             {
                 editingEvent = null;
                 await LoadAdminEvents();
+                await LoadAdminSalesDashboard();
             }
         }
         catch
@@ -1361,6 +1546,7 @@ else
                     editingEvent = null;
 
                 await LoadAdminEvents();
+                await LoadAdminSalesDashboard();
             }
         }
         catch
@@ -1471,5 +1657,36 @@ else
     {
         Session.Logout();
         Navigation.NavigateTo("/");
+    }
+
+    private static string GetPaymentMethodLabel(string paymentMethod)
+    {
+        return paymentMethod switch
+        {
+            "Cartao" => "Cartão",
+            _ => paymentMethod
+        };
+    }
+
+    private static string GetPaymentStatusLabel(string status)
+    {
+        return status switch
+        {
+            "Pendente" => "Pendente",
+            "Cancelado" => "Cancelado",
+            "Reembolsado" => "Reembolsado",
+            _ => "Pago"
+        };
+    }
+
+    private static string GetPaymentStatusClass(string status)
+    {
+        return status switch
+        {
+            "Pendente" => "admin-status-pill--pending",
+            "Cancelado" => "admin-status-pill--cancelled",
+            "Reembolsado" => "admin-status-pill--refunded",
+            _ => "admin-status-pill--paid"
+        };
     }
 }

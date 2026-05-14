@@ -86,6 +86,15 @@ else
                         </div>
                     </div>
 
+                    <div class="field">
+                        <label for="formaPagamento">Forma de pagamento</label>
+                        <select id="formaPagamento" class="field__input" @bind="paymentMethod">
+                            <option value="Pix">Pix</option>
+                            <option value="Cartao">Cartão</option>
+                            <option value="Boleto">Boleto</option>
+                        </select>
+                    </div>
+
                     @if (couponPreview is not null)
                     {
                         <div class="cart-discount-box">
@@ -113,6 +122,7 @@ else
 
 @code {
     private string couponCode = string.Empty;
+    private string paymentMethod = "Pix";
     private string statusMessage = string.Empty;
     private bool isError;
     private bool isBusy;
@@ -141,6 +151,7 @@ else
             {
                 UsuarioCpf = Session.CurrentUser.Cpf,
                 CupomCodigo = string.IsNullOrWhiteSpace(couponCode) ? null : couponCode,
+                FormaPagamento = paymentMethod,
                 Itens = Cart.Items.Select(item => new ReservationCheckoutItemRequest
                 {
                     EventoId = item.EventoId,
@@ -180,6 +191,7 @@ else
             {
                 UsuarioCpf = Session.CurrentUser.Cpf,
                 CupomCodigo = string.IsNullOrWhiteSpace(couponCode) ? null : couponCode,
+                FormaPagamento = paymentMethod,
                 Itens = Cart.Items.Select(item => new ReservationCheckoutItemRequest
                 {
                     EventoId = item.EventoId,

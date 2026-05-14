@@ -4,5 +4,6 @@ public class ReservaCheckoutRequest
 {
     public string UsuarioCpf { get; set; } = string.Empty;
     public string? CupomCodigo { get; set; }
+    public string? FormaPagamento { get; set; }
     public List<ReservaCheckoutItemRequest> Itens { get; set; } = [];
 }

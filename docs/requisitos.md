@@ -60,19 +60,28 @@ Como cliente, quero aplicar um cupom no carrinho e ver o desconto antes de final
 ### HU18 - Finalizacao da compra
 Como cliente, quero concluir a compra de ingressos, para garantir minha reserva.
 
-### HU19 - Consulta de reservas
+### HU19 - Forma de pagamento no carrinho
+Como cliente, quero escolher entre Pix, Cartao e Boleto no carrinho, para finalizar a compra com a forma de pagamento desejada.
+
+### HU20 - Consulta de reservas
 Como cliente, quero consultar minhas reservas, para acompanhar meus ingressos confirmados.
 
-### HU20 - Protecao de perfil e reservas
+### HU21 - Relatorio de vendas do administrador
+Como administrador, quero visualizar um relatorio de vendas com cliente, show, data, pagamento, status, valor, quantidade e pedido, para acompanhar a operacao comercial.
+
+### HU22 - Separacao de contextos no painel administrativo
+Como administrador, quero alternar entre controle de ingressos e relatorio de vendas, para trabalhar com menos poluicao visual.
+
+### HU23 - Protecao de perfil e reservas
 Como sistema, quero restringir acesso a perfil e reservas ao proprio cliente ou administrador, para proteger dados pessoais.
 
-### HU21 - Protecao de usuarios administrativos
+### HU24 - Protecao de usuarios administrativos
 Como sistema, quero proteger a listagem de usuarios para uso apenas administrativo, para evitar exposicao indevida.
 
-### HU22 - Seguranca contra SQL Injection
+### HU25 - Seguranca contra SQL Injection
 Como sistema, quero usar Dapper com parametros nomeados, para reduzir o risco de SQL Injection.
 
-### HU23 - Qualidade automatizada
+### HU26 - Qualidade automatizada
 Como desenvolvedor, quero manter testes automatizados com Assert, para validar o comportamento esperado do sistema.
 
 ## Criterios de aceitacao
@@ -131,6 +140,16 @@ Dado que o administrador esta autenticado
 Quando informa codigo, desconto e valor minimo  
 Entao o cupom deve ser criado
 
+Cenario: visualizar relatorio de vendas  
+Dado que existem compras registradas  
+Quando o administrador abre a visao comercial  
+Entao o sistema deve mostrar totais, formas de pagamento, ranking de shows e a tabela detalhada das compras
+
+Cenario: alternar entre as visoes do painel  
+Dado que o administrador esta no painel  
+Quando ele clica em controle de ingressos ou relatorio de vendas  
+Entao a tela deve exibir apenas os blocos do contexto selecionado
+
 ### Compra e reservas
 
 Cenario: concluir compra valida  
@@ -138,6 +157,11 @@ Dado que o usuario existe
 E que o evento existe  
 Quando a compra respeita capacidade, limite por CPF e regra de cupom  
 Entao a reserva deve ser salva com sucesso
+
+Cenario: registrar forma de pagamento na compra  
+Dado que o cliente esta no carrinho  
+Quando ele escolhe Pix, Cartao ou Boleto e finaliza  
+Entao a reserva deve salvar a forma de pagamento, o status correspondente e o codigo do pedido
 
 Cenario: bloquear excesso por CPF  
 Dado que o mesmo CPF ja possui 2 reservas para o mesmo evento  
@@ -196,6 +220,7 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - `POST /api/admin/cidades`
 - `PUT /api/admin/cidades/{nomeAtual}`
 - `DELETE /api/admin/cidades/{nomeAtual}`
+- `GET /api/admin/vendas/dashboard`
 
 ### Cupons
 
@@ -265,6 +290,9 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - `Quantidade` INTEGER NOT NULL
 - `PrecoUnitario` REAL NOT NULL
 - `ValorFinalPago` REAL NOT NULL
+- `FormaPagamento` TEXT NOT NULL
+- `StatusPagamento` TEXT NOT NULL
+- `CodigoPedido` TEXT NOT NULL
 - `DataReserva` TEXT NOT NULL
 
 ### Tabela `RecuperacoesSenha`
@@ -274,9 +302,8 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - `CodigoHash` TEXT NOT NULL
 - `EmailDestino` TEXT NOT NULL
 - `ExpiraEm` TEXT NOT NULL
-- `Utilizado` INTEGER NOT NULL
 - `TentativasInvalidas` INTEGER NOT NULL
-- `Bloqueado` INTEGER NOT NULL
+- `UsadoEm` TEXT NULL
 - `CriadoEm` TEXT NOT NULL
 
 ## Observacoes tecnicas
@@ -287,10 +314,13 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - a API possui fluxo de recuperacao de senha por email com codigo temporario
 - o app Blazor possui modal de login, cadastro, redefinicao de senha e exibicao de senha
 - a vitrine publica possui filtros por cidade, dia da semana, artista e genero musical
-- o carrinho mostra pre-visualizacao do desconto antes da finalizacao
+- o carrinho mostra pre-visualizacao do desconto antes da finalizacao e permite escolher a forma de pagamento
 - a rota `GET /api/reservas/{cpf}` usa `INNER JOIN` para retornar o nome do evento
 - a rota `POST /api/reservas` aplica validacao de integridade, limite por CPF, capacidade e cupom
+- o painel administrativo tem uma visao separada de relatorio comercial
+- o dashboard comercial mostra totais, formas de pagamento, shows mais vendidos e ultimas compras
+- as datas de compra do historico e do relatorio sao convertidas para o horario de Brasilia
 - as rotas sensiveis de usuarios e reservas exigem autorizacao do proprio cliente ou do administrador
 - o projeto esta preparado para deploy no Railway com configuracao por variavel de ambiente e volume persistente para o banco SQLite
-- a API usa Gmail SMTP em producao quando as variaveis de ambiente forem configuradas corretamente
+- a API suporta envio de email tanto por Gmail SMTP quanto por API HTTP compativel com endpoint `/emails`
 - existem testes automatizados com xUnit cobrindo regras principais e riscos de seguranca
