@@ -178,24 +178,7 @@
 }
 
 .event-card--night {
-    background: linear-gradient(180deg, #16315f 0%, #0f2247 100%);
-}
-
-.event-card--night h2,
-.event-card--night .event-card__date,
-.event-card--night .event-card__description,
-.event-card--night .event-card__pricing strong,
-.event-card--night .pill--muted {
-    color: #f8fafc;
-}
-
-.event-card--night .event-card__pricing span {
-    background: rgba(255, 255, 255, 0.14);
-    color: #f8fafc;
-}
-
-.event-card--night .pill--muted {
-    background: rgba(255, 255, 255, 0.14);
+    background: linear-gradient(180deg, #f7fbff 0%, #eaf4ff 100%);
 }
 
 .event-card--neon {
