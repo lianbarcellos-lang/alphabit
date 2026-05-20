@@ -77,56 +77,6 @@ else
 
         @if (activeAdminView == "vendas")
         {
-            <section class="admin-stats">
-                <article class="admin-stat-card admin-stat-card--accent">
-                    <span>Receita confirmada</span>
-                    <strong>R$ @((salesDashboard?.ReceitaTotal ?? 0).ToString("0.00"))</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>A receber</span>
-                    <strong>R$ @((salesDashboard?.ValorPendente ?? 0).ToString("0.00"))</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Total vendido hoje</span>
-                    <strong>R$ @((salesDashboard?.TotalVendidoHoje ?? 0).ToString("0.00"))</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Reservas</span>
-                    <strong>@(salesDashboard?.TotalReservas ?? 0)</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Ingressos vendidos</span>
-                    <strong>@(salesDashboard?.TotalIngressosVendidos ?? 0)</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Check-ins</span>
-                    <strong>@(salesDashboard?.CheckinsRealizados ?? 0)</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Capacidade restante</span>
-                    <strong>@(salesDashboard?.CapacidadeRestante ?? 0)</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Ocupacao</span>
-                    <strong>@((salesDashboard?.TaxaOcupacaoPercentual ?? 0).ToString("0.##"))%</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Taxa check-in</span>
-                    <strong>@((salesDashboard?.TaxaCheckinPercentual ?? 0).ToString("0.##"))%</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Avaliacoes</span>
-                    <strong>@(salesDashboard?.TotalAvaliacoes ?? 0)</strong>
-                </article>
-                <article class="admin-stat-card">
-                    <span>Média avaliações</span>
-                    <strong>@((salesDashboard?.MediaAvaliacoes ?? 0).ToString("0.##"))/5</strong>
-                </article>
-            </section>
-        }
-
-        @if (activeAdminView == "vendas")
-        {
         <section class="admin-panel admin-panel--sales">
             <div class="admin-list-header">
                 <div>
@@ -171,7 +121,7 @@ else
                     </article>
 
                     <article class="admin-sales-card">
-                        <h3>Ultimas compras realizadas</h3>
+                        <h3>Últimas compras realizadas</h3>
                         @if (salesDashboard.UltimasCompras.Count == 0)
                         {
                             <p>Nenhuma compra registrada ainda.</p>
@@ -183,8 +133,8 @@ else
                                 {
                                     <div class="admin-sales-list__row">
                                         <div>
-                                            <strong>@item.Cliente</strong>
-                                            <span>@item.Evento • @item.DataCompra.ToString("dd/MM/yyyy HH:mm")</span>
+                                            <strong>@item.Evento</strong>
+                                            <span>@item.DataCompra.ToString("dd/MM/yyyy HH:mm") • @GetPaymentMethodLabel(item.FormaPagamento) • @GetPaymentStatusLabel(item.StatusPagamento)</span>
                                         </div>
                                         <strong>R$ @item.ValorPago.ToString("0.00")</strong>
                                     </div>
