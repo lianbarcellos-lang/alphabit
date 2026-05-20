@@ -83,7 +83,10 @@
                         <p>@item.LocalEvento, @item.CidadeEvento</p>
                         <p>@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                         <div class="home-event-card__footer">
-                            <strong>R$ @item.PrecoPadrao.ToString("0.00")</strong>
+                            <div class="home-event-card__pricing">
+                                <strong>R$ @item.PrecoPadrao.ToString("0.00")</strong>
+                                <span>@FormatRating(item)</span>
+                            </div>
                             <div class="home-event-card__actions">
                                 <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.Id}")'>Ver ingressos</button>
                                 <button class="secondary-button" type="button" @onclick='() => BuyEvent(item.Id)'>Comprar agora</button>
@@ -142,5 +145,12 @@
         }
 
         Navigation.NavigateTo($"/eventos/{eventId}/assentos");
+    }
+
+    private static string FormatRating(EventViewModel item)
+    {
+        return item.TotalAvaliacoes == 0
+            ? "Sem avaliações"
+            : $"{item.MediaAvaliacoes:0.0}/5 ({item.TotalAvaliacoes})";
     }
 }

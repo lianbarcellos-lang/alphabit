@@ -70,7 +70,10 @@ else
             <aside class="event-detail-panel event-detail-panel--buy">
                 <span class="eyebrow">Ingressos</span>
                 <h2>Escolha seus assentos e siga para o checkout</h2>
-                <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
+                <div class="event-detail-price-row">
+                    <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
+                    <span>@FormatRating(eventItem)</span>
+                </div>
                 <p>Veja os assentos disponíveis, monte o carrinho e confirme a reserva na sua conta.</p>
 
                 <button class="secondary-button" type="button" @onclick="GoToSeats">Comprar agora</button>
@@ -253,6 +256,13 @@ else
     {
         var safeRating = Math.Clamp(rating, 1, 5);
         return $"{new string('*', safeRating)}{new string('-', 5 - safeRating)} {safeRating}/5";
+    }
+
+    private static string FormatRating(EventViewModel item)
+    {
+        return item.TotalAvaliacoes == 0
+            ? "Sem avaliações"
+            : $"{item.MediaAvaliacoes:0.0}/5 ({item.TotalAvaliacoes})";
     }
 
     private async Task SignUpForActivity(int activityId)

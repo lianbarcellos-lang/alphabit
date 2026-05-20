@@ -136,7 +136,10 @@
                         <p class="event-card__location">@item.LocalEvento, @item.CidadeEvento</p>
                         <p class="event-card__date">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                         <p class="event-card__description">@GetDescription(item)</p>
-                        <p class="event-card__price">R$ @item.PrecoPadrao.ToString("0.00")</p>
+                        <div class="event-card__pricing">
+                            <strong>R$ @item.PrecoPadrao.ToString("0.00")</strong>
+                            <span>@FormatRating(item)</span>
+                        </div>
                         <div class="event-card__actions">
                             <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.Id}")'>Ver ingressos</button>
                             <button class="buy-button" type="button" @onclick='() => GoToSeatSelection(item.Id)'>Comprar agora</button>
@@ -254,6 +257,13 @@
             return "Mesas, campeonatos e comunidades reunidas para partidas competitivas e trocas.";
 
         return "Uma experiência geek especial para garantir seu lugar com antecedência.";
+    }
+
+    private static string FormatRating(EventViewModel item)
+    {
+        return item.TotalAvaliacoes == 0
+            ? "Sem avaliações"
+            : $"{item.MediaAvaliacoes:0.0}/5 ({item.TotalAvaliacoes})";
     }
 
     private static string GetDayLabel(DayOfWeek dayOfWeek)

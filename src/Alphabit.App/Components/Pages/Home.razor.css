@@ -240,6 +240,27 @@
     margin-top: 0.7rem;
 }
 
+.home-event-card__pricing {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.home-event-card__pricing strong {
+    color: #11213f;
+    font-weight: 900;
+}
+
+.home-event-card__pricing span {
+    border-radius: 999px;
+    padding: 0.3rem 0.6rem;
+    background: rgba(17, 33, 63, 0.08);
+    color: #4b5d79;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
 .home-event-card__actions {
     display: flex;
     gap: 0.75rem;

@@ -776,6 +776,27 @@
     line-height: 1.55;
 }
 
+.admin-event-card__pricing {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.admin-event-card__pricing strong {
+    color: #18202d;
+    font-weight: 900;
+}
+
+.admin-event-card__pricing span {
+    border-radius: 999px;
+    padding: 0.34rem 0.65rem;
+    background: rgba(17, 33, 63, 0.08);
+    color: #4b5d79;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
 .admin-event-card__actions {
     display: flex;
     gap: 0.75rem;

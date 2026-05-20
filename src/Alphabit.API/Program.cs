@@ -831,7 +831,24 @@ app.MapGet("/api/admin/eventos", (HttpContext httpContext) =>
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
-    var eventos = connection.Query<Evento>("SELECT Id, Nome, LocalEvento, CidadeEvento, Artista, GeneroMusical, CapacidadeTotal, DataEvento, PrecoPadrao, ImagemUrl FROM Eventos ORDER BY DataEvento").ToList();
+    var eventos = connection.Query<Evento>(@"
+        SELECT
+            e.Id,
+            e.Nome,
+            e.LocalEvento,
+            e.CidadeEvento,
+            e.Artista,
+            e.GeneroMusical,
+            e.CapacidadeTotal,
+            e.DataEvento,
+            e.PrecoPadrao,
+            e.ImagemUrl,
+            CAST(COALESCE(ROUND(AVG(a.Nota), 1), 0.0) AS REAL) AS MediaAvaliacoes,
+            COUNT(a.Id) AS TotalAvaliacoes
+        FROM Eventos e
+        LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
+        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl
+        ORDER BY e.DataEvento").ToList();
 
     return Results.Ok(eventos);
 });
@@ -1213,7 +1230,23 @@ app.MapGet("/api/eventos", () =>
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
-    var eventos = connection.Query<Evento>("SELECT Id, Nome, LocalEvento, CidadeEvento, Artista, GeneroMusical, CapacidadeTotal, DataEvento, PrecoPadrao, ImagemUrl FROM Eventos").ToList();
+    var eventos = connection.Query<Evento>(@"
+        SELECT
+            e.Id,
+            e.Nome,
+            e.LocalEvento,
+            e.CidadeEvento,
+            e.Artista,
+            e.GeneroMusical,
+            e.CapacidadeTotal,
+            e.DataEvento,
+            e.PrecoPadrao,
+            e.ImagemUrl,
+            CAST(COALESCE(ROUND(AVG(a.Nota), 1), 0.0) AS REAL) AS MediaAvaliacoes,
+            COUNT(a.Id) AS TotalAvaliacoes
+        FROM Eventos e
+        LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
+        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl").ToList();
 
     return Results.Ok(eventos);
 });
@@ -1224,7 +1257,24 @@ app.MapGet("/api/eventos/{id:int}", (int id) =>
     connection.Open();
 
     var evento = connection.QueryFirstOrDefault<Evento>(
-        "SELECT Id, Nome, LocalEvento, CidadeEvento, Artista, GeneroMusical, CapacidadeTotal, DataEvento, PrecoPadrao, ImagemUrl FROM Eventos WHERE Id = @id",
+        @"
+        SELECT
+            e.Id,
+            e.Nome,
+            e.LocalEvento,
+            e.CidadeEvento,
+            e.Artista,
+            e.GeneroMusical,
+            e.CapacidadeTotal,
+            e.DataEvento,
+            e.PrecoPadrao,
+            e.ImagemUrl,
+            CAST(COALESCE(ROUND(AVG(a.Nota), 1), 0.0) AS REAL) AS MediaAvaliacoes,
+            COUNT(a.Id) AS TotalAvaliacoes
+        FROM Eventos e
+        LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
+        WHERE e.Id = @id
+        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl",
         new { id });
 
     return evento is null ? Results.NotFound("Evento não encontrado.") : Results.Ok(evento);

@@ -673,7 +673,10 @@ else
                                 <p class="admin-event-card__copy">@item.LocalEvento, @item.CidadeEvento</p>
                                 <p class="admin-event-card__copy">@item.Artista • @item.GeneroMusical</p>
                                 <p class="admin-event-card__copy">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
-                                <p class="admin-event-card__copy">R$ @item.PrecoPadrao.ToString("0.00")</p>
+                                <div class="admin-event-card__pricing">
+                                    <strong>R$ @item.PrecoPadrao.ToString("0.00")</strong>
+                                    <span>@FormatRating(item)</span>
+                                </div>
 
                                 <div class="admin-event-card__actions">
                                     <button class="ghost-button" type="button" @onclick='() => StartEdit(item)'>Editar</button>
@@ -2207,5 +2210,12 @@ else
             "Reembolsado" => "admin-status-pill--refunded",
             _ => "admin-status-pill--paid"
         };
+    }
+
+    private static string FormatRating(EventViewModel item)
+    {
+        return item.TotalAvaliacoes == 0
+            ? "Sem avaliações"
+            : $"{item.MediaAvaliacoes:0.0}/5 ({item.TotalAvaliacoes})";
     }
 }

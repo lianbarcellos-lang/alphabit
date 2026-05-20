@@ -184,8 +184,13 @@
 .event-card--night h2,
 .event-card--night .event-card__date,
 .event-card--night .event-card__description,
-.event-card--night .event-card__price,
+.event-card--night .event-card__pricing strong,
 .event-card--night .pill--muted {
+    color: #f8fafc;
+}
+
+.event-card--night .event-card__pricing span {
+    background: rgba(255, 255, 255, 0.14);
     color: #f8fafc;
 }
 
@@ -268,11 +273,27 @@
     line-height: 1.6;
 }
 
-.event-card__price {
+.event-card__pricing {
     margin: auto 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.event-card__pricing strong {
     font-size: 1.7rem;
     font-weight: 800;
     color: #11213f;
+}
+
+.event-card__pricing span {
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    background: rgba(17, 33, 63, 0.08);
+    color: #4b5d79;
+    font-size: 0.82rem;
+    font-weight: 800;
 }
 
 .event-card__actions {
