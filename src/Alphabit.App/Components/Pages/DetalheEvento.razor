@@ -1,0 +1,287 @@
+@page "/eventos/{Id:int}"
+@inject AlphabitApiClient ApiClient
+@inject AuthOverlayState AuthOverlay
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+
+<PageTitle>Detalhes do Evento</PageTitle>
+
+@if (isLoading)
+{
+    <div class="event-detail-shell">
+        <div class="status-box">Carregando detalhes do evento...</div>
+    </div>
+}
+else if (eventItem is null)
+{
+    <div class="event-detail-shell">
+        <div class="status-box status-box--error">Evento não encontrado.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para eventos</button>
+    </div>
+}
+else
+{
+    <div class="event-detail-shell">
+        <section class="event-detail-hero">
+            @if (!string.IsNullOrWhiteSpace(eventItem.ImagemUrl))
+            {
+                <img class="event-detail-hero__image" src="@eventItem.ImagemUrl" alt="@eventItem.Nome" />
+            }
+
+            <div class="event-detail-hero__overlay"></div>
+
+            <div class="event-detail-hero__content">
+                <span class="pill">@eventItem.GeneroMusical</span>
+                <h1>@eventItem.Nome</h1>
+                <p>@eventItem.Artista</p>
+                <div class="event-detail-hero__meta">
+                    <span>@eventItem.LocalEvento, @eventItem.CidadeEvento</span>
+                    <span>@eventItem.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="event-detail-grid">
+            <section class="event-detail-panel">
+                <span class="eyebrow">Sobre o evento</span>
+                <h2>Uma página feita para orientar a reserva</h2>
+                <p>@GetDescription(eventItem)</p>
+
+                <div class="event-detail-info">
+                    <article>
+                        <strong>Local</strong>
+                        <span>@eventItem.LocalEvento</span>
+                    </article>
+                    <article>
+                        <strong>Cidade</strong>
+                        <span>@eventItem.CidadeEvento</span>
+                    </article>
+                    <article>
+                        <strong>Capacidade</strong>
+                        <span>@eventItem.CapacidadeTotal lugares</span>
+                    </article>
+                    <article>
+                        <strong>Categoria</strong>
+                        <span>@eventItem.GeneroMusical</span>
+                    </article>
+                </div>
+            </section>
+
+            <aside class="event-detail-panel event-detail-panel--buy">
+                <span class="eyebrow">Ingressos</span>
+                <h2>Escolha seus assentos e siga para o checkout</h2>
+                <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
+                <p>Veja os assentos disponíveis, monte o carrinho e confirme a reserva na sua conta.</p>
+
+                <button class="secondary-button" type="button" @onclick="GoToSeats">Comprar agora</button>
+                <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para agenda</button>
+            </aside>
+        </div>
+
+        <section class="event-detail-panel event-guest-panel">
+            <div class="event-activity-head">
+                <div>
+                    <span class="eyebrow">Convidados</span>
+                    <h2>Presencas confirmadas</h2>
+                </div>
+                <span>@guests.Count convidado(s)</span>
+            </div>
+
+            @if (guests.Count == 0)
+            {
+                <p>Os convidados deste evento ainda serão anunciados.</p>
+            }
+            else
+            {
+                <div class="event-guest-list">
+                    @foreach (var guest in guests)
+                    {
+                        <article class="event-guest-card">
+                            @if (!string.IsNullOrWhiteSpace(guest.FotoUrl))
+                            {
+                                <img src="@guest.FotoUrl" alt="@guest.Nome" />
+                            }
+                            <div>
+                                <span class="pill event-activity-card__type">@guest.Tipo</span>
+                                <h3>@guest.Nome</h3>
+                                <p>@guest.Bio</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="event-detail-panel event-activity-panel">
+            <div class="event-activity-head">
+                <div>
+                    <span class="eyebrow">Programação interna</span>
+                    <h2>Atividades do evento</h2>
+                </div>
+                <span>@activities.Count atividade(s)</span>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(activityStatusMessage))
+            {
+                <div class="status-box @(activityStatusIsError ? "status-box--error" : "status-box--success")">@activityStatusMessage</div>
+            }
+
+            @if (activities.Count == 0)
+            {
+                <p>A programação deste evento ainda está sendo preparada.</p>
+            }
+            else
+            {
+                <div class="event-activity-list">
+                    @foreach (var activity in activities)
+                    {
+                        <article class="event-activity-card">
+                            <div>
+                                <span class="pill event-activity-card__type">@activity.Tipo</span>
+                                <h3>@activity.Nome</h3>
+                                <p>@activity.Horario.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                                <p>@activity.VagasRestantes vaga(s) restante(s) de @activity.LimiteParticipantes</p>
+                            </div>
+                            <button class="ghost-button"
+                                    type="button"
+                                    disabled="@(activity.UsuarioInscrito || activity.VagasRestantes <= 0 || activityIsBusy)"
+                                    @onclick="() => SignUpForActivity(activity.Id)">
+                                @(activity.UsuarioInscrito ? "Inscrito" : activity.VagasRestantes <= 0 ? "Esgotado" : "Inscrever")
+                            </button>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="event-detail-panel event-review-panel">
+            <div class="event-activity-head">
+                <div>
+                    <span class="eyebrow">Avaliacoes</span>
+                    <h2>Historico da comunidade</h2>
+                </div>
+                <span>@reviews.Count avaliação(ões)</span>
+            </div>
+
+            @if (reviews.Count == 0)
+            {
+                <p>Este evento ainda não recebeu avaliações.</p>
+            }
+            else
+            {
+                <div class="event-review-list">
+                    @foreach (var review in reviews)
+                    {
+                        <article class="event-review-card">
+                            <div class="event-review-card__head">
+                                <strong>@review.UsuarioNome</strong>
+                                <span>@RenderRating(review.Nota)</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(review.Comentario))
+                            {
+                                <p>@review.Comentario</p>
+                            }
+                            <small>@review.CriadoEm.ToString("dd/MM/yyyy 'as' HH:mm")</small>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private EventViewModel? eventItem;
+    private readonly List<ActivityViewModel> activities = [];
+    private readonly List<GuestViewModel> guests = [];
+    private readonly List<EventReviewViewModel> reviews = [];
+    private bool isLoading = true;
+    private bool activityIsBusy;
+    private bool activityStatusIsError;
+    private string activityStatusMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            eventItem = await ApiClient.GetEventByIdAsync(Id);
+            await Task.WhenAll(LoadActivities(), LoadGuests(), LoadReviews());
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoToSeats()
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        Navigation.NavigateTo($"/eventos/{Id}/assentos");
+    }
+
+    private static string GetDescription(EventViewModel item)
+    {
+        return $"Prepare-se para {item.Nome}: uma experiência de {item.GeneroMusical.ToLowerInvariant()} com atrações, comunidade e fluxo de reserva direto para o público geek.";
+    }
+
+    private async Task LoadActivities()
+    {
+        activities.Clear();
+        activities.AddRange(await ApiClient.GetActivitiesAsync(Id, Session.CurrentUser?.Cpf));
+    }
+
+    private async Task LoadGuests()
+    {
+        guests.Clear();
+        guests.AddRange(await ApiClient.GetEventGuestsAsync(Id));
+    }
+
+    private async Task LoadReviews()
+    {
+        reviews.Clear();
+        reviews.AddRange(await ApiClient.GetEventReviewsAsync(Id));
+    }
+
+    private static string RenderRating(int rating)
+    {
+        var safeRating = Math.Clamp(rating, 1, 5);
+        return $"{new string('*', safeRating)}{new string('-', 5 - safeRating)} {safeRating}/5";
+    }
+
+    private async Task SignUpForActivity(int activityId)
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        activityIsBusy = true;
+        activityStatusIsError = false;
+        activityStatusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.SignUpForActivityAsync(activityId, Session.CurrentUser.Cpf);
+            activityStatusIsError = !result.Success;
+            activityStatusMessage = result.Message;
+            await LoadActivities();
+        }
+        catch
+        {
+            activityStatusIsError = true;
+            activityStatusMessage = "Não foi possível realizar a inscrição agora.";
+        }
+        finally
+        {
+            activityIsBusy = false;
+        }
+    }
+}

@@ -1,0 +1,271 @@
+@page "/reservas"
+@inject AlphabitApiClient ApiClient
+@inject UserSessionState Session
+@inject NavigationManager Navigation
+@using System.Text
+@using QRCoder
+
+<PageTitle>Minhas Reservas</PageTitle>
+
+@if (Session.CurrentUser is null)
+{
+    <div class="reservations-shell">
+        <div class="status-box status-box--error">Entre com uma conta de cliente para visualizar suas reservas.</div>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
+    </div>
+}
+else
+{
+    <div class="reservations-shell">
+        <section class="reservations-hero">
+            <div>
+                <span class="eyebrow">Minhas reservas</span>
+                <h1>Seus ingressos confirmados</h1>
+                <p>Acompanhe as compras já registradas no seu CPF e veja o resumo de cada reserva.</p>
+            </div>
+            <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar aos eventos</button>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="status-box status-box--error">@errorMessage</div>
+        }
+        else if (isLoading)
+        {
+            <div class="status-box">Carregando suas reservas...</div>
+        }
+        else if (reservations.Count == 0)
+        {
+            <div class="status-box">Você ainda não possui reservas confirmadas.</div>
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(reviewMessage))
+            {
+                <div class="status-box @(reviewIsError ? "status-box--error" : "status-box--success")">@reviewMessage</div>
+            }
+
+            <section class="reservations-grid">
+                @foreach (var item in reservations)
+                {
+                    <article class="reservation-card">
+                        <span class="pill">@item.EventoNome</span>
+                        <h2>@item.Quantidade ingresso(s)</h2>
+                        <p>Tipo: <strong>@(string.IsNullOrWhiteSpace(item.TipoIngressoNome) ? "Normal" : item.TipoIngressoNome)</strong></p>
+                        <p>Assentos: <strong>@item.Assentos</strong></p>
+                        <p>@item.DataReserva.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                        <p>Valor pago: <strong>R$ @item.ValorFinalPago.ToString("0.00")</strong></p>
+                        <p>Check-in: <strong>@item.CheckinStatus</strong></p>
+                        @if (!string.IsNullOrWhiteSpace(item.QrCode))
+                        {
+                            <div class="reservation-ticket">
+                                <div class="reservation-ticket__qr">
+                                    <img src="@GetQrCodeDataUrl(item.QrCode)" alt="QR Code da reserva @item.Id" />
+                                </div>
+                                <div>
+                                    <span>QR Code de entrada</span>
+                                    <strong class="reservation-qr">@item.QrCode</strong>
+                                    <button class="reservation-ticket__button" type="button" @onclick="() => OpenExpandedQrCode(item.Id)">Abrir</button>
+                                </div>
+                            </div>
+
+                            @if (expandedQrReservationId == item.Id)
+                            {
+                                <div class="reservation-qr-expanded">
+                                    <div class="reservation-qr-expanded__head">
+                                        <strong>QR Code para leitura</strong>
+                                        <button class="reservation-ticket__button" type="button" @onclick="CloseExpandedQrCode">Fechar</button>
+                                    </div>
+                                    <img src="@GetQrCodeDataUrl(item.QrCode)" alt="QR Code ampliado da reserva @item.Id" />
+                                    <span>@item.QrCode</span>
+                                </div>
+                            }
+                        }
+                        @if (item.DataCheckin is not null)
+                        {
+                            <p>Validado em: <strong>@item.DataCheckin.Value.ToString("dd/MM/yyyy 'as' HH:mm")</strong></p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.CupomUtilizado))
+                        {
+                            <p>Cupom aplicado: <strong>@item.CupomUtilizado</strong></p>
+                        }
+
+                        <div class="reservation-review">
+                            <h3>Avaliar evento</h3>
+                            @if (reviewedEventIds.Contains(item.EventoId))
+                            {
+                                <p>Você já avaliou este evento.</p>
+                            }
+                            else
+                            {
+                                <label for="@($"review-note-{item.Id}")">Nota</label>
+                                <select id="@($"review-note-{item.Id}")"
+                                        class="reservation-review__select"
+                                        value="@GetReviewRating(item.Id)"
+                                        @onchange="eventArgs => SetReviewRating(item.Id, eventArgs.Value?.ToString())">
+                                    <option value="5">5 - Excelente</option>
+                                    <option value="4">4 - Muito bom</option>
+                                    <option value="3">3 - Bom</option>
+                                    <option value="2">2 - Regular</option>
+                                    <option value="1">1 - Ruim</option>
+                                </select>
+
+                                <label for="@($"review-comment-{item.Id}")">Comentario</label>
+                                <textarea id="@($"review-comment-{item.Id}")"
+                                          class="reservation-review__textarea"
+                                          maxlength="600"
+                                          value="@GetReviewComment(item.Id)"
+                                          @oninput="eventArgs => SetReviewComment(item.Id, eventArgs.Value?.ToString())"></textarea>
+
+                                <button class="secondary-button"
+                                        type="button"
+                                        disabled="@reviewIsBusy"
+                                        @onclick="() => SubmitReview(item)">
+                                    Enviar avaliação
+                                </button>
+                            }
+                        </div>
+                    </article>
+                }
+            </section>
+        }
+    </div>
+}
+
+@code {
+    private readonly List<ReservationViewModel> reservations = [];
+    private readonly Dictionary<int, int> reviewRatings = [];
+    private readonly Dictionary<int, string> reviewComments = [];
+    private readonly HashSet<int> reviewedEventIds = [];
+    private bool isLoading = true;
+    private bool reviewIsBusy;
+    private bool reviewIsError;
+    private string errorMessage = string.Empty;
+    private string reviewMessage = string.Empty;
+    private int? expandedQrReservationId;
+
+    private static string GetQrCodeDataUrl(string payload)
+    {
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
+        var qrCode = new SvgQRCode(data);
+        var svg = qrCode.GetGraphic(8);
+        return $"data:image/svg+xml;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(svg))}";
+    }
+
+    private void OpenExpandedQrCode(int reservationId)
+    {
+        expandedQrReservationId = reservationId;
+    }
+
+    private void CloseExpandedQrCode()
+    {
+        expandedQrReservationId = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.CurrentUser is null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            reservations.Clear();
+            reservations.AddRange(await ApiClient.GetReservationsAsync(Session.CurrentUser.Cpf));
+            foreach (var reservation in reservations)
+            {
+                reviewRatings.TryAdd(reservation.Id, 5);
+            }
+
+            await LoadReviewedEventsForReservations();
+        }
+        catch
+        {
+            errorMessage = "Não foi possível carregar suas reservas agora.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private int GetReviewRating(int reservationId)
+    {
+        return reviewRatings.TryGetValue(reservationId, out var rating) ? rating : 5;
+    }
+
+    private string GetReviewComment(int reservationId)
+    {
+        return reviewComments.TryGetValue(reservationId, out var comment) ? comment : string.Empty;
+    }
+
+    private void SetReviewRating(int reservationId, string? value)
+    {
+        reviewRatings[reservationId] = int.TryParse(value, out var rating)
+            ? Math.Clamp(rating, 1, 5)
+            : 5;
+    }
+
+    private void SetReviewComment(int reservationId, string? value)
+    {
+        reviewComments[reservationId] = value ?? string.Empty;
+    }
+
+    private async Task LoadReviewedEventsForReservations()
+    {
+        if (Session.CurrentUser is null)
+            return;
+
+        reviewedEventIds.Clear();
+        var eventIds = reservations
+            .Select(reservation => reservation.EventoId)
+            .Distinct()
+            .ToList();
+
+        foreach (var eventId in eventIds)
+        {
+            var reviews = await ApiClient.GetEventReviewsAsync(eventId);
+            if (reviews.Any(review => string.Equals(review.UsuarioCpf, Session.CurrentUser.Cpf, StringComparison.Ordinal)))
+                reviewedEventIds.Add(eventId);
+        }
+    }
+
+    private async Task SubmitReview(ReservationViewModel reservation)
+    {
+        if (Session.CurrentUser is null)
+            return;
+
+        reviewIsBusy = true;
+        reviewIsError = false;
+        reviewMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.CreateEventReviewAsync(new EventReviewRequest
+            {
+                EventoId = reservation.EventoId,
+                UsuarioCpf = Session.CurrentUser.Cpf,
+                Nota = GetReviewRating(reservation.Id),
+                Comentario = GetReviewComment(reservation.Id)
+            }, Session.CurrentUser.Cpf);
+
+            reviewIsError = !result.Success;
+            reviewMessage = result.Message;
+
+            if (result.Success)
+                reviewedEventIds.Add(reservation.EventoId);
+        }
+        catch
+        {
+            reviewIsError = true;
+            reviewMessage = "Não foi possível enviar a avaliação agora.";
+        }
+        finally
+        {
+            reviewIsBusy = false;
+        }
+    }
+}

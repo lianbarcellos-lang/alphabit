@@ -1,6 +1,6 @@
-# TicketPrime
+# GeekTop
 
-Sistema de venda e vitrine de eventos musicais com API em .NET 9, banco SQLite e interface em Blazor.
+Sistema de venda e vitrine de eventos geek/anime com API em .NET 9, banco SQLite e interface em Blazor.
 
 ## O que o projeto entrega hoje
 
@@ -9,16 +9,23 @@ Sistema de venda e vitrine de eventos musicais com API em .NET 9, banco SQLite e
 - acesso administrativo no mesmo site
 - painel ADM para cadastrar, listar, editar e excluir eventos
 - cadastro de cupons
+- catalogos administrativos de cidades e categorias geek
 - vitrine visual de eventos com imagens
-- eventos iniciais cadastrados automaticamente para demonstracao
-- queries parametrizadas com Dapper nas operacoes principais
+- tipos de ingresso por evento
+- atividades internas com inscrição
+- convidados associados aos eventos
+- check-in administrativo com QR Code
+- avaliações de eventos por clientes com reserva
+- dashboard administrativo com receita, reservas, check-ins, capacidade, cupons e avaliações
+- eventos iniciais cadastrados automaticamente para demonstração
+- queries parametrizadas com Dapper nas operações principais
 - testes automatizados com xUnit e `Assert`
 
-## Estrutura da solucao
+## Estrutura da solução
 
-- `src/TicketPrime.API`: backend da aplicacao
-- `src/TicketPrime.App`: interface Blazor
-- `tests/TicketPrime.Tests`: testes automatizados
+- `src/Alphabit.API`: backend da aplicação
+- `src/Alphabit.App`: interface Blazor
+- `tests/Alphabit.Tests`: testes automatizados
 - `docs/requisitos.md`: requisitos atualizados do sistema
 
 ## Como rodar
@@ -28,24 +35,24 @@ Abra dois terminais.
 ### 1. Subir a API
 
 ```powershell
-dotnet run --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.API\TicketPrime.API.csproj"
+dotnet run --project .\src\Alphabit.API\Alphabit.API.csproj --urls http://localhost:5248
 ```
 
-API disponivel em:
+API disponível em:
 
-- `http://localhost:5238`
+- `http://localhost:5248`
 
 ### 2. Subir o Blazor
 
 ```powershell
-dotnet run --project "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\src\TicketPrime.App\TicketPrime.App.csproj"
+dotnet run --project .\src\Alphabit.App\Alphabit.App.csproj --urls http://localhost:5072
 ```
 
-Site disponivel em:
+Site disponível em:
 
-- `http://localhost:5062`
+- `http://localhost:5072`
 
-## Acessos para demonstracao
+## Acessos para demonstração
 
 ### Cliente
 
@@ -53,7 +60,7 @@ O cliente pode:
 
 - criar conta com `CPF`, `nome`, `email` e `senha`
 - fazer login com `email ou CPF`
-- acessar a pagina de eventos
+- acessar a página de eventos
 
 ### Administrador
 
@@ -73,6 +80,12 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 - editar evento existente
 - excluir evento
 - cadastrar cupom
+- gerenciar cidades e categorias geek
+- cadastrar atividades e convidados
+- associar convidados aos eventos
+- validar check-in por QR Code
+- acompanhar métricas do dashboard
+- moderar avaliações recentes
 
 ## Endpoints principais da API
 
@@ -80,7 +93,7 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 
 - `GET /`
 
-### Autenticacao e usuarios
+### Autenticação e usuários
 
 - `POST /api/auth/usuarios/cadastro`
 - `POST /api/auth/usuarios/login`
@@ -91,13 +104,58 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 
 - `GET /api/eventos`
 - `POST /api/eventos`
+- `GET /api/eventos/{id}/tipos-ingresso`
+- `GET /api/eventos/{id}/atividades`
+- `GET /api/eventos/{id}/convidados`
 - `GET /api/admin/eventos`
 - `PUT /api/admin/eventos/{id}`
 - `DELETE /api/admin/eventos/{id}`
 
+### Catálogos administrativos
+
+- `GET /api/admin/generos`
+- `POST /api/admin/generos`
+- `PUT /api/admin/generos/{nomeAtual}`
+- `DELETE /api/admin/generos/{nomeAtual}`
+- `GET /api/admin/cidades`
+- `POST /api/admin/cidades`
+- `PUT /api/admin/cidades/{nomeAtual}`
+- `DELETE /api/admin/cidades/{nomeAtual}`
+
+### Convidados e atividades
+
+- `GET /api/admin/convidados`
+- `POST /api/admin/convidados`
+- `POST /api/admin/eventos/convidados`
+- `DELETE /api/admin/eventos/{eventoId}/convidados/{convidadoId}`
+- `DELETE /api/admin/convidados/{id}`
+- `POST /api/atividades`
+- `POST /api/atividades/{id}/inscricao`
+- `DELETE /api/admin/atividades/{id}`
+
+### Reservas e check-in
+
+- `POST /api/reservas`
+- `GET /api/reservas/{cpf}`
+- `POST /api/admin/checkins/validar`
+
+### Avaliações
+
+- `POST /api/avaliacoes`
+- `GET /api/eventos/{id}/avaliacoes`
+- `DELETE /api/admin/avaliacoes/{id}`
+
+### Dashboard administrativo
+
+- `GET /api/admin/vendas/dashboard`
+
 ### Cupons
 
 - `POST /api/cupons`
+- `POST /api/cupons/preview`
+- `GET /api/admin/cupons`
+- `PUT /api/admin/cupons/{codigo}`
+- `DELETE /api/admin/cupons/{codigo}`
 
 ## Exemplo de cadastro de cliente
 
@@ -113,7 +171,7 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 Endpoint:
 
 ```http
-POST http://localhost:5238/api/auth/usuarios/cadastro
+POST http://localhost:5248/api/auth/usuarios/cadastro
 ```
 
 ## Exemplo de login de cliente
@@ -128,22 +186,22 @@ POST http://localhost:5238/api/auth/usuarios/cadastro
 Endpoint:
 
 ```http
-POST http://localhost:5238/api/auth/usuarios/login
+POST http://localhost:5248/api/auth/usuarios/login
 ```
 
 ## Exemplo de cadastro de evento
 
-Para operacoes administrativas via API, envie o cabecalho:
+Para operações administrativas via API, envie o cabeçalho:
 
 ```http
-X-Admin-Token: ticketprime-admin-token
+X-Admin-Token: alphabit-admin-token
 ```
 
 Exemplo de corpo:
 
 ```json
 {
-  "Nome": "Show de Rock",
+  "Nome": "Anime Friends Experience",
   "CapacidadeTotal": 5000,
   "DataEvento": "2026-05-01T20:00:00",
   "PrecoPadrao": 150.00,
@@ -154,7 +212,7 @@ Exemplo de corpo:
 Endpoint:
 
 ```http
-POST http://localhost:5238/api/eventos
+POST http://localhost:5248/api/eventos
 ```
 
 ## Testes
@@ -162,25 +220,33 @@ POST http://localhost:5238/api/eventos
 Para executar os testes:
 
 ```powershell
-dotnet test "C:\Users\rapha\OneDrive\Área de Trabalho\Curso_Video\TicketPrime (1)\TicketPrime\tests\TicketPrime.Tests\TicketPrime.Tests.csproj" --no-restore
+dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 ```
 
 Os testes cobrem regras como:
 
 - hash de senha
 - credencial administrativa
-- validacao de cadastro
-- validacao de evento
-- validacao de cupom
+- validação de cadastro
+- validação de evento
+- validação de cupom
+- tipos de ingresso
+- atividades internas
+- convidados
+- check-in com QR Code
+- avaliações de eventos
 
-## Observacoes tecnicas
+## Observações técnicas
 
-- o banco utilizado e SQLite
-- as senhas dos clientes sao armazenadas como hash SHA-256
-- as operacoes principais usam Dapper com queries parametrizadas
+- o banco utilizado é SQLite
+- as senhas dos clientes são armazenadas como hash SHA-256
+- as operações principais usam Dapper com queries parametrizadas
 - isso reduz o risco de SQL Injection nas rotas implementadas
-- eventos demo sao inseridos automaticamente quando a tabela `Eventos` esta vazia
+- eventos demo são inseridos automaticamente quando a tabela `Eventos` está vazia
 
-## Documentacao complementar
+## Documentação complementar
 
 - requisitos atualizados: `docs/requisitos.md`
+- pivotagem: `docs/pivotagem.md`
+- roadmap da pivotagem: `docs/roadmap-pivotagem.md`
+- checklist de entrega: `docs/checklist-entrega.md`

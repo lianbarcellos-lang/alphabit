@@ -1,8 +1,14 @@
 
+# Documento legado
 
-# Product Backlog – Sistema TicketPrime 🎟️
+Este arquivo foi mantido apenas como historico do backlog inicial de venda de ingressos.
+Para a pivotagem atual Geek / Anime, use `docs/requisitos.md`, `docs/pivotagem.md`,
+`docs/roadmap-pivotagem.md` e `docs/checklist-entrega.md`.
 
-Este documento descreve o backlog completo do sistema TicketPrime, contendo as funcionalidades necessárias para o desenvolvimento da API de venda de ingressos.
+
+# Product Backlog – Sistema Alphabit 🎟️
+
+Este documento descreve o backlog completo do sistema Alphabit, contendo as funcionalidades necessárias para o desenvolvimento da API de venda de ingressos.
 
 ---
 

@@ -14,8 +14,8 @@ Legenda do nivel de risco:
 - Nivel de risco: Medio
 - Evidencia: o teste IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest falhava.
 - Teste unitario relacionado:
-  - TicketPrimeRulesTests.IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest
-  - TicketPrimeRulesTests.IsValidCheckout_ShouldReturnFalse_WhenSeatCountDoesNotMatchQuantity
+  - AlphabitRulesTests.IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest
+  - AlphabitRulesTests.IsValidCheckout_ShouldReturnFalse_WhenSeatCountDoesNotMatchQuantity
 
 2. Perfil de usuario sem autenticacao
 - Categoria: Seguranca
@@ -25,7 +25,7 @@ Legenda do nivel de risco:
 - Nivel de risco: Alto
 - Consequencia: um usuario pode consultar ou alterar dados de outro.
 - Teste unitario relacionado:
-  - TicketPrimeRiskTests.ReviewRisk_ProfileRoutes_ShouldExistWithoutProtectionCheck
+  - AlphabitRiskTests.ReviewRisk_ProfileRoutes_ShouldExistWithoutProtectionCheck
 
 3. Exclusao de evento sem tratamento de dependencias
 - Categoria: Integridade / Operacao
@@ -35,7 +35,7 @@ Legenda do nivel de risco:
 - Nivel de risco: Alto
 - Consequencia: o painel administrativo pode falhar ao excluir evento real em producao ou apresentacao.
 - Teste unitario relacionado:
-  - TicketPrimeRiskTests.ReviewRisk_DeleteEvent_ShouldUseDirectDeleteWithoutDependencyHandling
+  - AlphabitRiskTests.ReviewRisk_DeleteEvent_ShouldUseDirectDeleteWithoutDependencyHandling
 
 4. Exclusao de cupom sem tratamento de dependencias
 - Categoria: Integridade / Operacao
@@ -45,7 +45,7 @@ Legenda do nivel de risco:
 - Nivel de risco: Alto
 - Consequencia: falha administrativa e risco de erro de banco.
 - Teste unitario relacionado:
-  - TicketPrimeRiskTests.ReviewRisk_DeleteCoupon_ShouldUseDirectDeleteWithoutDependencyHandling
+  - AlphabitRiskTests.ReviewRisk_DeleteCoupon_ShouldUseDirectDeleteWithoutDependencyHandling
 
 5. Rota POST /api/usuarios cria usuario sem senha
 - Categoria: Funcionalidade / Consistencia
@@ -55,7 +55,7 @@ Legenda do nivel de risco:
 - Nivel de risco: Alto
 - Consequencia: cadastro inconsistente e confusao entre fluxo AV1 e fluxo de autenticacao real.
 - Teste unitario relacionado:
-  - TicketPrimeRiskTests.ReviewRisk_Av1UserRoute_ShouldInsertEmptyPasswordHash
+  - AlphabitRiskTests.ReviewRisk_Av1UserRoute_ShouldInsertEmptyPasswordHash
 
 6. Banco criado sem foreign keys em Reservas
 - Categoria: Integridade de dados
@@ -65,7 +65,7 @@ Legenda do nivel de risco:
 - Nivel de risco: Alto
 - Consequencia: possibilidade de registros orfaos e comportamento diferente entre ambientes.
 - Teste unitario relacionado:
-  - TicketPrimeRiskTests.ReviewRisk_ReservationsTable_ShouldBeCreatedWithoutForeignKeys
+  - AlphabitRiskTests.ReviewRisk_ReservationsTable_ShouldBeCreatedWithoutForeignKeys
 
 7. Credencial administrativa fixa na regra
 - Categoria: Seguranca
@@ -75,7 +75,7 @@ Legenda do nivel de risco:
 - Nivel de risco: Alto
 - Consequencia: acesso administrativo previsivel e fragil.
 - Teste unitario relacionado:
-  - TicketPrimeRiskTests.ReviewRisk_AdminCredential_ShouldRemainHardcodedInRules
+  - AlphabitRiskTests.ReviewRisk_AdminCredential_ShouldRemainHardcodedInRules
 
 RESUMO FINAL
 - Riscos baixos: 0

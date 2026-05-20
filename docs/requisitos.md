@@ -1,8 +1,8 @@
-# Requisitos do Sistema TicketPrime
+# Requisitos do Sistema Alphabit
 
 ## Escopo implementado
 
-O TicketPrime possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos, cupons, cidades e generos musicais, fluxo de compra com carrinho, assentos, reservas e filtros de descoberta.
+O Alphabit possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos, cupons, cidades e categorias geek, fluxo de compra com carrinho, tipos de ingresso, assentos, reservas e filtros de descoberta.
 
 ## Historias de usuario implementadas
 
@@ -25,7 +25,7 @@ Como sistema, quero bloquear CPF e email ja cadastrados, para manter a base cons
 Como administrador, quero acessar uma area protegida, para gerenciar a operacao da plataforma.
 
 ### HU07 - Cadastro de evento
-Como administrador, quero cadastrar eventos com nome, local, cidade, artista, genero musical, capacidade, data, preco e imagem, para publicar a agenda da plataforma.
+Como administrador, quero cadastrar eventos com nome, local, cidade, atracao principal, categoria geek, capacidade, data, preco e imagem, para publicar a agenda da plataforma.
 
 ### HU08 - Gestao de eventos
 Como administrador, quero editar e excluir eventos, para manter a agenda atualizada.
@@ -33,8 +33,8 @@ Como administrador, quero editar e excluir eventos, para manter a agenda atualiz
 ### HU09 - Catalogo de cidades
 Como administrador, quero selecionar, criar, editar e excluir cidades de um catalogo, para evitar digitacao repetida e erros.
 
-### HU10 - Catalogo de generos musicais
-Como administrador, quero selecionar, criar, editar e excluir generos musicais de um catalogo, para padronizar os eventos cadastrados.
+### HU10 - Catalogo de categorias geek
+Como administrador, quero selecionar, criar, editar e excluir categorias geek de um catalogo, para padronizar os eventos cadastrados.
 
 ### HU11 - Cadastro de cupons
 Como administrador, quero cadastrar cupons promocionais com codigo, desconto e valor minimo, para criar campanhas.
@@ -46,7 +46,7 @@ Como administrador, quero editar e excluir cupons, para ajustar campanhas promoc
 Como cliente, quero visualizar os eventos disponiveis com imagem e informacoes principais, para escolher o que desejo comprar.
 
 ### HU14 - Filtros de descoberta
-Como cliente, quero filtrar eventos por cidade, dia da semana, artista e genero musical, para encontrar opcoes mais relevantes.
+Como cliente, quero filtrar eventos por cidade, dia da semana, atracao e categoria geek, para encontrar opcoes mais relevantes.
 
 ### HU15 - Detalhe do evento
 Como cliente, quero abrir uma pagina de detalhe do evento, para entender local, data, preco e seguir para os assentos.
@@ -67,7 +67,7 @@ Como cliente, quero escolher entre Pix, Cartao e Boleto no carrinho, para finali
 Como cliente, quero consultar minhas reservas, para acompanhar meus ingressos confirmados.
 
 ### HU21 - Relatorio de vendas do administrador
-Como administrador, quero visualizar um relatorio de vendas com cliente, show, data, pagamento, status, valor, quantidade e pedido, para acompanhar a operacao comercial.
+Como administrador, quero visualizar um dashboard com cliente, evento, data, pagamento, status, valor, quantidade, tipo de ingresso, pedido, check-ins, capacidade, cupons e avaliacoes, para acompanhar a operacao comercial.
 
 ### HU22 - Separacao de contextos no painel administrativo
 Como administrador, quero alternar entre controle de ingressos e relatorio de vendas, para trabalhar com menos poluicao visual.
@@ -83,6 +83,24 @@ Como sistema, quero usar Dapper com parametros nomeados, para reduzir o risco de
 
 ### HU26 - Qualidade automatizada
 Como desenvolvedor, quero manter testes automatizados com Assert, para validar o comportamento esperado do sistema.
+
+### HU27 - Tipos de ingresso por evento
+Como cliente, quero escolher entre tipos de ingresso com precos e beneficios diferentes, para comprar a experiencia desejada.
+
+### HU28 - Atividades internas do evento
+Como cliente, quero me inscrever em atividades internas com limite de vagas, para participar da programacao do evento.
+
+### HU29 - Convidados do evento
+Como cliente, quero visualizar convidados associados ao evento, para decidir se o evento e relevante para mim.
+
+### HU30 - Check-in por QR Code
+Como administrador, quero validar a entrada pelo QR Code da reserva, para controlar acesso e impedir uso duplicado.
+
+### HU31 - Avaliacoes pos-evento
+Como cliente, quero avaliar um evento reservado, para registrar minha experiencia e ajudar outros clientes.
+
+### HU32 - Moderacao de avaliacoes
+Como administrador, quero remover avaliacoes indevidas, para manter a vitrine confiavel.
 
 ## Criterios de aceitacao
 
@@ -130,7 +148,7 @@ Dado que o administrador deseja padronizar cidades
 Quando ele cria, edita ou exclui uma cidade no catalogo  
 Entao a lista deve ser atualizada e reutilizavel no cadastro de eventos
 
-Cenario: gerenciar catalogo de generos musicais  
+Cenario: gerenciar catalogo de categorias geek  
 Dado que o administrador deseja padronizar generos  
 Quando ele cria, edita ou exclui um genero no catalogo  
 Entao a lista deve ser atualizada e reutilizavel no cadastro de eventos
@@ -143,12 +161,17 @@ Entao o cupom deve ser criado
 Cenario: visualizar relatorio de vendas  
 Dado que existem compras registradas  
 Quando o administrador abre a visao comercial  
-Entao o sistema deve mostrar totais, formas de pagamento, ranking de shows e a tabela detalhada das compras
+Entao o sistema deve mostrar totais, formas de pagamento, ranking de eventos e a tabela detalhada das compras
 
 Cenario: alternar entre as visoes do painel  
 Dado que o administrador esta no painel  
 Quando ele clica em controle de ingressos ou relatorio de vendas  
 Entao a tela deve exibir apenas os blocos do contexto selecionado
+
+Cenario: acompanhar metricas da pivotagem  
+Dado que existem reservas, cupons, check-ins e avaliacoes  
+Quando o administrador abre o dashboard  
+Entao o sistema deve mostrar receita, ingressos vendidos, capacidade restante, eventos populares, uso de cupons, check-ins e avaliacoes recentes
 
 ### Compra e reservas
 
@@ -177,6 +200,21 @@ Cenario: proteger reservas
 Dado que a rota de reservas pertence a um CPF especifico  
 Quando outro usuario tenta consultar o historico sem permissao  
 Entao a API deve retornar acesso nao autorizado
+
+Cenario: reservar por tipo de ingresso  
+Dado que o evento possui tipos de ingresso ativos  
+Quando o cliente seleciona um tipo de ingresso  
+Entao o valor final deve usar o preco do tipo escolhido e respeitar a disponibilidade dele
+
+Cenario: validar entrada por QR Code  
+Dado que uma reserva possui QR Code valido  
+Quando o administrador realiza o check-in  
+Entao o sistema deve marcar o QR Code como usado e bloquear uma segunda validacao
+
+Cenario: avaliar evento uma unica vez  
+Dado que o cliente possui reserva para o evento  
+Quando ele envia uma avaliacao valida  
+Entao a avaliacao deve ser salva e uma nova avaliacao do mesmo cliente para o mesmo evento deve ser rejeitada
 
 ### Descoberta
 
@@ -208,6 +246,11 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 
 - `GET /api/eventos`
 - `GET /api/eventos/{id}`
+- `GET /api/eventos/{id}/assentos-ocupados`
+- `GET /api/eventos/{id}/tipos-ingresso`
+- `GET /api/eventos/{id}/atividades`
+- `GET /api/eventos/{id}/convidados`
+- `GET /api/eventos/{id}/avaliacoes`
 - `POST /api/eventos`
 - `GET /api/admin/eventos`
 - `PUT /api/admin/eventos/{id}`
@@ -221,6 +264,21 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - `PUT /api/admin/cidades/{nomeAtual}`
 - `DELETE /api/admin/cidades/{nomeAtual}`
 - `GET /api/admin/vendas/dashboard`
+- `GET /api/dashboard`
+
+### Atividades, convidados, avaliacoes e check-in
+
+- `GET /api/convidados`
+- `POST /api/convidados`
+- `POST /api/eventos/{id}/convidados`
+- `DELETE /api/eventos/{id}/convidados/{convidadoId}`
+- `DELETE /api/admin/convidados/{id}`
+- `POST /api/atividades`
+- `POST /api/atividades/{id}/inscricao`
+- `DELETE /api/admin/atividades/{id}`
+- `POST /api/checkin`
+- `POST /api/avaliacoes`
+- `DELETE /api/admin/avaliacoes/{id}`
 
 ### Cupons
 
@@ -285,6 +343,7 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - `Id` INTEGER PRIMARY KEY AUTOINCREMENT
 - `UsuarioCpf` TEXT NOT NULL
 - `EventoId` INTEGER NOT NULL
+- `TipoIngressoId` INTEGER NULL
 - `CupomUtilizado` TEXT
 - `Assentos` TEXT NOT NULL
 - `Quantidade` INTEGER NOT NULL
@@ -294,6 +353,61 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - `StatusPagamento` TEXT NOT NULL
 - `CodigoPedido` TEXT NOT NULL
 - `DataReserva` TEXT NOT NULL
+
+### Tabela `TiposIngresso`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `EventoId` INTEGER NOT NULL
+- `Nome` TEXT NOT NULL
+- `Beneficios` TEXT NOT NULL
+- `Preco` REAL NOT NULL
+- `QuantidadeDisponivel` INTEGER NOT NULL
+
+### Tabela `Atividades`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `EventoId` INTEGER NOT NULL
+- `Nome` TEXT NOT NULL
+- `Horario` TEXT NOT NULL
+- `Tipo` TEXT NOT NULL
+- `LimiteParticipantes` INTEGER NOT NULL
+
+### Tabela `InscricoesAtividades`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `AtividadeId` INTEGER NOT NULL
+- `UsuarioCpf` TEXT NOT NULL
+- `CriadoEm` TEXT NOT NULL
+
+### Tabela `Convidados`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `Nome` TEXT NOT NULL
+- `Tipo` TEXT NOT NULL
+- `Descricao` TEXT NOT NULL
+- `ImagemUrl` TEXT
+
+### Tabela `EventoConvidados`
+
+- `EventoId` INTEGER NOT NULL
+- `ConvidadoId` INTEGER NOT NULL
+
+### Tabela `Checkins`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `ReservaId` INTEGER NOT NULL
+- `QrCode` TEXT NOT NULL
+- `DataCheckin` TEXT NULL
+- `Status` TEXT NOT NULL
+
+### Tabela `Avaliacoes`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `EventoId` INTEGER NOT NULL
+- `UsuarioCpf` TEXT NOT NULL
+- `Nota` INTEGER NOT NULL
+- `Comentario` TEXT
+- `CriadoEm` TEXT NOT NULL
 
 ### Tabela `RecuperacoesSenha`
 
@@ -313,12 +427,15 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 - senhas de usuarios sao armazenadas como hash SHA-256
 - a API possui fluxo de recuperacao de senha por email com codigo temporario
 - o app Blazor possui modal de login, cadastro, redefinicao de senha e exibicao de senha
-- a vitrine publica possui filtros por cidade, dia da semana, artista e genero musical
+- a vitrine publica possui filtros por cidade, dia da semana, atracao e categoria geek
 - o carrinho mostra pre-visualizacao do desconto antes da finalizacao e permite escolher a forma de pagamento
 - a rota `GET /api/reservas/{cpf}` usa `INNER JOIN` para retornar o nome do evento
 - a rota `POST /api/reservas` aplica validacao de integridade, limite por CPF, capacidade e cupom
 - o painel administrativo tem uma visao separada de relatorio comercial
-- o dashboard comercial mostra totais, formas de pagamento, shows mais vendidos e ultimas compras
+- o dashboard comercial mostra totais, formas de pagamento, eventos mais vendidos e ultimas compras
+- o dashboard administrativo tambem mostra check-ins, capacidade, uso de cupons e avaliacoes recentes
+- o check-in usa QR Code unico por reserva e impede reutilizacao
+- as avaliacoes exigem reserva do usuario, nota valida e bloqueiam duplicidade por usuario/evento
 - as datas de compra do historico e do relatorio sao convertidas para o horario de Brasilia
 - as rotas sensiveis de usuarios e reservas exigem autorizacao do proprio cliente ou do administrador
 - o projeto esta preparado para deploy no Railway com configuracao por variavel de ambiente e volume persistente para o banco SQLite

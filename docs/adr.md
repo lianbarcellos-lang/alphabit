@@ -2,7 +2,7 @@
 
 ## Contexto
 
-O projeto TicketPrime precisava de um backend simples de executar, com baixo custo de infraestrutura, sem uso de ORM completo e aderente ao enunciado da disciplina. A aplicação também precisava usar rotas HTTP explícitas, script SQL manual e consultas protegidas contra SQL Injection.
+O projeto Alphabit precisava de um backend simples de executar, com baixo custo de infraestrutura, sem uso de ORM completo e aderente ao enunciado da disciplina. A aplicação também precisava usar rotas HTTP explícitas, script SQL manual e consultas protegidas contra SQL Injection.
 
 ## Decisão
 

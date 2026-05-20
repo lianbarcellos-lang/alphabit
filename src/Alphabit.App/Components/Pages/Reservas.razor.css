@@ -1,0 +1,208 @@
+.reservations-shell {
+    display: grid;
+    gap: 1.3rem;
+}
+
+.reservations-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+    padding: 1.7rem;
+    border-radius: 1.7rem;
+    background:
+        radial-gradient(circle at top right, rgba(15, 130, 255, 0.14), transparent 14rem),
+        rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(17, 33, 63, 0.08);
+    box-shadow: 0 18px 50px rgba(16, 33, 66, 0.08);
+}
+
+.reservations-hero h1 {
+    margin: 0.45rem 0 0.6rem;
+    color: #11213f;
+}
+
+.reservations-hero p {
+    margin: 0;
+    color: #66758f;
+}
+
+.reservations-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.reservation-card {
+    padding: 1.35rem;
+    border-radius: 1.4rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(17, 33, 63, 0.08);
+    box-shadow: 0 16px 40px rgba(16, 33, 66, 0.08);
+}
+
+.reservation-card h2 {
+    margin: 1rem 0 0.55rem;
+    color: #11213f;
+    font-size: 1.5rem;
+}
+
+.reservation-card p {
+    margin: 0 0 0.45rem;
+    color: #66758f;
+}
+
+.reservation-card strong {
+    color: #11213f;
+}
+
+.reservation-qr {
+    display: block;
+    overflow-wrap: anywhere;
+    margin-top: 0.25rem;
+    padding: 0.55rem;
+    border-radius: 0.6rem;
+    background: #f4f8ff;
+    font-size: 0.82rem;
+}
+
+.reservation-ticket {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: center;
+    margin: 0.85rem 0 1rem;
+    padding: 0.85rem;
+    border: 1px solid rgba(17, 33, 63, 0.08);
+    border-radius: 1rem;
+    background: #ffffff;
+}
+
+.reservation-ticket__qr {
+    display: grid;
+    place-items: center;
+    width: 116px;
+    aspect-ratio: 1;
+    padding: 0.45rem;
+    border-radius: 0.8rem;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(17, 33, 63, 0.1);
+}
+
+.reservation-ticket__qr img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.reservation-ticket span {
+    color: #66758f;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.reservation-ticket__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.45rem;
+    min-height: 2.4rem;
+    padding: 0 0.95rem;
+    border: 0;
+    border-radius: 0.75rem;
+    background: #eaf3ff;
+    color: #0a66d1;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.reservation-ticket__button:hover {
+    background: #d9ebff;
+}
+
+.reservation-qr-expanded {
+    display: grid;
+    gap: 0.8rem;
+    justify-items: center;
+    margin: 0.75rem 0 1rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: #ffffff;
+    border: 1px solid rgba(17, 33, 63, 0.08);
+    box-shadow: 0 16px 40px rgba(16, 33, 66, 0.08);
+}
+
+.reservation-qr-expanded__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.reservation-qr-expanded img {
+    width: min(100%, 320px);
+    aspect-ratio: 1;
+    object-fit: contain;
+}
+
+.reservation-qr-expanded span {
+    overflow-wrap: anywhere;
+    color: #11213f;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.reservation-review {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(17, 33, 63, 0.08);
+}
+
+.reservation-review h3 {
+    margin: 0;
+    color: #11213f;
+    font-size: 1rem;
+}
+
+.reservation-review label {
+    color: #66758f;
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+
+.reservation-review__select,
+.reservation-review__textarea {
+    width: 100%;
+    border: 1px solid rgba(17, 33, 63, 0.12);
+    border-radius: 0.75rem;
+    background: #f8fbff;
+    color: #11213f;
+}
+
+.reservation-review__select {
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+}
+
+.reservation-review__textarea {
+    min-height: 5rem;
+    resize: vertical;
+    padding: 0.75rem;
+}
+
+@media (max-width: 640px) {
+    .reservations-hero {
+        align-items: start;
+        flex-direction: column;
+    }
+
+    .reservation-ticket {
+        grid-template-columns: 1fr;
+    }
+}

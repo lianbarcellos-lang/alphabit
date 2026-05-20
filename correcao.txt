@@ -1,4 +1,4 @@
-CORRECAO DO PROJETO TICKETPRIME
+CORRECAO DO PROJETO ALPHABIT
 Data da revisao: 07/05/2026
 
 1. RESUMO GERAL
@@ -7,21 +7,21 @@ Data da revisao: 07/05/2026
 - O principal motivo para essa conclusao e que a suite automatizada de testes esta falhando.
 
 2. VALIDACAO EXECUTADA
-- Comando executado: dotnet build .\TicketPrime.sln --no-restore /nr:false -p:BuildInParallel=false -m:1
+- Comando executado: dotnet build .\Alphabit.sln --no-restore /nr:false -p:BuildInParallel=false -m:1
 - Resultado: compilacao concluida com sucesso.
 - Observacao: apareceu 1 aviso de acesso ao arquivo de cache em obj do projeto de testes.
 
-- Comando executado: dotnet test .\tests\TicketPrime.Tests\TicketPrime.Tests.csproj --no-restore
+- Comando executado: dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 - Resultado: 9 testes aprovados e 1 teste com falha.
 - Teste com falha:
-  TicketPrime.Tests.TicketPrimeRulesTests.IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest
+  Alphabit.Tests.AlphabitRulesTests.IsValidCheckout_ShouldReturnTrue_ForValidReservationRequest
 
 3. ERROS E PROBLEMAS ENCONTRADOS
 
 3.1. TESTE DE CHECKOUT QUEBRADO
 Arquivo:
-- tests\TicketPrime.Tests\TicketPrimeRulesTests.cs
-- src\TicketPrime.API\TicketPrimeRules.cs
+- tests\Alphabit.Tests\AlphabitRulesTests.cs
+- src\Alphabit.API\AlphabitRules.cs
 
 Problema:
 - O teste espera que um checkout valido passe apenas com EventoId e Quantidade.
@@ -36,7 +36,7 @@ Impacto:
 
 4.1. PERFIL DE USUARIO SEM AUTENTICACAO
 Arquivo:
-- src\TicketPrime.API\Program.cs
+- src\Alphabit.API\Program.cs
 
 Rotas afetadas:
 - GET /api/usuarios/{cpf}/perfil
@@ -51,7 +51,7 @@ Impacto:
 
 4.2. EXCLUSAO DE EVENTO NAO TRATA REGISTROS RELACIONADOS
 Arquivo:
-- src\TicketPrime.API\Program.cs
+- src\Alphabit.API\Program.cs
 
 Rota afetada:
 - DELETE /api/admin/eventos/{id}
@@ -66,7 +66,7 @@ Impacto:
 
 4.3. EXCLUSAO DE CUPOM TAMBEM NAO TRATA VINCULOS
 Arquivo:
-- src\TicketPrime.API\Program.cs
+- src\Alphabit.API\Program.cs
 
 Rota afetada:
 - DELETE /api/admin/cupons/{codigo}
@@ -80,7 +80,7 @@ Impacto:
 
 4.4. ROTA /api/usuarios CRIA USUARIO SEM SENHA
 Arquivo:
-- src\TicketPrime.API\Program.cs
+- src\Alphabit.API\Program.cs
 
 Rota afetada:
 - POST /api/usuarios
@@ -96,7 +96,7 @@ Impacto:
 
 4.5. BANCO CRIADO SEM FOREIGN KEYS NA TABELA RESERVAS
 Arquivo:
-- src\TicketPrime.API\Program.cs
+- src\Alphabit.API\Program.cs
 
 Problema:
 - A criacao da tabela Reservas nao define FOREIGN KEY para UsuarioCpf, EventoId e CupomUtilizado.
@@ -108,7 +108,7 @@ Impacto:
 
 4.6. CREDENCIAL ADMINISTRATIVA FIXA NO CODIGO DE REGRA
 Arquivo:
-- src\TicketPrime.API\TicketPrimeRules.cs
+- src\Alphabit.API\AlphabitRules.cs
 
 Problema:
 - O login administrativo continua fixo como admin/admin no metodo de regra.

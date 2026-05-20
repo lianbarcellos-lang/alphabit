@@ -1,0 +1,39 @@
+using Alphabit.App.Components;
+using Alphabit.App.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+builder.Services.AddHttpClient<AlphabitApiClient>(client =>
+{
+    var configuredBaseUrl = builder.Configuration["AlphabitApi:BaseUrl"];
+    if (string.IsNullOrWhiteSpace(configuredBaseUrl))
+    {
+        throw new InvalidOperationException(
+            "A configuracao 'AlphabitApi:BaseUrl' precisa ser definida para iniciar o Alphabit.App.");
+    }
+
+    client.BaseAddress = new Uri(configuredBaseUrl);
+});
+builder.Services.AddScoped<UserSessionState>();
+builder.Services.AddScoped<CartState>();
+builder.Services.AddScoped<AuthOverlayState>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+}
+
+
+app.UseAntiforgery();
+
+app.MapStaticAssets();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();
