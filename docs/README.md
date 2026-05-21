@@ -246,6 +246,10 @@ Os testes cobrem regras como:
 
 ## Documentação complementar
 
+- visão do projeto: `docs/visao.md`
+- arquitetura: `docs/arquitetura.md`
+- specs: `docs/specs.md`
+- roadmap resumido: `docs/roadmap.md`
 - requisitos atualizados: `docs/requisitos.md`
 - pivotagem: `docs/pivotagem.md`
 - roadmap da pivotagem: `docs/roadmap-pivotagem.md`
