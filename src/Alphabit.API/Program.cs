@@ -2710,7 +2710,7 @@ static void EnsureDemoEvents(SqliteConnection connection)
             CapacidadeTotal = 18000,
             DataEvento = new DateTime(2026, 6, 20, 17, 0, 0),
             PrecoPadrao = 249.90m,
-            ImagemUrl = "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80"
+            ImagemUrl = "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80"
         },
         new Evento
         {
@@ -2758,7 +2758,7 @@ static void EnsureDemoEvents(SqliteConnection connection)
             CapacidadeTotal = 14000,
             DataEvento = new DateTime(2026, 10, 17, 22, 0, 0),
             PrecoPadrao = 279.90m,
-            ImagemUrl = "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80"
+            ImagemUrl = "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80"
         },
         new Evento
         {

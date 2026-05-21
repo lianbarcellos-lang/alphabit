@@ -168,13 +168,13 @@
 .hero-banner--large {
     background:
         linear-gradient(180deg, rgba(23, 33, 49, 0.08), rgba(23, 33, 49, 0.78)),
-        url("https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80") center/cover;
+        url("https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80") center/cover;
 }
 
 .hero-banner--small {
     background:
         linear-gradient(180deg, rgba(23, 33, 49, 0.08), rgba(23, 33, 49, 0.78)),
-        url("https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1200&q=80") center/cover;
+        url("https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80") center/cover;
 }
 
 .home-sections,
