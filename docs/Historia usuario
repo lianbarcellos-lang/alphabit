@@ -3,7 +3,8 @@
 
 Este arquivo foi mantido apenas como material de apoio sobre escrita de historias de usuario.
 Ele nao define o escopo atual da pivotagem. Para a entrega vigente, use
-`docs/requisitos.md`, `docs/pivotagem.md`, `docs/roadmap-pivotagem.md` e
+`docs/historias-usuario.md`, `docs/requisitos.md`, `docs/visao.md`,
+`docs/arquitetura.md`, `docs/specs.md`, `docs/roadmap.md` e
 `docs/checklist-entrega.md`.
 
 
@@ -101,7 +102,6 @@ CÓDIGO vscode 26/02/2026
 | **HU008** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
 | **HU009** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
 | **HU010** | Qual o valor de negócio ou motivo daquela ação. | **para que** [resultado esperado] |
-
 
 
 

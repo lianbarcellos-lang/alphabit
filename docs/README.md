@@ -249,6 +249,7 @@ Os testes cobrem regras como:
 - visão do projeto: `docs/visao.md`
 - arquitetura: `docs/arquitetura.md`
 - specs: `docs/specs.md`
+- histórias de usuário: `docs/historias-usuario.md`
 - roadmap resumido: `docs/roadmap.md`
 - requisitos atualizados: `docs/requisitos.md`
 - pivotagem: `docs/pivotagem.md`

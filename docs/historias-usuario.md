@@ -1,0 +1,244 @@
+# Historias de Usuario - GeekTop
+
+Este documento consolida as historias de usuario atuais do GeekTop. Os arquivos antigos `docs/Historia usuario`, `docs/História de Usuário` e `docs/Raphael` foram mantidos apenas como historico/apoio e nao representam mais o escopo final da pivotagem.
+
+## Epico 1 - Identidade e descoberta
+
+### HU01 - Vitrine de eventos geek
+Como cliente, quero visualizar eventos geek com imagem, categoria, cidade, data, preco e avaliacao, para escolher rapidamente uma experiencia interessante.
+
+Critérios de aceite:
+
+- os eventos devem aparecer com imagem/capa;
+- o preco deve ficar visivel;
+- a media de avaliacoes deve aparecer junto ao preco;
+- eventos sem avaliacao devem exibir `Sem avaliações`.
+
+### HU02 - Filtros de descoberta
+Como cliente, quero filtrar eventos por cidade, dia da semana, atracao e categoria geek, para encontrar opcoes mais relevantes.
+
+Critérios de aceite:
+
+- os filtros devem funcionar juntos;
+- a lista deve atualizar conforme os filtros;
+- deve existir acao para limpar filtros.
+
+### HU03 - Detalhe do evento
+Como cliente, quero abrir o detalhe de um evento, para ver local, cidade, data, preco, convidados, atividades e avaliacoes antes da compra.
+
+Critérios de aceite:
+
+- o detalhe deve mostrar os dados principais do evento;
+- deve haver caminho para comprar;
+- convidados, atividades e avaliacoes devem aparecer quando existirem.
+
+## Epico 2 - Conta e seguranca
+
+### HU04 - Cadastro de cliente
+Como cliente, quero criar uma conta com CPF, nome, email e senha, para poder comprar ingressos.
+
+Critérios de aceite:
+
+- CPF duplicado deve ser bloqueado;
+- email duplicado deve ser bloqueado;
+- senha deve ser armazenada como hash.
+
+### HU05 - Login de cliente
+Como cliente, quero entrar com email ou CPF e senha, para acessar reservas, perfil e compras.
+
+Critérios de aceite:
+
+- credenciais validas autenticam o usuario;
+- credenciais invalidas retornam erro claro.
+
+### HU06 - Recuperacao de senha
+Como cliente, quero receber um codigo por email para redefinir minha senha, para recuperar acesso a conta.
+
+Critérios de aceite:
+
+- codigo temporario deve ser gerado;
+- codigo invalido ou expirado deve ser rejeitado;
+- senha redefinida deve passar a valer no login.
+
+### HU07 - Protecao de dados
+Como sistema, quero restringir perfil e reservas ao proprio cliente ou administrador, para proteger dados pessoais.
+
+Critérios de aceite:
+
+- cliente nao acessa reserva de outro CPF;
+- administrador pode acessar dados necessarios para operacao.
+
+## Epico 3 - Compra e reservas
+
+### HU08 - Tipos de ingresso
+Como cliente, quero escolher entre tipos de ingresso com precos e beneficios diferentes, para comprar a experiencia desejada.
+
+Critérios de aceite:
+
+- tipos devem pertencer ao evento;
+- preco final deve usar o tipo selecionado;
+- disponibilidade do tipo deve ser respeitada.
+
+### HU09 - Selecao de assentos
+Como cliente, quero selecionar assentos disponiveis, para montar minha compra.
+
+Critérios de aceite:
+
+- assentos ocupados devem ficar bloqueados;
+- assentos selecionados devem ir para o carrinho/reserva.
+
+### HU10 - Carrinho e cupom
+Como cliente, quero aplicar cupom no carrinho e ver o desconto antes de finalizar, para conhecer o valor final.
+
+Critérios de aceite:
+
+- cupom inexistente deve ser rejeitado;
+- valor minimo deve ser respeitado;
+- desconto deve aparecer antes da compra.
+
+### HU11 - Finalizacao da reserva
+Como cliente, quero finalizar a compra, para garantir minha reserva no evento.
+
+Critérios de aceite:
+
+- usuario deve existir;
+- evento deve existir;
+- capacidade deve ser respeitada;
+- reserva deve registrar forma de pagamento, status e codigo do pedido.
+
+### HU12 - Historico de reservas
+Como cliente, quero consultar minhas reservas, para acompanhar meus ingressos e acessar o QR Code.
+
+Critérios de aceite:
+
+- historico deve mostrar evento, data, valor e status;
+- QR Code deve estar disponivel para reservas;
+- cliente deve conseguir ampliar o QR Code para leitura.
+
+## Epico 4 - Programacao e convidados
+
+### HU13 - Atividades internas
+Como cliente, quero me inscrever em atividades internas, para participar da programacao do evento.
+
+Critérios de aceite:
+
+- atividade deve ter limite de vagas;
+- inscricao duplicada deve ser bloqueada;
+- limite de participantes deve ser respeitado.
+
+### HU14 - Convidados do evento
+Como cliente, quero visualizar convidados associados ao evento, para decidir se o evento e relevante para mim.
+
+Critérios de aceite:
+
+- detalhe do evento deve mostrar convidados;
+- administrador deve conseguir cadastrar convidado;
+- administrador deve conseguir associar e remover convidado de evento.
+
+## Epico 5 - Check-in
+
+### HU15 - QR Code da reserva
+Como cliente, quero receber um QR Code da reserva, para apresentar na entrada do evento.
+
+Critérios de aceite:
+
+- cada reserva deve ter codigo unico;
+- QR Code deve representar esse codigo;
+- cliente deve conseguir ampliar o QR Code.
+
+### HU16 - Check-in administrativo
+Como administrador, quero validar a entrada por codigo manual ou camera/webcam, para controlar acesso ao evento.
+
+Critérios de aceite:
+
+- check-in valido deve ser aceito;
+- check-in duplicado deve ser bloqueado;
+- reserva cancelada deve ser rejeitada;
+- codigo invalido deve retornar mensagem clara.
+
+## Epico 6 - Avaliacoes
+
+### HU17 - Avaliacao pos-evento
+Como cliente, quero avaliar um evento reservado, para registrar minha experiencia e ajudar outros clientes.
+
+Critérios de aceite:
+
+- cliente precisa ter reserva;
+- nota deve ser valida;
+- avaliacao duplicada por cliente/evento deve ser bloqueada.
+
+### HU18 - Media de avaliacoes
+Como cliente ou administrador, quero ver a media de avaliacoes junto ao preco do evento, para comparar preco e qualidade percebida.
+
+Critérios de aceite:
+
+- media deve aparecer na Home, vitrine, detalhe e admin;
+- total de avaliacoes deve aparecer quando houver avaliacao;
+- eventos sem avaliacao devem exibir `Sem avaliações`.
+
+### HU19 - Moderacao de avaliacoes
+Como administrador, quero remover avaliacoes indevidas, para manter a vitrine confiavel.
+
+Critérios de aceite:
+
+- apenas administrador pode remover avaliacao;
+- dashboard deve refletir a remocao.
+
+## Epico 7 - Administracao e relatorios
+
+### HU20 - Gestao de eventos
+Como administrador, quero cadastrar, editar e excluir eventos, para manter a agenda atualizada.
+
+Critérios de aceite:
+
+- evento cadastrado deve aparecer na vitrine;
+- edicao deve atualizar os dados;
+- exclusao deve remover o evento das listas.
+
+### HU21 - Catalogos administrativos
+Como administrador, quero gerenciar cidades e categorias geek, para padronizar os eventos.
+
+Critérios de aceite:
+
+- cidade/categoria deve poder ser criada, editada e removida;
+- cadastro de evento deve reutilizar esses catalogos.
+
+### HU22 - Gestao de cupons
+Como administrador, quero criar, editar e excluir cupons, para gerenciar campanhas promocionais.
+
+Critérios de aceite:
+
+- cupom deve ter codigo, desconto e valor minimo;
+- carrinho deve validar as regras do cupom.
+
+### HU23 - Dashboard administrativo
+Como administrador, quero visualizar relatorio de vendas e operacao, para acompanhar desempenho dos eventos.
+
+Critérios de aceite:
+
+- dashboard deve mostrar eventos mais vendidos;
+- deve mostrar compras recentes sem poluir com dados desnecessarios;
+- deve mostrar formas de pagamento, capacidade, cupons, avaliacoes e check-ins.
+
+## Epico 8 - Documentacao e qualidade
+
+### HU24 - Documentacao do projeto
+Como avaliador ou desenvolvedor, quero consultar visao, arquitetura, specs, roadmap e requisitos, para entender o projeto e sua evolucao.
+
+Critérios de aceite:
+
+- `docs/visao.md` deve explicar a ideia do projeto;
+- `docs/arquitetura.md` deve explicar a estrutura tecnica;
+- `docs/specs.md` deve listar especificacoes;
+- `docs/roadmap.md` deve mostrar ordem, dependencias e status;
+- `docs/requisitos.md` deve registrar requisitos e criterios de aceite.
+
+### HU25 - Testes automatizados
+Como desenvolvedor, quero manter testes automatizados, para validar regras principais e reduzir regressao.
+
+Critérios de aceite:
+
+- `dotnet build .\Alphabit.sln` deve passar;
+- `dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore` deve passar;
+- regras de usuario, evento, cupom, reserva, convidados, atividades, check-in e avaliacoes devem ter cobertura.
+

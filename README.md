@@ -38,15 +38,16 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 - login administrativo
 - listagem, filtros e detalhe de eventos
 - categorias geek, cidades e eventos enriquecidos
+- imagens e identidade visual voltadas a games, anime, cosplay e cultura geek
 - tipos de ingresso com preço, benefícios e disponibilidade
 - seleção de assentos, carrinho e finalização de reserva
 - cupons promocionais
-- histórico de reservas com QR Code
-- check-in administrativo com bloqueio de duplicidade e rejeição de reserva cancelada
+- histórico de reservas com QR Code ampliável para leitura
+- check-in administrativo manual ou por câmera/webcam, com bloqueio de duplicidade e rejeição de reserva cancelada
 - convidados e associação de convidados aos eventos
 - atividades internas com limite de vagas e inscrição
-- avaliações de eventos com bloqueio de duplicidade
-- dashboard administrativo com métricas de eventos, reservas, receita, ingressos, check-ins, cupons, avaliações e capacidade
+- avaliações de eventos com bloqueio de duplicidade e média exibida junto ao preço
+- dashboard administrativo com relatório de vendas, eventos populares, compras recentes, cupons, avaliações, check-ins e capacidade
 
 ## Como rodar
 
@@ -165,6 +166,11 @@ Esse caminho foi mantido por compatibilidade técnica com a base original.
 
 ## Documentação complementar
 
+- [docs/visao.md](docs/visao.md)
+- [docs/arquitetura.md](docs/arquitetura.md)
+- [docs/specs.md](docs/specs.md)
+- [docs/roadmap.md](docs/roadmap.md)
+- [docs/historias-usuario.md](docs/historias-usuario.md)
 - [docs/pivotagem.md](docs/pivotagem.md)
 - [docs/roadmap-pivotagem.md](docs/roadmap-pivotagem.md)
 - [docs/requisitos.md](docs/requisitos.md)

@@ -2,8 +2,9 @@
 # Documento legado
 
 Este arquivo foi mantido apenas como historico do backlog inicial de venda de ingressos.
-Para a pivotagem atual Geek / Anime, use `docs/requisitos.md`, `docs/pivotagem.md`,
-`docs/roadmap-pivotagem.md` e `docs/checklist-entrega.md`.
+Para a pivotagem atual Geek / Anime, use `docs/historias-usuario.md`,
+`docs/requisitos.md`, `docs/visao.md`, `docs/arquitetura.md`, `docs/specs.md`,
+`docs/roadmap.md` e `docs/checklist-entrega.md`.
 
 
 # Product Backlog – Sistema Alphabit 🎟️

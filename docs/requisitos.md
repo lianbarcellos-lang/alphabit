@@ -1,8 +1,10 @@
-# Requisitos do Sistema Alphabit
+# Requisitos do Sistema GeekTop
 
 ## Escopo implementado
 
-O Alphabit possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos, cupons, cidades e categorias geek, fluxo de compra com carrinho, tipos de ingresso, assentos, reservas e filtros de descoberta.
+O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos de ingresso, assentos, reservas, filtros de descoberta, convidados, atividades, avaliacoes, dashboard e check-in por QR Code.
+
+A identidade exibida ao usuario e GeekTop. Os nomes tecnicos `Alphabit.*` foram mantidos em projetos, namespaces e banco local para preservar compatibilidade com a base original.
 
 ## Historias de usuario implementadas
 
@@ -45,11 +47,17 @@ Como administrador, quero editar e excluir cupons, para ajustar campanhas promoc
 ### HU13 - Vitrine publica de eventos
 Como cliente, quero visualizar os eventos disponiveis com imagem e informacoes principais, para escolher o que desejo comprar.
 
+### HU13.1 - Identidade visual geek
+Como cliente, quero ver imagens relacionadas a games, anime, cosplay e cultura geek, para entender rapidamente a proposta da plataforma.
+
 ### HU14 - Filtros de descoberta
 Como cliente, quero filtrar eventos por cidade, dia da semana, atracao e categoria geek, para encontrar opcoes mais relevantes.
 
 ### HU15 - Detalhe do evento
 Como cliente, quero abrir uma pagina de detalhe do evento, para entender local, data, preco e seguir para os assentos.
+
+### HU15.1 - Media de avaliacoes junto ao preco
+Como cliente, quero ver a media de avaliacoes ao lado do valor do evento, para comparar preco e qualidade percebida antes da compra.
 
 ### HU16 - Selecao de assentos
 Como cliente, quero escolher assentos disponiveis antes de comprar, para montar meu pedido.
@@ -96,11 +104,17 @@ Como cliente, quero visualizar convidados associados ao evento, para decidir se 
 ### HU30 - Check-in por QR Code
 Como administrador, quero validar a entrada pelo QR Code da reserva, para controlar acesso e impedir uso duplicado.
 
+### HU30.1 - Leitura de QR Code por camera
+Como administrador, quero ler o QR Code usando camera ou webcam, para agilizar a validacao de entrada no evento.
+
 ### HU31 - Avaliacoes pos-evento
 Como cliente, quero avaliar um evento reservado, para registrar minha experiencia e ajudar outros clientes.
 
 ### HU32 - Moderacao de avaliacoes
 Como administrador, quero remover avaliacoes indevidas, para manter a vitrine confiavel.
+
+### HU33 - Documentacao da pivotagem
+Como avaliador ou desenvolvedor, quero consultar visao, arquitetura, specs, roadmap e historias de usuario, para entender o escopo, as decisoes tecnicas e a ordem de implementacao do projeto.
 
 ## Criterios de aceitacao
 
@@ -211,10 +225,20 @@ Dado que uma reserva possui QR Code valido
 Quando o administrador realiza o check-in  
 Entao o sistema deve marcar o QR Code como usado e bloquear uma segunda validacao
 
+Cenario: validar entrada pela camera  
+Dado que o administrador abriu a area de check-in  
+Quando a camera ou webcam le um QR Code valido  
+Entao o sistema deve preencher o codigo e validar a entrada da reserva
+
 Cenario: avaliar evento uma unica vez  
 Dado que o cliente possui reserva para o evento  
 Quando ele envia uma avaliacao valida  
 Entao a avaliacao deve ser salva e uma nova avaliacao do mesmo cliente para o mesmo evento deve ser rejeitada
+
+Cenario: mostrar media de avaliacao no evento  
+Dado que um evento possui avaliacoes  
+Quando a vitrine, o detalhe ou o painel administrativo exibem o valor do evento  
+Entao o sistema deve mostrar tambem a media de avaliacoes e a quantidade de avaliacoes
 
 ### Descoberta
 
@@ -227,6 +251,11 @@ Cenario: filtrar eventos
 Dado que existem eventos com cidades, artistas, dias e generos diferentes  
 Quando o cliente aplica filtros  
 Entao a vitrine deve exibir apenas os eventos compativeis
+
+Cenario: manter imagens alinhadas ao dominio geek  
+Dado que o sistema exibe banners e capas de eventos  
+Quando o usuario navega pela Home ou pela vitrine  
+Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou cultura geek
 
 ## Endpoints implementados
 
