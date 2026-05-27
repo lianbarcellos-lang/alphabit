@@ -30,11 +30,20 @@ Sistema de venda e vitrine de eventos geek/anime com API em .NET 9, banco SQLite
 
 ## Como rodar
 
+Todos os comandos devem ser executados a partir da raiz do projeto:
+
+```powershell
+cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
+```
+
+Se o terminal estiver em `C:\Users\rapha`, os caminhos `.\src\...` nao existem e o comando `dotnet run` falha com erro de projeto inexistente.
+
 Abra dois terminais.
 
 ### 1. Subir a API
 
 ```powershell
+cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
 dotnet run --project .\src\Alphabit.API\Alphabit.API.csproj --urls http://localhost:5248
 ```
 
@@ -45,6 +54,7 @@ API disponível em:
 ### 2. Subir o Blazor
 
 ```powershell
+cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
 dotnet run --project .\src\Alphabit.App\Alphabit.App.csproj --urls http://localhost:5072
 ```
 

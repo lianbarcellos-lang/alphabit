@@ -451,6 +451,11 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 
 ## Observacoes tecnicas
 
+- para rodar localmente, primeiro entre na raiz do projeto com `cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"`
+- os comandos `dotnet run --project .\src\...` dependem dessa pasta raiz; se forem executados em `C:\Users\rapha`, o .NET retorna erro informando que o arquivo de projeto nao existe
+- a API deve ser executada em um terminal com `dotnet run --project .\src\Alphabit.API\Alphabit.API.csproj --urls http://localhost:5248`
+- o App deve ser executado em outro terminal com `dotnet run --project .\src\Alphabit.App\Alphabit.App.csproj --urls http://localhost:5072`
+- o site fica disponivel em `http://localhost:5072`
 - o acesso a dados principal utiliza Dapper com parametros nomeados
 - as queries de negocio estao parametrizadas
 - senhas de usuarios sao armazenadas como hash SHA-256

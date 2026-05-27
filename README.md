@@ -51,16 +51,25 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 
 ## Como rodar
 
-Na raiz do projeto:
+Primeiro entre na pasta raiz do projeto. Os comandos abaixo precisam ser executados dentro desta pasta:
+
+```powershell
+cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
+```
+
+Se o comando for executado em `C:\Users\rapha`, o .NET nao encontra `.\src\Alphabit.API\Alphabit.API.csproj` e retorna erro de projeto inexistente.
+
+Depois, no primeiro terminal, suba a API:
 
 ```powershell
 dotnet build .\Alphabit.sln
 dotnet run --project .\src\Alphabit.API\Alphabit.API.csproj --urls http://localhost:5248
 ```
 
-Em outro terminal:
+Em outro terminal, entre na mesma pasta e suba o App:
 
 ```powershell
+cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
 dotnet run --project .\src\Alphabit.App\Alphabit.App.csproj --urls http://localhost:5072
 ```
 
@@ -74,6 +83,7 @@ URLs locais:
 Feche a API e o App antes de rodar os testes, para evitar bloqueio dos arquivos compilados.
 
 ```powershell
+cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
 dotnet build .\Alphabit.sln /nr:false -p:BuildInParallel=false -m:1
 dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 ```
