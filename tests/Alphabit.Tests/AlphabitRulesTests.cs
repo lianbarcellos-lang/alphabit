@@ -142,6 +142,28 @@ public class AlphabitRulesTests
     }
 
     [Fact]
+    public void IsValidCheckout_ShouldReturnTrue_ForGeneralAdmissionWithoutSeats()
+    {
+        var request = new ReservaCheckoutRequest
+        {
+            UsuarioCpf = "12345678900",
+            Itens =
+            [
+                new ReservaCheckoutItemRequest
+                {
+                    EventoId = 1,
+                    Quantidade = 2,
+                    Assentos = []
+                }
+            ]
+        };
+
+        var actual = AlphabitRules.IsValidCheckout(request);
+
+        Assert.True(actual);
+    }
+
+    [Fact]
     public void IsValidCheckout_ShouldReturnFalse_WhenItemQuantityIsInvalid()
     {
         var request = new ReservaCheckoutRequest

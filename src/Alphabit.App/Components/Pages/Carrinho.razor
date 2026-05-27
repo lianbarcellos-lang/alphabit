@@ -51,7 +51,7 @@ else
                                         <h2>@item.Nome</h2>
                                         <p>@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                                         <p>Ingresso: @item.TipoIngressoNome</p>
-                                        <p>Assentos: @string.Join(", ", item.Assentos)</p>
+                                        <p>@GetReservationMode(item)</p>
                                     </div>
 
                                 <div class="cart-item__controls">
@@ -60,7 +60,11 @@ else
                                         <span class="cart-item__count">@item.Quantidade ingresso(s)</span>
                                     </label>
                                     <strong>R$ @item.Subtotal.ToString("0.00")</strong>
-                                    <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}/assentos")'>Alterar assentos</button>
+                                    <div class="cart-quantity-actions">
+                                        <button class="ghost-button" type="button" @onclick="() => UpdateQuantity(item, item.Quantidade - 1)" disabled="@(item.Quantidade <= 1)">-</button>
+                                        <button class="ghost-button" type="button" @onclick="() => UpdateQuantity(item, item.Quantidade + 1)" disabled="@(item.Quantidade >= 2)">+</button>
+                                    </div>
+                                    <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}/assentos")'>Alterar ingresso</button>
                                     <button class="ghost-button" type="button" @onclick='() => RemoveItem(item.EventoId, item.TipoIngressoId)'>Remover</button>
                                 </div>
                             </div>
@@ -135,6 +139,19 @@ else
     {
         Cart.RemoveItem(eventoId, tipoIngressoId);
         couponPreview = null;
+    }
+
+    private void UpdateQuantity(CartItemViewModel item, int quantity)
+    {
+        Cart.UpdateQuantity(item.EventoId, item.TipoIngressoId, quantity);
+        couponPreview = null;
+    }
+
+    private static string GetReservationMode(CartItemViewModel item)
+    {
+        return item.Assentos.Count == 0
+            ? "Entrada geral sem assento marcado"
+            : $"Assentos: {string.Join(", ", item.Assentos)}";
     }
 
     private async Task ApplyCoupon()

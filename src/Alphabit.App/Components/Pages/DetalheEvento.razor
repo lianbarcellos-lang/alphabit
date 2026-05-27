@@ -69,12 +69,12 @@ else
 
             <aside class="event-detail-panel event-detail-panel--buy">
                 <span class="eyebrow">Ingressos</span>
-                <h2>Escolha seus assentos e siga para o checkout</h2>
+                <h2>Escolha seu ingresso e siga para o checkout</h2>
                 <div class="event-detail-price-row">
                     <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
                     <span>@FormatRating(eventItem)</span>
                 </div>
-                <p>Veja os assentos disponíveis, monte o carrinho e confirme a reserva na sua conta.</p>
+                <p>Garanta sua entrada no evento. Vagas limitadas de workshops, torneios e meet and greet ficam na programação interna.</p>
 
                 <button class="secondary-button" type="button" @onclick="GoToSeats">Comprar agora</button>
                 <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para agenda</button>
@@ -145,12 +145,24 @@ else
                                 <p>@activity.Horario.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                                 <p>@activity.VagasRestantes vaga(s) restante(s) de @activity.LimiteParticipantes</p>
                             </div>
-                            <button class="ghost-button"
-                                    type="button"
-                                    disabled="@(activity.UsuarioInscrito || activity.VagasRestantes <= 0 || activityIsBusy)"
-                                    @onclick="() => SignUpForActivity(activity.Id)">
-                                @(activity.UsuarioInscrito ? "Inscrito" : activity.VagasRestantes <= 0 ? "Esgotado" : "Inscrever")
-                            </button>
+                            @if (activity.UsuarioInscrito)
+                            {
+                                <button class="ghost-button"
+                                        type="button"
+                                        disabled="@activityIsBusy"
+                                        @onclick="() => CancelActivitySignup(activity.Id)">
+                                    Cancelar inscrição
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="ghost-button"
+                                        type="button"
+                                        disabled="@(activity.VagasRestantes <= 0 || activityIsBusy)"
+                                        @onclick="() => SignUpForActivity(activity.Id)">
+                                    @(activity.VagasRestantes <= 0 ? "Esgotado" : "Inscrever")
+                                </button>
+                            }
                         </article>
                     }
                 </div>
@@ -288,6 +300,36 @@ else
         {
             activityStatusIsError = true;
             activityStatusMessage = "Não foi possível realizar a inscrição agora.";
+        }
+        finally
+        {
+            activityIsBusy = false;
+        }
+    }
+
+    private async Task CancelActivitySignup(int activityId)
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        activityIsBusy = true;
+        activityStatusIsError = false;
+        activityStatusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.CancelActivitySignupAsync(activityId, Session.CurrentUser.Cpf);
+            activityStatusIsError = !result.Success;
+            activityStatusMessage = result.Message;
+            await LoadActivities();
+        }
+        catch
+        {
+            activityStatusIsError = true;
+            activityStatusMessage = "Não foi possível cancelar a inscrição agora.";
         }
         finally
         {

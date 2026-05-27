@@ -12,7 +12,17 @@ public class CartState
 
     public void AddEvent(EventViewModel eventItem, IReadOnlyCollection<string> assentos, TicketTypeViewModel? ticketType)
     {
-        if (assentos.Count == 0)
+        AddEvent(eventItem, assentos.Count, ticketType, assentos);
+    }
+
+    public void AddEvent(EventViewModel eventItem, int quantidade, TicketTypeViewModel? ticketType)
+    {
+        AddEvent(eventItem, quantidade, ticketType, []);
+    }
+
+    private void AddEvent(EventViewModel eventItem, int quantidade, TicketTypeViewModel? ticketType, IReadOnlyCollection<string> assentos)
+    {
+        if (quantidade <= 0)
             return;
 
         var existing = items.FirstOrDefault(item =>
@@ -21,7 +31,7 @@ public class CartState
         if (existing is not null)
         {
             existing.Assentos = assentos.Distinct().OrderBy(item => item).ToList();
-            existing.Quantidade = existing.Assentos.Count;
+            existing.Quantidade = quantidade;
             return;
         }
 
@@ -37,17 +47,19 @@ public class CartState
             PrecoUnitario = ticketType?.Preco ?? eventItem.PrecoPadrao,
             ImagemUrl = eventItem.ImagemUrl,
             Assentos = assentos.Distinct().OrderBy(item => item).ToList(),
-            Quantidade = assentos.Count
+            Quantidade = quantidade
         });
     }
 
-    public void UpdateQuantity(int eventoId, int quantidade)
+    public void UpdateQuantity(int eventoId, int? tipoIngressoId, int quantidade)
     {
-        var item = items.FirstOrDefault(current => current.EventoId == eventoId);
+        var item = items.FirstOrDefault(current =>
+            current.EventoId == eventoId &&
+            current.TipoIngressoId == tipoIngressoId);
         if (item is null)
             return;
 
-        item.Quantidade = item.Assentos.Count;
+        item.Quantidade = Math.Clamp(quantidade, 1, 2);
     }
 
     public void RemoveItem(int eventoId, int? tipoIngressoId = null)

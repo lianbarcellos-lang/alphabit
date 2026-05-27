@@ -1754,6 +1754,25 @@ app.MapPost("/api/atividades/{id:int}/inscricao", (int id, AtividadeInscricaoReq
     return Results.Ok("Inscrição realizada com sucesso!");
 });
 
+app.MapDelete("/api/atividades/{id:int}/inscricao/{usuarioCpf}", (int id, string usuarioCpf, HttpContext httpContext) =>
+{
+    var accessResult = EnsureUserAccess(httpContext, usuarioCpf);
+    if (accessResult is not null)
+        return accessResult;
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var deleted = connection.Execute(@"
+        DELETE FROM InscricoesAtividades
+        WHERE AtividadeId = @id AND UsuarioCpf = @cpf",
+        new { id, cpf = usuarioCpf });
+
+    return deleted == 0
+        ? Results.NotFound("Inscrição não encontrada.")
+        : Results.Ok("Inscrição cancelada com sucesso.");
+});
+
 app.MapDelete("/api/admin/atividades/{id:int}", (int id, HttpContext httpContext) =>
 {
     var adminResult = EnsureAdminAccess(httpContext);

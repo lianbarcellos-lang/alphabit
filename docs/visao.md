@@ -25,11 +25,12 @@ O cliente pode:
 - filtrar eventos por cidade, data, atracao e categoria geek;
 - abrir o detalhe do evento;
 - visualizar convidados e atividades;
-- escolher tipo de ingresso e assentos;
+- escolher tipo e quantidade de ingresso;
 - aplicar cupom no carrinho;
 - finalizar reserva;
 - acessar historico de compras;
 - abrir e ampliar o QR Code da reserva;
+- inscrever-se e cancelar inscricao em atividades internas;
 - avaliar eventos reservados.
 
 ## Experiencia administrativa
@@ -78,4 +79,3 @@ Nao fazem parte desta entrega:
 ## Estado atual
 
 O projeto ja possui vitrine publica, fluxo de compra, reservas, cupons, tipos de ingresso, convidados, atividades, avaliacoes, dashboard administrativo e check-in com QR Code.
-

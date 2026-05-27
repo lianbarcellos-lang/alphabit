@@ -122,18 +122,21 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Nao deve vender acima da quantidade disponivel.
 - Meet and Greet deve ter limite de vagas.
 
-## 8. Assentos
+## 8. Escolha de ingressos
 
 ### Funcionalidades
 
-- Visualizar assentos disponiveis.
-- Selecionar assentos.
-- Bloquear assentos ja reservados.
+- Escolher tipo de ingresso.
+- Escolher quantidade de ingressos.
+- Adicionar ingresso ao carrinho.
+- Tratar a reserva principal como entrada geral sem assento marcado.
 
 ### Regras
 
-- Assentos selecionados devem ser enviados para reserva.
-- Assentos ocupados nao devem ficar disponiveis.
+- Cada CPF pode reservar ate 2 ingressos por evento.
+- A disponibilidade deve respeitar capacidade total do evento.
+- A disponibilidade deve respeitar quantidade do tipo de ingresso.
+- Vagas limitadas especificas devem ser controladas nas atividades internas, como workshop, torneio e meet and greet.
 
 ## 9. Carrinho e cupons
 
@@ -176,12 +179,14 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Cadastrar atividades internas.
 - Listar atividades no detalhe do evento.
 - Inscrever cliente em atividade.
+- Cancelar inscricao do cliente em atividade.
 
 ### Regras
 
 - Atividade deve pertencer a evento existente.
 - Nao permitir inscricao duplicada.
 - Nao ultrapassar limite de participantes.
+- Ao cancelar inscricao, a vaga deve voltar a ficar disponivel.
 
 ## 12. Convidados
 
@@ -277,4 +282,3 @@ Os testes automatizados devem cobrir:
 - `docs/roadmap-pivotagem.md`
 - `docs/requisitos.md`
 - `docs/checklist-entrega.md`
-

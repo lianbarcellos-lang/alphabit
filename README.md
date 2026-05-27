@@ -40,7 +40,7 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 - categorias geek, cidades e eventos enriquecidos
 - imagens e identidade visual voltadas a games, anime, cosplay e cultura geek
 - tipos de ingresso com preço, benefícios e disponibilidade
-- seleção de assentos, carrinho e finalização de reserva
+- escolha de tipo/quantidade de ingresso, carrinho e finalização de reserva
 - cupons promocionais
 - histórico de reservas com QR Code ampliável para leitura
 - check-in administrativo manual ou por câmera/webcam, com bloqueio de duplicidade e rejeição de reserva cancelada

@@ -188,6 +188,21 @@ public class AlphabitApiClient(HttpClient httpClient)
         };
     }
 
+    public async Task<ApiResult> CancelActivitySignupAsync(int activityId, string userCpf)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Delete, $"api/atividades/{activityId}/inscricao/{Uri.EscapeDataString(userCpf)}");
+        message.Headers.Add("X-User-Cpf", userCpf);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Inscrição cancelada com sucesso." : "Não foi possível cancelar a inscrição.")
+        };
+    }
+
     public async Task<List<EventViewModel>> GetAdminEventsAsync(string adminToken)
     {
         using var message = new HttpRequestMessage(HttpMethod.Get, "api/admin/eventos");

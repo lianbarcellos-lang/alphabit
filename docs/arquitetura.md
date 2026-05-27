@@ -30,7 +30,7 @@ Principais telas:
 - Home;
 - Eventos;
 - Detalhe do evento;
-- Assentos;
+- Escolha de ingressos;
 - Carrinho;
 - Reservas;
 - Minha conta;
@@ -75,7 +75,7 @@ Responsavel por cadastro, edicao, exclusao, listagem publica, filtros, imagens, 
 
 ### Compra e reservas
 
-Responsavel por selecao de assentos, carrinho, cupom, forma de pagamento, pedido e historico.
+Responsavel por escolha de tipo/quantidade de ingresso, carrinho, cupom, forma de pagamento, pedido e historico.
 
 ### Tipos de ingresso
 
@@ -138,4 +138,3 @@ Testes:
 ```powershell
 dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 ```
-

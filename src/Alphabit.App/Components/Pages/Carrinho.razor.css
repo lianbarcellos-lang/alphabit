@@ -104,6 +104,16 @@
     font-size: 1.15rem;
 }
 
+.cart-quantity-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.cart-quantity-actions .ghost-button {
+    min-width: 2.5rem;
+    padding-inline: 0.8rem;
+}
+
 .cart-panel--summary {
     display: grid;
     gap: 1rem;

@@ -154,11 +154,13 @@ public class AlphabitRiskTests
         Assert.Contains("app.MapGet(\"/api/eventos/{id:int}/atividades\"", ProgramSource);
         Assert.Contains("app.MapPost(\"/api/atividades\"", ProgramSource);
         Assert.Contains("app.MapPost(\"/api/atividades/{id:int}/inscricao\"", ProgramSource);
+        Assert.Contains("app.MapDelete(\"/api/atividades/{id:int}/inscricao/{usuarioCpf}\"", ProgramSource);
         Assert.Contains("app.MapDelete(\"/api/admin/atividades/{id:int}\"", ProgramSource);
         Assert.Contains("EnsureDefaultActivitiesForEvent(connection, eventId, evento.Nome, evento.DataEvento)", ProgramSource);
 
         var block = ExtractBlock(ProgramSource, "app.MapPost(\"/api/atividades/{id:int}/inscricao\"");
         var createBlock = ExtractBlock(ProgramSource, "app.MapPost(\"/api/atividades\"");
+        var cancelBlock = ExtractBlock(ProgramSource, "app.MapDelete(\"/api/atividades/{id:int}/inscricao/{usuarioCpf}\"");
 
         Assert.Contains("EnsureUserAccess(httpContext, request.UsuarioCpf)", block);
         Assert.Contains("using var transaction = connection.BeginTransaction();", block);
@@ -166,6 +168,8 @@ public class AlphabitRiskTests
         Assert.Contains("inscritos >= atividade.LimiteParticipantes", block);
         Assert.Contains("transaction.Commit()", block);
         Assert.Contains("Já existe uma atividade com este nome para o evento.", createBlock);
+        Assert.Contains("EnsureUserAccess(httpContext, usuarioCpf)", cancelBlock);
+        Assert.Contains("DELETE FROM InscricoesAtividades", cancelBlock);
 
         var deleteBlock = ExtractBlock(ProgramSource, "app.MapDelete(\"/api/admin/atividades/{id:int}\"");
         Assert.Contains("EnsureAdminAccess", deleteBlock);

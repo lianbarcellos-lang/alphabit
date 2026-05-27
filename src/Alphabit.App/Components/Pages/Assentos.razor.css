@@ -51,6 +51,43 @@
     letter-spacing: 0.18em;
 }
 
+.ticket-info-panel {
+    display: grid;
+    gap: 1rem;
+}
+
+.ticket-info-panel h2 {
+    margin: 0;
+    color: #11213f;
+}
+
+.ticket-info-panel p {
+    margin: 0;
+    color: #66758f;
+    line-height: 1.65;
+}
+
+.quantity-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.quantity-control button {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid rgba(17, 33, 63, 0.12);
+    border-radius: 999px;
+    background: #eaf4ff;
+    color: #11213f;
+    font-weight: 900;
+}
+
+.quantity-control button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .legend {
     display: flex;
     gap: 1rem;

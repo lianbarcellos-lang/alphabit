@@ -2,7 +2,7 @@
 
 ## Escopo implementado
 
-O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos de ingresso, assentos, reservas, filtros de descoberta, convidados, atividades, avaliacoes, dashboard e check-in por QR Code.
+O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos e quantidade de ingresso, reservas, filtros de descoberta, convidados, atividades com vagas limitadas, avaliacoes, dashboard e check-in por QR Code.
 
 A identidade exibida ao usuario e GeekTop. Os nomes tecnicos `Alphabit.*` foram mantidos em projetos, namespaces e banco local para preservar compatibilidade com a base original.
 
@@ -54,13 +54,13 @@ Como cliente, quero ver imagens relacionadas a games, anime, cosplay e cultura g
 Como cliente, quero filtrar eventos por cidade, dia da semana, atracao e categoria geek, para encontrar opcoes mais relevantes.
 
 ### HU15 - Detalhe do evento
-Como cliente, quero abrir uma pagina de detalhe do evento, para entender local, data, preco e seguir para os assentos.
+Como cliente, quero abrir uma pagina de detalhe do evento, para entender local, data, preco e seguir para a escolha de ingressos.
 
 ### HU15.1 - Media de avaliacoes junto ao preco
 Como cliente, quero ver a media de avaliacoes ao lado do valor do evento, para comparar preco e qualidade percebida antes da compra.
 
-### HU16 - Selecao de assentos
-Como cliente, quero escolher assentos disponiveis antes de comprar, para montar meu pedido.
+### HU16 - Escolha de ingressos
+Como cliente, quero escolher tipo e quantidade de ingresso antes de comprar, para montar meu pedido sem depender de assento marcado.
 
 ### HU17 - Carrinho e cupom
 Como cliente, quero aplicar um cupom no carrinho e ver o desconto antes de finalizar, para saber o valor final da compra.
@@ -97,6 +97,9 @@ Como cliente, quero escolher entre tipos de ingresso com precos e beneficios dif
 
 ### HU28 - Atividades internas do evento
 Como cliente, quero me inscrever em atividades internas com limite de vagas, para participar da programacao do evento.
+
+### HU28.1 - Cancelamento de inscricao em atividade
+Como cliente, quero cancelar minha inscricao em uma atividade, para liberar a vaga caso eu tenha me inscrito por engano.
 
 ### HU29 - Convidados do evento
 Como cliente, quero visualizar convidados associados ao evento, para decidir se o evento e relevante para mim.
@@ -219,6 +222,16 @@ Cenario: reservar por tipo de ingresso
 Dado que o evento possui tipos de ingresso ativos  
 Quando o cliente seleciona um tipo de ingresso  
 Entao o valor final deve usar o preco do tipo escolhido e respeitar a disponibilidade dele
+
+Cenario: reservar entrada geral sem assento marcado  
+Dado que o cliente escolheu tipo e quantidade de ingresso  
+Quando ele adiciona o item ao carrinho  
+Entao a reserva deve ser criada como entrada geral sem assento marcado
+
+Cenario: cancelar inscricao em atividade  
+Dado que o cliente esta inscrito em uma atividade  
+Quando ele solicita o cancelamento  
+Entao a inscricao deve ser removida e a vaga deve voltar a ficar disponivel
 
 Cenario: validar entrada por QR Code  
 Dado que uma reserva possui QR Code valido  

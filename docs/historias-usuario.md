@@ -79,13 +79,15 @@ Critérios de aceite:
 - preco final deve usar o tipo selecionado;
 - disponibilidade do tipo deve ser respeitada.
 
-### HU09 - Selecao de assentos
-Como cliente, quero selecionar assentos disponiveis, para montar minha compra.
+### HU09 - Escolha de ingressos
+Como cliente, quero escolher tipo e quantidade de ingresso sem depender de assento marcado, para montar minha compra de forma simples.
 
 Critérios de aceite:
 
-- assentos ocupados devem ficar bloqueados;
-- assentos selecionados devem ir para o carrinho/reserva.
+- a reserva principal deve funcionar como entrada geral sem assento marcado;
+- o cliente deve escolher tipo de ingresso;
+- o cliente deve escolher quantidade;
+- vagas limitadas devem ficar nos tipos de ingresso e nas atividades internas.
 
 ### HU10 - Carrinho e cupom
 Como cliente, quero aplicar cupom no carrinho e ver o desconto antes de finalizar, para conhecer o valor final.
@@ -125,6 +127,7 @@ Critérios de aceite:
 - atividade deve ter limite de vagas;
 - inscricao duplicada deve ser bloqueada;
 - limite de participantes deve ser respeitado.
+- cliente inscrito deve poder cancelar a propria inscricao.
 
 ### HU14 - Convidados do evento
 Como cliente, quero visualizar convidados associados ao evento, para decidir se o evento e relevante para mim.
@@ -241,4 +244,3 @@ Critérios de aceite:
 - `dotnet build .\Alphabit.sln` deve passar;
 - `dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore` deve passar;
 - regras de usuario, evento, cupom, reserva, convidados, atividades, check-in e avaliacoes devem ter cobertura.
-

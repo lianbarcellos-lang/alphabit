@@ -179,7 +179,7 @@ else
                                             <strong>@item.EventoNome</strong>
                                             <p>@item.DataReserva.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                                             <p>Tipo: @(string.IsNullOrWhiteSpace(item.TipoIngressoNome) ? "Normal" : item.TipoIngressoNome)</p>
-                                            <p>Assentos: @item.Assentos</p>
+                                            <p>Reserva: @GetReservationMode(item)</p>
                                         </div>
                                         <span>R$ @item.ValorFinalPago.ToString("0.00")</span>
                                     </article>
@@ -297,5 +297,12 @@ else
             DataNascimento = source.DataNascimento,
             Sexo = source.Sexo
         };
+    }
+
+    private static string GetReservationMode(ReservationViewModel item)
+    {
+        return string.IsNullOrWhiteSpace(item.Assentos)
+            ? "Entrada geral sem assento marcado"
+            : $"Assentos: {item.Assentos}";
     }
 }

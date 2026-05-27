@@ -20,8 +20,8 @@ Legenda:
 | 9 | Filtros de eventos | Vitrine, cidades e categorias | Sim | Sim | Concluido |
 | 10 | Detalhe do evento | Vitrine | Sim | Sim | Concluido |
 | 11 | Tipos de ingresso | Eventos | Sim | Sim | Concluido |
-| 12 | Selecao de assentos | Eventos e reservas | Sim | Sim | Concluido |
-| 13 | Carrinho | Eventos, assentos e tipos de ingresso | Sim | Sim | Concluido |
+| 12 | Escolha de tipo/quantidade de ingresso | Eventos e reservas | Sim | Sim | Concluido |
+| 13 | Carrinho | Eventos e tipos de ingresso | Sim | Sim | Concluido |
 | 14 | Cupons de desconto | Carrinho | Sim | Sim | Concluido |
 | 15 | Finalizacao de reserva | Usuario, evento, carrinho e cupom | Sim | Sim | Concluido |
 | 16 | Historico de reservas | Reservas | Sim | Sim | Concluido |
@@ -67,4 +67,3 @@ Comandos de verificacao:
 dotnet build .\Alphabit.sln
 dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 ```
-

@@ -54,7 +54,7 @@ public static class AlphabitRules
         if (!request.Itens.All(item =>
                 item.EventoId > 0 &&
                 item.Quantidade > 0 &&
-                item.Assentos.Count == item.Quantidade &&
+                (item.Assentos.Count == 0 || item.Assentos.Count == item.Quantidade) &&
                 item.Assentos.All(seat => !string.IsNullOrWhiteSpace(seat)) &&
                 item.Assentos.Distinct(StringComparer.OrdinalIgnoreCase).Count() == item.Assentos.Count))
             return false;

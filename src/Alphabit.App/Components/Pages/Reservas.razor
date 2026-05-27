@@ -52,7 +52,7 @@ else
                         <span class="pill">@item.EventoNome</span>
                         <h2>@item.Quantidade ingresso(s)</h2>
                         <p>Tipo: <strong>@(string.IsNullOrWhiteSpace(item.TipoIngressoNome) ? "Normal" : item.TipoIngressoNome)</strong></p>
-                        <p>Assentos: <strong>@item.Assentos</strong></p>
+                        <p>Reserva: <strong>@GetReservationMode(item)</strong></p>
                         <p>@item.DataReserva.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                         <p>Valor pago: <strong>R$ @item.ValorFinalPago.ToString("0.00")</strong></p>
                         <p>Check-in: <strong>@item.CheckinStatus</strong></p>
@@ -212,6 +212,13 @@ else
     private void SetReviewComment(int reservationId, string? value)
     {
         reviewComments[reservationId] = value ?? string.Empty;
+    }
+
+    private static string GetReservationMode(ReservationViewModel item)
+    {
+        return string.IsNullOrWhiteSpace(item.Assentos)
+            ? "Entrada geral sem assento marcado"
+            : $"Assentos: {item.Assentos}";
     }
 
     private async Task LoadReviewedEventsForReservations()

@@ -14,7 +14,7 @@ Documento de conferencia final para apresentacao e entrega da pivotagem.
 - Vitrine publica de eventos geek/anime com filtros.
 - Detalhe do evento com tipos de ingresso, atividades, convidados e avaliacoes.
 - Cadastro e login de cliente.
-- Compra/reserva com assentos, cupom, forma de pagamento e tipo de ingresso.
+- Compra/reserva com tipo e quantidade de ingresso, cupom e forma de pagamento.
 - Historico de reservas com QR Code e avaliacao do evento.
 - Painel administrativo para eventos, cidades, categorias, cupons, atividades e convidados.
 - Check-in administrativo por QR Code, com bloqueio de duplicidade.
@@ -28,7 +28,7 @@ Documento de conferencia final para apresentacao e entrega da pivotagem.
 3. Abrir a home e a vitrine de eventos.
 4. Entrar no detalhe de um evento e mostrar convidados, atividades, tipos de ingresso e avaliacoes.
 5. Fazer login ou cadastro de cliente.
-6. Simular uma reserva com tipo de ingresso, assento, pagamento e cupom opcional.
+6. Simular uma reserva com tipo de ingresso, quantidade, pagamento e cupom opcional.
 7. Abrir reservas e mostrar historico, QR Code e avaliacao.
 8. Entrar como administrador com login `admin` e senha `admin`.
 9. Mostrar dashboard, gestao de eventos, cupons, atividades, convidados e check-in.
