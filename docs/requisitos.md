@@ -2,7 +2,7 @@
 
 ## Escopo implementado
 
-O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos e quantidade de ingresso, reservas, filtros de descoberta, convidados, atividades com vagas limitadas, avaliacoes, dashboard e check-in por QR Code.
+O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos e quantidade de ingresso, reservas, filtros de descoberta, convidados, mapa de stands e expositores, atividades com vagas limitadas, avaliacoes, dashboard e check-in por QR Code.
 
 A identidade exibida ao usuario e GeekTop. Os nomes tecnicos `Alphabit.*` foram mantidos em projetos, namespaces e banco local para preservar compatibilidade com a base original.
 
@@ -103,6 +103,33 @@ Como cliente, quero cancelar minha inscricao em uma atividade, para liberar a va
 
 ### HU29 - Convidados do evento
 Como cliente, quero visualizar convidados associados ao evento, para decidir se o evento e relevante para mim.
+
+### HU29.1 - Mapa de stands e expositores
+Como cliente, quero visualizar o mapa do evento com stands, empresas e atrações, para saber onde cada espaço fica localizado.
+
+### HU29.2 - Alocacao administrativa de stands
+Como administrador, quero enviar a planta do evento, cadastrar stands e arrastar cada stand para sua posição, para organizar empresas expositoras ou atrações no mapa real do evento.
+
+Como administrador, quero criar, renomear e excluir linhas do mapa, para organizar os stands de acordo com a estrutura real do evento.
+
+Como administrador, quero editar ou excluir um stand diretamente na lista da linha, para corrigir erros sem precisar refazer todo o cadastro.
+
+Como administrador, quero aplicar uma organização automática em grade 2x2, 3x3, 4x4, 5x5 ou 8x8, para distribuir rapidamente os stands antes de fazer ajustes manuais.
+
+Critérios:
+- grade 2x2 comporta ate 4 stands;
+- grade 3x3 comporta ate 9 stands;
+- grade 4x4 comporta ate 16 stands;
+- grade 5x5 comporta ate 25 stands;
+- grade 8x8 comporta ate 64 stands;
+- grades menores que a quantidade atual de stands devem ficar indisponiveis;
+- depois da organização automática, o administrador deve conseguir arrastar os stands manualmente.
+
+### HU29.3 - Precificacao comercial de stands
+Como administrador, quero definir preço por metro quadrado ou preço fixo por stand, para diferenciar esquinas, ruas principais e espaços premium.
+
+### HU29.4 - Visualizacao do mapa pelo cliente
+Como cliente, quero abrir o mapa do evento nos meus ingressos, para identificar onde ficam stands, palcos, serviços e atrações.
 
 ### HU30 - Check-in por QR Code
 Como administrador, quero validar a entrada pelo QR Code da reserva, para controlar acesso e impedir uso duplicado.
@@ -292,6 +319,7 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `GET /api/eventos/{id}/tipos-ingresso`
 - `GET /api/eventos/{id}/atividades`
 - `GET /api/eventos/{id}/convidados`
+- `GET /api/eventos/{id}/stands`
 - `GET /api/eventos/{id}/avaliacoes`
 - `POST /api/eventos`
 - `GET /api/admin/eventos`
@@ -314,6 +342,13 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `POST /api/convidados`
 - `POST /api/eventos/{id}/convidados`
 - `DELETE /api/eventos/{id}/convidados/{convidadoId}`
+- `POST /api/admin/eventos/{id}/stands`
+- `PUT /api/admin/eventos/{id}/mapa-imagem`
+- `PUT /api/admin/eventos/{id}/stands/{standId}`
+- `DELETE /api/admin/eventos/{id}/stands/{standId}`
+- `POST /api/admin/eventos/{id}/stand-setores`
+- `PUT /api/admin/eventos/{id}/stand-setores/{nomeAtual}`
+- `DELETE /api/admin/eventos/{id}/stand-setores/{nome}`
 - `DELETE /api/admin/convidados/{id}`
 - `POST /api/atividades`
 - `POST /api/atividades/{id}/inscricao`
@@ -433,6 +468,24 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 
 - `EventoId` INTEGER NOT NULL
 - `ConvidadoId` INTEGER NOT NULL
+
+### Tabela `StandsEspacos`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `EventoId` INTEGER NOT NULL
+- `Setor` TEXT NOT NULL
+- `Codigo` TEXT NOT NULL
+- `PosicaoX` INTEGER NOT NULL
+- `PosicaoY` INTEGER NOT NULL
+- `Largura` INTEGER NOT NULL
+- `Altura` INTEGER NOT NULL
+- `AreaMetrosQuadrados` REAL NOT NULL
+- `PrecoPorMetroQuadrado` REAL NOT NULL
+- `PrecoFixo` REAL NOT NULL
+- `Reservado` INTEGER NOT NULL
+- `NomeOcupante` TEXT NOT NULL
+- `TipoOcupante` TEXT NOT NULL
+- `Descricao` TEXT NOT NULL
 
 ### Tabela `Checkins`
 

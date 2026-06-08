@@ -4,6 +4,10 @@ public class AlphabitRiskTests
 {
     private static readonly string ProgramSource = File.ReadAllText(GetApiFilePath("Program.cs"));
     private static readonly string RulesSource = File.ReadAllText(GetApiFilePath("AlphabitRules.cs"));
+    private static readonly string ReservationsPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Reservas.razor"));
+    private static readonly string ReservationsCssSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Reservas.razor.css"));
+    private static readonly string AdminPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Admin.razor"));
+    private static readonly string AdminCssSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Admin.razor.css"));
 
     [Fact]
     public void ReviewRisk_ProfileRoutes_ShouldRequireUserAccessCheck()
@@ -288,6 +292,111 @@ public class AlphabitRiskTests
     }
 
     [Fact]
+    public void ReviewRisk_EventStands_ShouldExposePublicMapAndAdminAllocation()
+    {
+        Assert.Contains("CREATE TABLE IF NOT EXISTS StandsEspacos", ProgramSource);
+        Assert.Contains("CREATE UNIQUE INDEX IF NOT EXISTS IX_StandsEspacos_Evento_Codigo", ProgramSource);
+        Assert.Contains("EnsureDemoStands(connection);", ProgramSource);
+        Assert.Contains("EnsureDefaultStandSectorsForEvent(connection, eventId);", ProgramSource);
+        Assert.DoesNotContain("EnsureDefaultStandsForEvent", ProgramSource);
+        Assert.Contains("app.MapGet(\"/api/eventos/{id:int}/stands\"", ProgramSource);
+        Assert.Contains("app.MapPut(\"/api/admin/eventos/{id:int}/mapa-imagem\"", ProgramSource);
+        Assert.Contains("app.MapPost(\"/api/admin/eventos/{id:int}/stands\"", ProgramSource);
+        Assert.Contains("app.MapPut(\"/api/admin/eventos/{id:int}/stands/{standId:int}\"", ProgramSource);
+        Assert.Contains("app.MapDelete(\"/api/admin/eventos/{id:int}/stands/{standId:int}\"", ProgramSource);
+        Assert.Contains("CREATE TABLE IF NOT EXISTS StandSetores", ProgramSource);
+        Assert.Contains("app.MapPost(\"/api/admin/eventos/{id:int}/stand-setores\"", ProgramSource);
+        Assert.Contains("app.MapPut(\"/api/admin/eventos/{id:int}/stand-setores/{nomeAtual}\"", ProgramSource);
+        Assert.Contains("app.MapDelete(\"/api/admin/eventos/{id:int}/stand-setores/{nome}\"", ProgramSource);
+        Assert.Contains("MapaImagemUrl", ProgramSource);
+        Assert.Contains("AreaX", ProgramSource);
+        Assert.Contains("AreaLargura", ProgramSource);
+        Assert.Contains("PrecoPorMetroQuadrado", ProgramSource);
+        Assert.Contains("PrecoFixo", ProgramSource);
+        Assert.DoesNotContain("app.MapPost(\"/api/admin/eventos/{id:int}/stands/importar-mapa\"", ProgramSource);
+
+        var updateBlock = ExtractBlock(ProgramSource, "app.MapPut(\"/api/admin/eventos/{id:int}/stands/{standId:int}\"");
+
+        Assert.Contains("EnsureAdminAccess", updateBlock);
+        Assert.Contains("NomeOcupante", updateBlock);
+        Assert.Contains("Já existe um stand cadastrado com esse nome.", ProgramSource);
+        Assert.Contains("NomeOcupante = @nomeOcupante COLLATE NOCASE", ProgramSource);
+        Assert.Contains("Reservado", updateBlock);
+        Assert.Contains("TipoArea", updateBlock);
+        Assert.Contains("AreaX", updateBlock);
+        Assert.Contains("UPDATE StandsEspacos", updateBlock);
+        Assert.Contains("Stand não encontrado para este evento.", updateBlock);
+
+        Assert.Contains("Salvar nome", AdminPageSource);
+        Assert.Contains("HandleStandMapImageSelected", AdminPageSource);
+        Assert.Contains("DropStandOnMap", AdminPageSource);
+        Assert.Contains("HasDuplicateStandName", AdminPageSource);
+        Assert.Contains("GetNextStandMapPoint", AdminPageSource);
+        Assert.Contains("Organização automática", AdminPageSource);
+        Assert.Contains("ApplyStandLayoutGrid", AdminPageSource);
+        Assert.Contains("BuildStandLayoutGrid", AdminPageSource);
+        Assert.Contains("2x2", AdminPageSource);
+        Assert.Contains("3x3", AdminPageSource);
+        Assert.Contains("4x4", AdminPageSource);
+        Assert.Contains("5x5", AdminPageSource);
+        Assert.Contains("8x8", AdminPageSource);
+        Assert.Contains("StandLayoutOption", AdminPageSource);
+        Assert.Contains("admin-stand-layout-tools", AdminCssSource);
+        Assert.Contains("admin-stand-grid-options", AdminCssSource);
+        Assert.Contains("CreateStand", AdminPageSource);
+        Assert.Contains("DeleteSelectedStand", AdminPageSource);
+        Assert.Contains("CreateStandSector", AdminPageSource);
+        Assert.Contains("DeleteStandSector", AdminPageSource);
+        Assert.Contains("DeleteStand(sectorStand)", AdminPageSource);
+        Assert.Contains("MoveSelectedStandToSector", AdminPageSource);
+        Assert.Contains("standEditCode", AdminPageSource);
+        Assert.Contains("admin-stand-map", AdminPageSource);
+        Assert.Contains("admin-stand-image-map", AdminPageSource);
+        Assert.Contains("geekTopStandMap.getDropPoint", AdminPageSource);
+        Assert.DoesNotContain("Detectar mapa colorido", AdminPageSource);
+        Assert.DoesNotContain("Criar área faltante", AdminPageSource);
+        Assert.DoesNotContain("BeginManualAreaDraw", AdminPageSource);
+        Assert.DoesNotContain("DeleteSelectedStandArea", AdminPageSource);
+        Assert.DoesNotContain("geekTopMapDesigner.getPoint", AdminPageSource);
+        Assert.DoesNotContain("geekTopMapDetector.detect", AdminPageSource);
+        Assert.DoesNotContain("BuildStandAreaStyle", AdminPageSource);
+        Assert.DoesNotContain("Sugerir organização", AdminPageSource);
+        Assert.DoesNotContain("SuggestStandLayout", AdminPageSource);
+        Assert.DoesNotContain("BuildSuggestedStandLayout", AdminPageSource);
+        Assert.DoesNotContain("GetSuggestedStandColumns", AdminPageSource);
+    }
+
+    [Fact]
+    public void ReviewRisk_ReservationMapModal_ShouldUseAdminMapImageAndSupportPdfPrint()
+    {
+        var reservationsBlock = ExtractBlock(ProgramSource, "app.MapGet(\"/api/reservas/{cpf}\"");
+
+        Assert.Contains("e.CidadeEvento AS EventoCidade", reservationsBlock);
+        Assert.Contains("Ver mapa do evento", ReservationsPageSource);
+        Assert.Contains("reservation-map-modal", ReservationsPageSource);
+        Assert.Contains("SelectedMapImageUrl", ReservationsPageSource);
+        Assert.Contains("HasSelectedMapImage", ReservationsPageSource);
+        Assert.Contains("BuildReservationStandPinStyle", ReservationsPageSource);
+        Assert.Contains("reservation-stand-image-map", ReservationsPageSource);
+        Assert.Contains("reservation-stand-pin", ReservationsPageSource);
+        Assert.Contains("Salvar mapa em PDF", ReservationsPageSource);
+        Assert.Contains("BuildMapDownloadHref()", ReservationsPageSource);
+        Assert.Contains("window.print", ReservationsPageSource);
+        Assert.DoesNotContain("Baixar imagem", ReservationsPageSource);
+        Assert.DoesNotContain("BuildMapImageHref()", ReservationsPageSource);
+        Assert.DoesNotContain("reservation-uploaded-map", ReservationsPageSource);
+        Assert.DoesNotContain("BuildMapTemplateClass", ReservationsPageSource);
+        Assert.DoesNotContain("BuildMapArenaLabel", ReservationsPageSource);
+        Assert.DoesNotContain("AppendSvgImageAreas", ReservationsPageSource);
+        Assert.Contains("@media print", ReservationsCssSource);
+        Assert.Contains("reservation-stand-image-map", ReservationsCssSource);
+        Assert.Contains("reservation-stand-pin", ReservationsCssSource);
+        Assert.DoesNotContain("reservation-map-visual--rio", ReservationsCssSource);
+        Assert.DoesNotContain("reservation-map-visual--sao-paulo", ReservationsCssSource);
+        Assert.DoesNotContain("reservation-map-visual--belo-horizonte", ReservationsCssSource);
+    }
+
+    [Fact]
     public void ReviewRisk_Reviews_ShouldRequireReservationAndPreventDuplicates()
     {
         Assert.Contains("CREATE TABLE IF NOT EXISTS Avaliacoes", ProgramSource);
@@ -323,6 +432,25 @@ public class AlphabitRiskTests
         }
 
         throw new DirectoryNotFoundException($"Nao foi possivel localizar o arquivo '{fileName}' da API.");
+    }
+
+    private static string GetAppFilePath(params string[] parts)
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (current is not null)
+        {
+            var segments = new[] { current.FullName, "src", "Alphabit.App" }
+                .Concat(parts)
+                .ToArray();
+            var candidate = Path.Combine(segments);
+            if (File.Exists(candidate))
+                return candidate;
+
+            current = current.Parent;
+        }
+
+        throw new DirectoryNotFoundException($"Nao foi possivel localizar o arquivo '{Path.Combine(parts)}' do App.");
     }
 
     private static string ExtractBlock(string source, string marker)

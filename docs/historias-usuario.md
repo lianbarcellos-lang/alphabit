@@ -24,13 +24,13 @@ Critérios de aceite:
 - deve existir acao para limpar filtros.
 
 ### HU03 - Detalhe do evento
-Como cliente, quero abrir o detalhe de um evento, para ver local, cidade, data, preco, convidados, atividades e avaliacoes antes da compra.
+Como cliente, quero abrir o detalhe de um evento, para ver local, cidade, data, preco, convidados, atividades, mapa de stands e avaliacoes antes da compra.
 
 Critérios de aceite:
 
 - o detalhe deve mostrar os dados principais do evento;
 - deve haver caminho para comprar;
-- convidados, atividades e avaliacoes devem aparecer quando existirem.
+- convidados, atividades, mapa de stands e avaliacoes devem aparecer quando existirem.
 
 ## Epico 2 - Conta e seguranca
 
@@ -138,9 +138,41 @@ Critérios de aceite:
 - administrador deve conseguir cadastrar convidado;
 - administrador deve conseguir associar e remover convidado de evento.
 
-## Epico 5 - Check-in
+## Epico 5 - Mapa de stands e expositores
 
-### HU15 - QR Code da reserva
+### HU15 - Visualizacao do mapa do evento
+Como cliente, quero visualizar o mapa de stands do evento, para saber onde ficam empresas, lojas, arenas e atrações.
+
+Critérios de aceite:
+
+- o detalhe do evento deve mostrar o mapa em blocos;
+- quando houver planta cadastrada, o painel administrativo deve mostrar a imagem com os stands posicionados;
+- os blocos devem aparecer organizados por linhas/setores;
+- stands reservados devem mostrar o nome do ocupante;
+- stands livres devem aparecer como disponíveis;
+- cliente nao pode alterar alocacoes.
+
+### HU16 - Alocacao administrativa de stands
+Como administrador, quero selecionar stands no mapa e reservar espaços para empresas expositoras ou atrações, para organizar o evento.
+
+Critérios de aceite:
+
+- administrador deve escolher o evento;
+- administrador deve poder enviar uma imagem da planta;
+- administrador deve poder cadastrar um stand;
+- administrador deve poder criar, renomear e excluir linhas vazias;
+- administrador deve poder aplicar uma organização automática por grade 2x2, 3x3, 4x4, 5x5 ou 8x8;
+- sistema deve desabilitar grades que nao comportam a quantidade atual de stands;
+- administrador deve poder arrastar o stand para a posição desejada na planta;
+- administrador deve poder editar ou excluir um stand diretamente na lista da linha;
+- administrador deve informar nome, tipo e descricao do ocupante;
+- sistema deve salvar as coordenadas do stand e recarregar a posição ao abrir novamente;
+- administrador deve poder liberar um stand;
+- alteracoes exigem token administrativo.
+
+## Epico 6 - Check-in
+
+### HU17 - QR Code da reserva
 Como cliente, quero receber um QR Code da reserva, para apresentar na entrada do evento.
 
 Critérios de aceite:
@@ -149,7 +181,7 @@ Critérios de aceite:
 - QR Code deve representar esse codigo;
 - cliente deve conseguir ampliar o QR Code.
 
-### HU16 - Check-in administrativo
+### HU18 - Check-in administrativo
 Como administrador, quero validar a entrada por codigo manual ou camera/webcam, para controlar acesso ao evento.
 
 Critérios de aceite:
@@ -159,9 +191,9 @@ Critérios de aceite:
 - reserva cancelada deve ser rejeitada;
 - codigo invalido deve retornar mensagem clara.
 
-## Epico 6 - Avaliacoes
+## Epico 7 - Avaliacoes
 
-### HU17 - Avaliacao pos-evento
+### HU19 - Avaliacao pos-evento
 Como cliente, quero avaliar um evento reservado, para registrar minha experiencia e ajudar outros clientes.
 
 Critérios de aceite:
@@ -170,7 +202,7 @@ Critérios de aceite:
 - nota deve ser valida;
 - avaliacao duplicada por cliente/evento deve ser bloqueada.
 
-### HU18 - Media de avaliacoes
+### HU20 - Media de avaliacoes
 Como cliente ou administrador, quero ver a media de avaliacoes junto ao preco do evento, para comparar preco e qualidade percebida.
 
 Critérios de aceite:
@@ -179,7 +211,7 @@ Critérios de aceite:
 - total de avaliacoes deve aparecer quando houver avaliacao;
 - eventos sem avaliacao devem exibir `Sem avaliações`.
 
-### HU19 - Moderacao de avaliacoes
+### HU21 - Moderacao de avaliacoes
 Como administrador, quero remover avaliacoes indevidas, para manter a vitrine confiavel.
 
 Critérios de aceite:
@@ -187,9 +219,9 @@ Critérios de aceite:
 - apenas administrador pode remover avaliacao;
 - dashboard deve refletir a remocao.
 
-## Epico 7 - Administracao e relatorios
+## Epico 8 - Administracao e relatorios
 
-### HU20 - Gestao de eventos
+### HU22 - Gestao de eventos
 Como administrador, quero cadastrar, editar e excluir eventos, para manter a agenda atualizada.
 
 Critérios de aceite:
@@ -198,7 +230,7 @@ Critérios de aceite:
 - edicao deve atualizar os dados;
 - exclusao deve remover o evento das listas.
 
-### HU21 - Catalogos administrativos
+### HU23 - Catalogos administrativos
 Como administrador, quero gerenciar cidades e categorias geek, para padronizar os eventos.
 
 Critérios de aceite:
@@ -206,7 +238,7 @@ Critérios de aceite:
 - cidade/categoria deve poder ser criada, editada e removida;
 - cadastro de evento deve reutilizar esses catalogos.
 
-### HU22 - Gestao de cupons
+### HU24 - Gestao de cupons
 Como administrador, quero criar, editar e excluir cupons, para gerenciar campanhas promocionais.
 
 Critérios de aceite:
@@ -214,7 +246,7 @@ Critérios de aceite:
 - cupom deve ter codigo, desconto e valor minimo;
 - carrinho deve validar as regras do cupom.
 
-### HU23 - Dashboard administrativo
+### HU25 - Dashboard administrativo
 Como administrador, quero visualizar relatorio de vendas e operacao, para acompanhar desempenho dos eventos.
 
 Critérios de aceite:
@@ -223,9 +255,9 @@ Critérios de aceite:
 - deve mostrar compras recentes sem poluir com dados desnecessarios;
 - deve mostrar formas de pagamento, capacidade, cupons, avaliacoes e check-ins.
 
-## Epico 8 - Documentacao e qualidade
+## Epico 9 - Documentacao e qualidade
 
-### HU24 - Documentacao do projeto
+### HU26 - Documentacao do projeto
 Como avaliador ou desenvolvedor, quero consultar visao, arquitetura, specs, roadmap e requisitos, para entender o projeto e sua evolucao.
 
 Critérios de aceite:
@@ -236,11 +268,11 @@ Critérios de aceite:
 - `docs/roadmap.md` deve mostrar ordem, dependencias e status;
 - `docs/requisitos.md` deve registrar requisitos e criterios de aceite.
 
-### HU25 - Testes automatizados
+### HU27 - Testes automatizados
 Como desenvolvedor, quero manter testes automatizados, para validar regras principais e reduzir regressao.
 
 Critérios de aceite:
 
 - `dotnet build .\Alphabit.sln` deve passar;
 - `dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore` deve passar;
-- regras de usuario, evento, cupom, reserva, convidados, atividades, check-in e avaliacoes devem ter cobertura.
+- regras de usuario, evento, cupom, reserva, convidados, atividades, stands, check-in e avaliacoes devem ter cobertura.

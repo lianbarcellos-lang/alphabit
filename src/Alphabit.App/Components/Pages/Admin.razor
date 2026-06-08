@@ -45,6 +45,7 @@ else
                 <div class="admin-view-switcher">
                     <button class="@(activeAdminView == "operacao" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("operacao")'>Controle de ingressos</button>
                     <button class="@(activeAdminView == "vendas" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("vendas")'>Relatório de vendas</button>
+                    <button class="@(activeAdminView == "mapa" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("mapa")'>Mapa de stands</button>
                 </div>
             </div>
 
@@ -267,6 +268,252 @@ else
                 }
             }
         </section>
+        }
+
+        @if (activeAdminView == "mapa")
+        {
+            <section class="admin-panel admin-stand-panel">
+                <div class="admin-list-header">
+                    <div>
+                        <span class="admin-panel__pill">Mapa de stands</span>
+                        <h2>Alocação de expositores</h2>
+                        <p>Selecione um evento, clique em um espaço do mapa e reserve para empresas, marcas ou atrações.</p>
+                    </div>
+                    <div class="admin-list-header__actions">
+                        <button class="ghost-button" type="button" @onclick="LoadEventStands" disabled="@isBusy">Atualizar mapa</button>
+                    </div>
+                </div>
+
+                <div class="admin-form__grid">
+                    <div class="field">
+                        <label for="standEvent">Evento</label>
+                        <select id="standEvent" class="field__input" value="@selectedStandEventId" @onchange="HandleStandEventChanged">
+                            @foreach (var item in adminEvents)
+                            {
+                                <option value="@item.Id">@item.Nome</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Espaço selecionado</label>
+                        <div class="admin-note">
+                            <strong>@(selectedStand is null ? "Nenhum stand selecionado" : $"{selectedStand.Codigo} - {selectedStand.Setor}")</strong>
+                            <span>@(selectedStand is null ? "Arraste um stand para posicionar ou cadastre um novo espaço." : selectedStand.Reservado ? selectedStand.NomeOcupante : "Disponível para reserva")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-map-upload">
+                    <div>
+                        <h3>Planta em branco do evento</h3>
+                        <p>Envie a imagem da planta e arraste os stands para marcar a localização de cada barraca.</p>
+                    </div>
+                    <div class="admin-map-upload__controls">
+                        <InputFile OnChange="HandleStandMapImageSelected" accept="image/*" />
+                        <InputText class="field__input" @bind-Value="standMapImageUrl" placeholder="Ou cole uma URL da planta" />
+                        <button class="ghost-button" type="button" @onclick="SaveStandMapImageFromInput" disabled="@isBusy">Salvar planta</button>
+                    </div>
+                </div>
+
+                @if (selectedStandEventId <= 0)
+                {
+                    <div class="status-box">Selecione um evento para organizar as linhas e os stands.</div>
+                }
+                else
+                {
+                    <div class="admin-stand-layout">
+                        <div class="admin-stand-map-area">
+                            @if (HasStandMapImage)
+                            {
+                                <div id="@StandMapDropElementId"
+                                     class="admin-stand-image-map"
+                                     @ondragover:preventDefault="true"
+                                     @ondrop="DropStandOnMap">
+                                    <img src="@standMapImageUrl" alt="Planta do evento" />
+                                    @foreach (var stand in eventStands)
+                                    {
+                                        <button class="admin-stand-pin @(stand.Id == selectedStandId ? "admin-stand-pin--selected" : null) @(stand.Reservado ? "admin-stand-pin--reserved" : null)"
+                                                @key="stand.Id"
+                                                data-stand-id="@stand.Id"
+                                                style="@BuildStandPinStyle(stand)"
+                                                type="button"
+                                                draggable="false"
+                                                title="@BuildStandPinTitle(stand)"
+                                                @onclick="() => SelectStand(stand)">
+                                            <strong>@stand.Codigo</strong>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="admin-stand-map" style="@BuildAdminStandMapStyle()">
+                                    @foreach (var stand in eventStands)
+                                    {
+                                        <button class="admin-stand-block @(stand.Id == selectedStandId ? "admin-stand-block--selected" : null) @(stand.Reservado ? "admin-stand-block--reserved" : null)"
+                                                @key="stand.Id"
+                                                style="@BuildAdminStandStyle(stand)"
+                                                type="button"
+                                                draggable="true"
+                                                @ondragstart="() => BeginStandDrag(stand.Id)"
+                                                @onclick="() => SelectStand(stand)">
+                                            <span>@stand.Codigo</span>
+                                            <strong>@(stand.Reservado ? stand.NomeOcupante : "Livre")</strong>
+                                            <small>@stand.Setor</small>
+                                        </button>
+                                    }
+                                </div>
+                            }
+
+                            <div class="admin-stand-layout-tools">
+                                <div>
+                                    <strong>Organização automática</strong>
+                                    <span>Escolha uma grade inicial. Depois você pode arrastar os stands livremente.</span>
+                                </div>
+                                <div class="admin-stand-grid-options">
+                                    @foreach (var option in standLayoutOptions)
+                                    {
+                                        <button class="ghost-button"
+                                                type="button"
+                                                disabled="@(isBusy || eventStands.Count == 0 || eventStands.Count > option.Capacity)"
+                                                title="@GetStandLayoutOptionTitle(option)"
+                                                @onclick="() => ApplyStandLayoutGrid(option.Size)">
+                                            @option.Label
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-stand-editor">
+                            <h3>Reservar espaço</h3>
+                            @if (selectedStand is null)
+                            {
+                                <p>Cadastre um stand e depois arraste-o para a posição desejada na planta.</p>
+                                <div class="field">
+                                    <label for="novoStandCodigo">Código do stand</label>
+                                    <InputText id="novoStandCodigo" class="field__input" @bind-Value="standEditCode" placeholder="Ex.: A-01" />
+                                </div>
+                                <div class="field">
+                                    <label for="novoStandLinha">Linha</label>
+                                    <select id="novoStandLinha" class="field__input" @bind="standEditSector">
+                                        @foreach (var sectorName in GetStandSectorNames())
+                                        {
+                                            <option value="@sectorName">@sectorName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="novoStandNome">Empresa ou atração</label>
+                                    <InputText id="novoStandNome" class="field__input" @bind-Value="standAllocationModel.NomeOcupante" placeholder="LG, Samsung, Ubisoft..." />
+                                </div>
+                                <div class="field">
+                                    <label for="novoStandTipo">Tipo</label>
+                                    <InputText id="novoStandTipo" class="field__input" @bind-Value="standAllocationModel.TipoOcupante" placeholder="Expositora, arena, loja..." />
+                                </div>
+                                <div class="field">
+                                    <label for="novoStandDescricao">Descrição curta</label>
+                                    <InputTextArea id="novoStandDescricao" class="field__input" @bind-Value="standAllocationModel.Descricao" />
+                                </div>
+                                <button class="secondary-button" type="button" @onclick="CreateStand" disabled="@isBusy">Cadastrar stand</button>
+                            }
+                            else
+                            {
+                                <div class="admin-stand-editor__top">
+                                    <p>Editando <strong>@selectedStand.Codigo</strong>. Use "Novo stand" para cadastrar outro espaço sem alterar este.</p>
+                                    <button class="ghost-button" type="button" @onclick="PrepareNewStandForm" disabled="@isBusy">Novo stand</button>
+                                </div>
+                                <div class="field">
+                                    <label for="standCodigo">Código do stand</label>
+                                    <InputText id="standCodigo" class="field__input" @bind-Value="standEditCode" placeholder="Ex.: AZ-01" />
+                                </div>
+                                <div class="field">
+                                    <label for="standLinha">Linha</label>
+                                    <select id="standLinha" class="field__input" @bind="standEditSector">
+                                        @foreach (var sectorName in GetStandSectorNames())
+                                        {
+                                            <option value="@sectorName">@sectorName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="standNome">Empresa ou atração</label>
+                                    <InputText id="standNome" class="field__input" @bind-Value="standAllocationModel.NomeOcupante" placeholder="LG, Samsung, Ubisoft..." />
+                                </div>
+                                <div class="field">
+                                    <label for="standTipo">Tipo</label>
+                                    <InputText id="standTipo" class="field__input" @bind-Value="standAllocationModel.TipoOcupante" placeholder="Expositora, arena, loja..." />
+                                </div>
+                                <div class="field">
+                                    <label for="standDescricao">Descrição curta</label>
+                                    <InputTextArea id="standDescricao" class="field__input" @bind-Value="standAllocationModel.Descricao" />
+                                </div>
+
+                                <div class="admin-event-card__actions">
+                                    <button class="secondary-button" type="button" @onclick="SaveStandAllocation" disabled="@isBusy">Salvar stand</button>
+                                    <button class="danger-button" type="button" @onclick="ReleaseStand" disabled="@isBusy">Liberar espaço</button>
+                                    <button class="danger-button" type="button" @onclick="DeleteSelectedStand" disabled="@isBusy">Apagar stand</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="event-stand-sector-list admin-stand-sector-list">
+                        <article class="admin-stand-sector-card admin-stand-sector-card--create">
+                            <div class="admin-stand-sector-create">
+                                <InputText class="field__input" @bind-Value="newStandSectorName" placeholder="Nova linha" />
+                                <button class="secondary-button admin-create-line-button" type="button" @onclick="CreateStandSector" disabled="@isBusy">Adicionar</button>
+                            </div>
+                        </article>
+                        @foreach (var sector in GetStandSectorGroups())
+                        {
+                            <article class="admin-stand-sector-card"
+                                     @key="sector.Key"
+                                     @ondragover:preventDefault="true"
+                                     @ondrop="() => DropStandOnSector(sector.Key)">
+                                <div class="admin-stand-sector-card__header">
+                                    <input class="field__input"
+                                           value="@GetSectorDraftName(sector.Key)"
+                                           @oninput="args => SetSectorDraftName(sector.Key, args.Value?.ToString())" />
+                                    <div class="admin-stand-sector-card__actions">
+                                        <button class="ghost-button" type="button" @onclick="() => RenameSector(sector.Key)" disabled="@isBusy">Salvar nome</button>
+                                        <button class="danger-button admin-delete-line-button" type="button" @onclick="() => DeleteStandSector(sector.Key)" disabled="@isBusy">Excluir</button>
+                                    </div>
+                                </div>
+                                <span>@sector.Stands.Count stand(s)</span>
+                                <div class="admin-stand-sector-card__allocations">
+                                    @if (sector.Stands.Count == 0)
+                                    {
+                                        <span class="admin-empty-line">Nenhum stand nesta linha.</span>
+                                    }
+                                    @foreach (var sectorStand in GetVisibleSectorStands(sector.Stands))
+                                    {
+                                        <div class="admin-stand-sector-allocation @(sectorStand.Id == selectedStandId ? "admin-stand-sector-allocation--selected" : null)"
+                                             @key="sectorStand.Id"
+                                             draggable="true"
+                                             @ondragstart="() => BeginStandDrag(sectorStand.Id)">
+                                            <button class="admin-stand-sector-allocation__main" type="button" @onclick="() => SelectStand(sectorStand)">
+                                                <strong>@sectorStand.Codigo</strong>
+                                                <span>@BuildSectorStandLabel(sectorStand)</span>
+                                            </button>
+                                            <div class="admin-stand-sector-allocation__actions">
+                                                <button type="button" class="ghost-button admin-mini-button" title="Editar stand" @onclick="() => SelectStand(sectorStand)">Editar</button>
+                                                <button type="button" class="danger-button admin-mini-button" title="Excluir stand" @onclick="() => DeleteStand(sectorStand)" disabled="@isBusy">×</button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                @if (selectedStand is not null)
+                                {
+                                    <button class="secondary-button" type="button" @onclick="() => MoveSelectedStandToSector(sector.Key)" disabled="@isBusy">
+                                        Mover selecionado para esta linha
+                                    </button>
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
         }
 
         @if (activeAdminView == "operacao")
@@ -930,8 +1177,21 @@ else
     private readonly List<CouponViewModel> adminCoupons = new();
     private readonly List<GuestViewModel> adminGuests = new();
     private readonly List<GuestViewModel> selectedEventGuests = new();
+    private readonly List<StandSpaceViewModel> eventStands = new();
+    private readonly List<string> standSectors = new();
     private readonly List<string> availableGenres = new();
     private readonly List<string> availableCities = new();
+    private readonly StandAllocationRequest standAllocationModel = new();
+    private readonly Dictionary<string, string> sectorRenameInputs = new(StringComparer.OrdinalIgnoreCase);
+    private readonly IReadOnlyList<StandLayoutOption> standLayoutOptions =
+    [
+        new("2x2", 2),
+        new("3x3", 3),
+        new("4x4", 4),
+        new("5x5", 5),
+        new("8x8", 8)
+    ];
+    private const string StandMapDropElementId = "admin-stand-image-map";
     private AdminSalesDashboardViewModel? salesDashboard;
     private string activeAdminView = "operacao";
     private bool isBusy;
@@ -956,12 +1216,20 @@ else
     private string? editingCityOriginalName;
     private int selectedGuestEventId;
     private int selectedGuestId;
+    private int selectedStandEventId;
+    private int selectedStandId;
+    private int draggedStandId;
+    private string standMapImageUrl = string.Empty;
+    private string standEditCode = string.Empty;
+    private string standEditSector = string.Empty;
+    private string newStandSectorName = string.Empty;
     private string checkinQrCode = string.Empty;
     private bool checkinCodeLoadedFromUrl;
     private bool isQrScannerOpen;
     private bool scannerIsError;
     private string scannerMessage = string.Empty;
     private DotNetObjectReference<Admin>? qrScannerReference;
+    private DotNetObjectReference<Admin>? standMapReference;
     private CheckinResponseViewModel? lastCheckinResult;
 
     protected override async Task OnInitializedAsync()
@@ -974,7 +1242,25 @@ else
         await LoadAdminEvents();
         await LoadAdminCoupons();
         await LoadGuests();
+        await LoadEventStands();
         await LoadAdminSalesDashboard();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!Session.IsAdmin || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        standMapReference ??= DotNetObjectReference.Create(this);
+
+        try
+        {
+            await JS.InvokeVoidAsync("geekTopStandMap.enablePinDragging", StandMapDropElementId, standMapReference);
+        }
+        catch
+        {
+            // O mapa pode não estar renderizado quando outra aba do painel está ativa.
+        }
     }
 
     private void LoadCheckinCodeFromUrl()
@@ -1207,12 +1493,910 @@ else
 
             if (selectedGuestEventId == 0 && adminEvents.Count > 0)
                 selectedGuestEventId = adminEvents[0].Id;
+
+            if (selectedStandEventId == 0 && adminEvents.Count > 0)
+                selectedStandEventId = adminEvents[0].Id;
         }
         finally
         {
             eventsLoading = false;
         }
     }
+
+    private StandSpaceViewModel? selectedStand => eventStands.FirstOrDefault(stand => stand.Id == selectedStandId);
+
+    private bool HasStandMapImage => !string.IsNullOrWhiteSpace(standMapImageUrl);
+
+    private void PrepareNewStandForm()
+    {
+        selectedStandId = 0;
+        draggedStandId = 0;
+        standEditCode = string.Empty;
+        ResetStandAllocationModel();
+
+        var sectorNames = GetStandSectorNames();
+        standEditSector = sectorNames.Count > 0 ? sectorNames[0] : string.Empty;
+    }
+
+    private async Task LoadEventStands()
+    {
+        eventStands.Clear();
+        PrepareNewStandForm();
+        standMapImageUrl = string.Empty;
+
+        if (selectedStandEventId <= 0)
+            return;
+
+        standSectors.Clear();
+        standSectors.AddRange(await ApiClient.GetEventStandSectorsAsync(selectedStandEventId));
+        eventStands.AddRange(await ApiClient.GetEventStandsAsync(selectedStandEventId));
+        standMapImageUrl = eventStands.FirstOrDefault(stand => !string.IsNullOrWhiteSpace(stand.MapaImagemUrl))?.MapaImagemUrl ?? string.Empty;
+        RefreshSectorRenameInputs();
+
+        var sectorNames = GetStandSectorNames();
+        if (string.IsNullOrWhiteSpace(standEditSector) || !sectorNames.Contains(standEditSector, StringComparer.OrdinalIgnoreCase))
+            standEditSector = sectorNames[0];
+    }
+
+    private async Task HandleStandEventChanged(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var eventId))
+        {
+            selectedStandEventId = eventId;
+            await LoadEventStands();
+        }
+    }
+
+    private void SelectStand(StandSpaceViewModel stand)
+    {
+        selectedStandId = stand.Id;
+        standAllocationModel.Reservado = stand.Reservado;
+        standAllocationModel.TipoArea = string.IsNullOrWhiteSpace(stand.TipoArea) ? "Stand" : stand.TipoArea;
+        standAllocationModel.AreaX = stand.AreaX;
+        standAllocationModel.AreaY = stand.AreaY;
+        standAllocationModel.AreaLargura = stand.AreaLargura <= 0 ? 12 : stand.AreaLargura;
+        standAllocationModel.AreaAltura = stand.AreaAltura <= 0 ? 8 : stand.AreaAltura;
+        standAllocationModel.AreaMetrosQuadrados = stand.AreaMetrosQuadrados;
+        standAllocationModel.PrecoPorMetroQuadrado = stand.PrecoPorMetroQuadrado;
+        standAllocationModel.PrecoFixo = stand.PrecoFixo;
+        standAllocationModel.NomeOcupante = stand.NomeOcupante;
+        standAllocationModel.TipoOcupante = stand.TipoOcupante;
+        standAllocationModel.Descricao = stand.Descricao;
+        standEditCode = stand.Codigo;
+        standEditSector = NormalizeStandSector(stand.Setor);
+    }
+
+    private async Task HandleStandMapImageSelected(InputFileChangeEventArgs args)
+    {
+        if (selectedStandEventId <= 0 || string.IsNullOrWhiteSpace(Session.AdminToken) || args.FileCount == 0)
+            return;
+
+        try
+        {
+            var dataUrl = await ConvertFileToDataUrlAsync(args.File);
+            await SaveStandMapImage(dataUrl);
+        }
+        catch
+        {
+            statusMessage = "Não foi possível carregar a planta selecionada.";
+            isError = true;
+        }
+    }
+
+    private async Task SaveStandMapImageFromInput()
+    {
+        await SaveStandMapImage(standMapImageUrl);
+    }
+
+    private async Task SaveStandMapImage(string mapImageUrl)
+    {
+        if (selectedStandEventId <= 0 || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.UpdateEventMapImageAsync(selectedStandEventId, mapImageUrl.Trim(), Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                standMapImageUrl = mapImageUrl.Trim();
+                await LoadEventStands();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível salvar a planta do evento agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task CreateStand()
+    {
+        if (selectedStandEventId <= 0 || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var code = standEditCode.Trim();
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            isError = true;
+            statusMessage = "Informe o código do stand.";
+            return;
+        }
+
+        if (eventStands.Any(stand => string.Equals(stand.Codigo, code, StringComparison.OrdinalIgnoreCase)))
+        {
+            isError = true;
+            statusMessage = "Já existe outro stand com este código.";
+            return;
+        }
+
+        var occupantName = standAllocationModel.NomeOcupante.Trim();
+        if (HasDuplicateStandName(occupantName))
+        {
+            isError = true;
+            statusMessage = "Já existe um stand cadastrado com esse nome.";
+            return;
+        }
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var createRequest = new StandAllocationRequest
+            {
+                Codigo = code,
+                Setor = NormalizeStandSector(standEditSector),
+                TipoArea = "Stand",
+                Reservado = !string.IsNullOrWhiteSpace(occupantName),
+                AreaX = GetNextStandMapX(),
+                AreaY = GetNextStandMapY(),
+                AreaLargura = standAllocationModel.AreaLargura <= 0 ? 12 : standAllocationModel.AreaLargura,
+                AreaAltura = standAllocationModel.AreaAltura <= 0 ? 8 : standAllocationModel.AreaAltura,
+                AreaMetrosQuadrados = Math.Max(0, standAllocationModel.AreaMetrosQuadrados),
+                PrecoPorMetroQuadrado = Math.Max(0, standAllocationModel.PrecoPorMetroQuadrado),
+                PrecoFixo = Math.Max(0, standAllocationModel.PrecoFixo),
+                NomeOcupante = occupantName,
+                TipoOcupante = standAllocationModel.TipoOcupante.Trim(),
+                Descricao = standAllocationModel.Descricao.Trim()
+            };
+
+            var result = await ApiClient.CreateStandAsync(selectedStandEventId, createRequest, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadEventStands();
+                statusMessage = "Stand cadastrado com sucesso. O formulário já está pronto para cadastrar outro stand.";
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível cadastrar o stand agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private IReadOnlyList<string> GetStandSectorNames()
+    {
+        var names = eventStands
+            .Select(stand => NormalizeStandSector(stand.Setor))
+            .Concat(standSectors.Select(NormalizeStandSector))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name)
+            .ToList();
+
+        if (names.Count == 0)
+            names.Add("Linha 1");
+
+        return names;
+    }
+
+    private IEnumerable<StandSectorGroup> GetStandSectorGroups()
+    {
+        return GetStandSectorNames()
+            .Select(name => new StandSectorGroup(
+                name,
+                eventStands
+                    .Where(stand => string.Equals(NormalizeStandSector(stand.Setor), name, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(stand => stand.Codigo)
+                    .ToList()))
+            .OrderBy(group => group.Key);
+    }
+
+    private static IReadOnlyList<StandSpaceViewModel> GetVisibleSectorStands(IReadOnlyList<StandSpaceViewModel> stands)
+    {
+        return stands
+            .OrderBy(stand => stand.Codigo)
+            .ToList();
+    }
+
+    private string BuildSectorStandLabel(StandSpaceViewModel stand)
+    {
+        return stand.Reservado && !string.IsNullOrWhiteSpace(stand.NomeOcupante)
+            ? stand.NomeOcupante
+            : "Disponível";
+    }
+
+    private bool HasDuplicateStandName(string? occupantName, int? ignoredStandId = null)
+    {
+        var normalizedName = (occupantName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalizedName))
+            return false;
+
+        return eventStands.Any(stand =>
+            (!ignoredStandId.HasValue || stand.Id != ignoredStandId.Value) &&
+            string.Equals(stand.NomeOcupante?.Trim(), normalizedName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private double GetNextStandMapX()
+    {
+        return GetNextStandMapPoint().X;
+    }
+
+    private double GetNextStandMapY()
+    {
+        return GetNextStandMapPoint().Y;
+    }
+
+    private StandMapPoint GetNextStandMapPoint()
+    {
+        var index = eventStands.Count;
+        var column = index % 6;
+        var row = index / 6;
+
+        var x = 12 + column * 14;
+        var y = 18 + (row % 5) * 14;
+
+        return new StandMapPoint
+        {
+            X = Math.Clamp(x, 6, 94),
+            Y = Math.Clamp(y, 8, 92)
+        };
+    }
+
+    private string NormalizeStandSector(string? sector)
+    {
+        var value = (sector ?? string.Empty).Trim();
+        if (value.Length == 0 || value.Equals("Ajustes manuais", StringComparison.OrdinalIgnoreCase))
+            return GetDefaultStandSector();
+
+        return value;
+    }
+
+    private string GetDefaultStandSector()
+    {
+        return standSectors
+            .Select(sector => sector.Trim())
+            .FirstOrDefault(sector => sector.Length > 0 && !sector.Equals("Ajustes manuais", StringComparison.OrdinalIgnoreCase))
+            ?? eventStands
+            .Select(stand => stand.Setor?.Trim() ?? string.Empty)
+            .FirstOrDefault(sector => sector.Length > 0 && !sector.Equals("Ajustes manuais", StringComparison.OrdinalIgnoreCase))
+            ?? "Linha 1";
+    }
+
+    private void RefreshSectorRenameInputs()
+    {
+        foreach (var sectorName in GetStandSectorNames())
+        {
+            if (!sectorRenameInputs.ContainsKey(sectorName))
+                sectorRenameInputs[sectorName] = sectorName;
+        }
+    }
+
+    private string GetSectorDraftName(string sectorName)
+    {
+        return sectorRenameInputs.TryGetValue(sectorName, out var draft)
+            ? draft
+            : sectorName;
+    }
+
+    private void SetSectorDraftName(string sectorName, string? value)
+    {
+        sectorRenameInputs[sectorName] = value ?? string.Empty;
+    }
+
+    private async Task CreateStandSector()
+    {
+        if (selectedStandEventId <= 0 || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var name = newStandSectorName.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            isError = true;
+            statusMessage = "Informe o nome da nova linha.";
+            return;
+        }
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.CreateStandSectorAsync(selectedStandEventId, name, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                newStandSectorName = string.Empty;
+                await LoadEventStands();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível criar a linha agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task RenameSector(string oldSector)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var newSector = GetSectorDraftName(oldSector).Trim();
+        if (string.IsNullOrWhiteSpace(newSector))
+        {
+            isError = true;
+            statusMessage = "Informe um nome para a linha.";
+            return;
+        }
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+        var selectedCode = selectedStand?.Codigo;
+
+        try
+        {
+            var result = await ApiClient.RenameStandSectorAsync(selectedStandEventId, oldSector, newSector, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                sectorRenameInputs.Remove(oldSector);
+                sectorRenameInputs[newSector] = newSector;
+                await LoadEventStands();
+
+                var selected = eventStands.FirstOrDefault(stand => string.Equals(stand.Codigo, selectedCode, StringComparison.OrdinalIgnoreCase));
+                if (selected is not null)
+                    SelectStand(selected);
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível renomear a linha agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task DeleteStandSector(string sectorName)
+    {
+        if (selectedStandEventId <= 0 || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.DeleteStandSectorAsync(selectedStandEventId, sectorName, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+                await LoadEventStands();
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível excluir a linha agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private void BeginStandDrag(int standId)
+    {
+        draggedStandId = standId;
+        SelectStand(eventStands.First(stand => stand.Id == standId));
+    }
+
+    private async Task DropStandOnSector(string sectorName)
+    {
+        if (draggedStandId <= 0)
+            return;
+
+        await MoveStandToSector(draggedStandId, sectorName);
+        draggedStandId = 0;
+    }
+
+    private async Task MoveSelectedStandToSector(string sectorName)
+    {
+        if (selectedStand is null)
+            return;
+
+        await MoveStandToSector(selectedStand.Id, sectorName);
+    }
+
+    private async Task MoveStandToSector(int standId, string sectorName)
+    {
+        var stand = eventStands.FirstOrDefault(item => item.Id == standId);
+        if (stand is null || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var targetSector = NormalizeStandSector(sectorName);
+        await UpdateStandsBatch(
+            [stand],
+            item => BuildStandUpdateRequest(item, setor: targetSector),
+            $"{stand.Codigo} movido para {targetSector}.",
+            stand.Codigo);
+    }
+
+    private async Task DropStandOnMap(DragEventArgs args)
+    {
+        if (draggedStandId <= 0 || string.IsNullOrWhiteSpace(Session.AdminToken) || !HasStandMapImage)
+            return;
+
+        var stand = eventStands.FirstOrDefault(item => item.Id == draggedStandId);
+        draggedStandId = 0;
+
+        if (stand is null)
+            return;
+
+        try
+        {
+            var point = await JS.InvokeAsync<StandMapPoint>(
+                "geekTopStandMap.getDropPoint",
+                StandMapDropElementId,
+                args.ClientX,
+                args.ClientY);
+
+            await UpdateStandMapPosition(stand, point.X, point.Y, $"Stand {stand.Codigo} posicionado na planta.");
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível posicionar o stand na planta agora.";
+        }
+    }
+
+    private async Task UpdateStandMapPosition(StandSpaceViewModel stand, double areaX, double areaY, string successMessage)
+    {
+        await UpdateStandsBatch(
+            [stand],
+            item =>
+            {
+                var request = BuildStandUpdateRequest(item);
+                request.AreaX = Math.Clamp(areaX, 0, 100);
+                request.AreaY = Math.Clamp(areaY, 0, 100);
+                request.AreaLargura = item.AreaLargura <= 0 ? 10 : item.AreaLargura;
+                request.AreaAltura = item.AreaAltura <= 0 ? 7 : item.AreaAltura;
+                return request;
+            },
+            successMessage,
+            stand.Codigo);
+    }
+
+    private async Task ApplyStandLayoutGrid(int gridSize)
+    {
+        if (eventStands.Count == 0 || string.IsNullOrWhiteSpace(Session.AdminToken))
+        {
+            isError = true;
+            statusMessage = "Cadastre pelo menos um stand antes de organizar o mapa.";
+            return;
+        }
+
+        if (eventStands.Count > gridSize * gridSize)
+        {
+            isError = true;
+            statusMessage = $"A grade {gridSize}x{gridSize} comporta até {gridSize * gridSize} stand(s). Escolha uma grade maior.";
+            return;
+        }
+
+        var points = BuildStandLayoutGrid(eventStands.Count, gridSize);
+        var standWidth = GetStandLayoutWidth(eventStands.Count, gridSize);
+        var standHeight = GetStandLayoutHeight(eventStands.Count, gridSize);
+        var orderedStands = eventStands
+            .OrderBy(stand => NormalizeStandSector(stand.Setor), StringComparer.OrdinalIgnoreCase)
+            .ThenBy(stand => stand.Codigo, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        await UpdateStandsBatch(
+            orderedStands,
+            stand =>
+            {
+                var index = orderedStands.FindIndex(item => item.Id == stand.Id);
+                var point = points[index];
+                var request = BuildStandUpdateRequest(stand);
+                request.AreaX = point.X;
+                request.AreaY = point.Y;
+                request.AreaLargura = standWidth;
+                request.AreaAltura = standHeight;
+                return request;
+            },
+            $"Grade {gridSize}x{gridSize} aplicada para {orderedStands.Count} stand(s). Você ainda pode arrastar e ajustar manualmente.",
+            selectedStand?.Codigo);
+    }
+
+    private static List<StandMapPoint> BuildStandLayoutGrid(int standCount, int gridSize)
+    {
+        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, (int)Math.Ceiling(Math.Sqrt(standCount))));
+        var rows = Math.Max(1, (int)Math.Ceiling(standCount / (double)columns));
+        var effectiveGridSize = Math.Max(columns, rows);
+
+        var horizontalMargin = effectiveGridSize <= 2 ? 30.0 : effectiveGridSize <= 3 ? 24.0 : effectiveGridSize <= 5 ? 16.0 : 10.0;
+        var verticalMargin = effectiveGridSize <= 2 ? 32.0 : effectiveGridSize <= 3 ? 26.0 : effectiveGridSize <= 5 ? 18.0 : 12.0;
+        var usableWidth = 100 - horizontalMargin * 2;
+        var usableHeight = 100 - verticalMargin * 2;
+        var points = new List<StandMapPoint>(standCount);
+
+        for (var index = 0; index < standCount; index++)
+        {
+            var column = index % columns;
+            var row = index / columns;
+            var x = columns == 1
+                ? 50
+                : horizontalMargin + (usableWidth * column / (columns - 1));
+            var y = rows == 1
+                ? 50
+                : verticalMargin + (usableHeight * row / (rows - 1));
+
+            points.Add(new StandMapPoint
+            {
+                X = Math.Clamp(x, 6, 94),
+                Y = Math.Clamp(y, 8, 92)
+            });
+        }
+
+        return points;
+    }
+
+    private static double GetStandLayoutWidth(int standCount, int gridSize)
+    {
+        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, (int)Math.Ceiling(Math.Sqrt(standCount))));
+        return Math.Clamp(72.0 / columns, 6.5, 12.0);
+    }
+
+    private static double GetStandLayoutHeight(int standCount, int gridSize)
+    {
+        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, (int)Math.Ceiling(Math.Sqrt(standCount))));
+        var rows = Math.Max(1, (int)Math.Ceiling(standCount / (double)columns));
+        return Math.Clamp(52.0 / rows, 6.5, 9.0);
+    }
+
+    private string GetStandLayoutOptionTitle(StandLayoutOption option)
+    {
+        return eventStands.Count > option.Capacity
+            ? $"{option.Label} comporta até {option.Capacity} stand(s)."
+            : $"Organizar {eventStands.Count} stand(s) em grade {option.Label}.";
+    }
+
+    [JSInvokable]
+    public async Task OnStandMapDropped(int standId, double areaX, double areaY)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var stand = eventStands.FirstOrDefault(item => item.Id == standId);
+        if (stand is null)
+            return;
+
+        SelectStand(stand);
+        await UpdateStandMapPosition(stand, areaX, areaY, $"Stand {stand.Codigo} posicionado na planta.");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task UpdateStandsBatch(
+        IReadOnlyList<StandSpaceViewModel> standsToUpdate,
+        Func<StandSpaceViewModel, StandAllocationRequest> requestFactory,
+        string successMessage,
+        string? codeToSelect)
+    {
+        if (standsToUpdate.Count == 0 || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            foreach (var stand in standsToUpdate)
+            {
+                var result = await ApiClient.UpdateStandAllocationAsync(
+                    selectedStandEventId,
+                    stand.Id,
+                    requestFactory(stand),
+                    Session.AdminToken);
+
+                if (!result.Success)
+                {
+                    isError = true;
+                    statusMessage = result.Message;
+                    return;
+                }
+            }
+
+            statusMessage = successMessage;
+            await LoadEventStands();
+
+            var selected = string.IsNullOrWhiteSpace(codeToSelect)
+                ? null
+                : eventStands.FirstOrDefault(stand => string.Equals(stand.Codigo, codeToSelect, StringComparison.OrdinalIgnoreCase));
+
+            if (selected is not null)
+                SelectStand(selected);
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível atualizar os stands agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private static StandAllocationRequest BuildStandUpdateRequest(StandSpaceViewModel stand, string? setor = null)
+    {
+        return new StandAllocationRequest
+        {
+            Reservado = stand.Reservado,
+            Setor = setor ?? stand.Setor,
+            Codigo = stand.Codigo,
+            TipoArea = string.IsNullOrWhiteSpace(stand.TipoArea) ? "Stand" : stand.TipoArea,
+            AreaX = stand.AreaX,
+            AreaY = stand.AreaY,
+            AreaLargura = stand.AreaLargura <= 0 ? 12 : stand.AreaLargura,
+            AreaAltura = stand.AreaAltura <= 0 ? 8 : stand.AreaAltura,
+            AreaMetrosQuadrados = stand.AreaMetrosQuadrados,
+            PrecoPorMetroQuadrado = stand.PrecoPorMetroQuadrado,
+            PrecoFixo = stand.PrecoFixo,
+            NomeOcupante = stand.NomeOcupante,
+            TipoOcupante = stand.TipoOcupante,
+            Descricao = stand.Descricao
+        };
+    }
+
+    private async Task SaveStandAllocation()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken) || selectedStand is null)
+            return;
+
+        var standId = selectedStand.Id;
+        var editedCode = standEditCode.Trim();
+        var editedSector = NormalizeStandSector(standEditSector);
+
+        if (string.IsNullOrWhiteSpace(editedCode))
+        {
+            isError = true;
+            statusMessage = "Informe o código do stand.";
+            return;
+        }
+
+        var duplicateCode = eventStands.Any(stand =>
+            stand.Id != standId &&
+            string.Equals(stand.Codigo, editedCode, StringComparison.OrdinalIgnoreCase));
+
+        if (duplicateCode)
+        {
+            isError = true;
+            statusMessage = "Já existe outro stand com este código.";
+            return;
+        }
+
+        var occupantName = standAllocationModel.NomeOcupante.Trim();
+        if (HasDuplicateStandName(occupantName, standId))
+        {
+            isError = true;
+            statusMessage = "Já existe um stand cadastrado com esse nome.";
+            return;
+        }
+
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var selected = selectedStand;
+            if (selected is null)
+                return;
+
+            var updateRequest = new StandAllocationRequest
+            {
+                Reservado = !string.IsNullOrWhiteSpace(occupantName),
+                Setor = editedSector,
+                Codigo = editedCode,
+                TipoArea = "Stand",
+                AreaX = standAllocationModel.AreaX <= 0 ? selected.AreaX : standAllocationModel.AreaX,
+                AreaY = standAllocationModel.AreaY <= 0 ? selected.AreaY : standAllocationModel.AreaY,
+                AreaLargura = standAllocationModel.AreaLargura <= 0 ? selected.AreaLargura : standAllocationModel.AreaLargura,
+                AreaAltura = standAllocationModel.AreaAltura <= 0 ? selected.AreaAltura : standAllocationModel.AreaAltura,
+                AreaMetrosQuadrados = Math.Max(0, standAllocationModel.AreaMetrosQuadrados),
+                PrecoPorMetroQuadrado = Math.Max(0, standAllocationModel.PrecoPorMetroQuadrado),
+                PrecoFixo = Math.Max(0, standAllocationModel.PrecoFixo),
+                NomeOcupante = occupantName,
+                TipoOcupante = standAllocationModel.TipoOcupante.Trim(),
+                Descricao = standAllocationModel.Descricao.Trim()
+            };
+
+            var result = await ApiClient.UpdateStandAllocationAsync(selectedStandEventId, standId, updateRequest, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadEventStands();
+                var updatedStand = eventStands.FirstOrDefault(stand => stand.Id == standId)
+                    ?? eventStands.FirstOrDefault(stand => string.Equals(stand.Codigo, editedCode, StringComparison.OrdinalIgnoreCase));
+
+                if (updatedStand is not null)
+                    SelectStand(updatedStand);
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível atualizar o stand agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task ReleaseStand()
+    {
+        if (selectedStand is null)
+            return;
+
+        standAllocationModel.Reservado = false;
+        standAllocationModel.TipoArea = selectedStand?.TipoArea ?? "Stand";
+        standAllocationModel.AreaX = selectedStand?.AreaX ?? 0;
+        standAllocationModel.AreaY = selectedStand?.AreaY ?? 0;
+        standAllocationModel.AreaLargura = selectedStand?.AreaLargura ?? 12;
+        standAllocationModel.AreaAltura = selectedStand?.AreaAltura ?? 8;
+        standAllocationModel.AreaMetrosQuadrados = selectedStand?.AreaMetrosQuadrados ?? 0;
+        standAllocationModel.PrecoPorMetroQuadrado = selectedStand?.PrecoPorMetroQuadrado ?? 0;
+        standAllocationModel.PrecoFixo = selectedStand?.PrecoFixo ?? 0;
+        standAllocationModel.NomeOcupante = string.Empty;
+        standAllocationModel.TipoOcupante = string.Empty;
+        standAllocationModel.Descricao = string.Empty;
+        await SaveStandAllocation();
+    }
+
+    private async Task DeleteSelectedStand()
+    {
+        if (selectedStand is null || string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        await DeleteStand(selectedStand);
+    }
+
+    private async Task DeleteStand(StandSpaceViewModel stand)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        var standCode = stand.Codigo;
+        isBusy = true;
+        isError = false;
+        statusMessage = string.Empty;
+
+        try
+        {
+            var result = await ApiClient.DeleteStandAsync(selectedStandEventId, stand.Id, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                await LoadEventStands();
+                statusMessage = $"Stand {standCode} apagado com sucesso.";
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível apagar o stand agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private void ResetStandAllocationModel()
+    {
+        standAllocationModel.Reservado = false;
+        standAllocationModel.TipoArea = "Stand";
+        standAllocationModel.AreaX = 0;
+        standAllocationModel.AreaY = 0;
+        standAllocationModel.AreaLargura = 12;
+        standAllocationModel.AreaAltura = 8;
+        standAllocationModel.AreaMetrosQuadrados = 0;
+        standAllocationModel.PrecoPorMetroQuadrado = 0;
+        standAllocationModel.PrecoFixo = 0;
+        standAllocationModel.NomeOcupante = string.Empty;
+        standAllocationModel.TipoOcupante = string.Empty;
+        standAllocationModel.Descricao = string.Empty;
+    }
+
+    private string BuildAdminStandMapStyle()
+    {
+        var maxColumn = Math.Max(4, eventStands.Count == 0 ? 4 : eventStands.Max(stand => stand.PosicaoX + stand.Largura - 1));
+        var maxRow = Math.Max(7, eventStands.Count == 0 ? 7 : eventStands.Max(stand => stand.PosicaoY + stand.Altura - 1));
+        return $"--stand-columns:{maxColumn};--stand-rows:{maxRow};";
+    }
+
+    private static string BuildAdminStandStyle(StandSpaceViewModel stand)
+    {
+        return $"grid-column:{stand.PosicaoX} / span {Math.Max(1, stand.Largura)};grid-row:{stand.PosicaoY} / span {Math.Max(1, stand.Altura)};";
+    }
+
+    private static string BuildStandPinStyle(StandSpaceViewModel stand)
+    {
+        var left = Math.Clamp(stand.AreaX <= 0 ? 50 : stand.AreaX, 0, 100);
+        var top = Math.Clamp(stand.AreaY <= 0 ? 50 : stand.AreaY, 0, 100);
+        return FormattableString.Invariant($"left:{left:0.###}%;top:{top:0.###}%;");
+    }
+
+    private static string BuildStandPinTitle(StandSpaceViewModel stand)
+    {
+        var status = stand.Reservado && !string.IsNullOrWhiteSpace(stand.NomeOcupante)
+            ? $"{stand.NomeOcupante} - {stand.TipoOcupante}"
+            : "Disponível";
+
+        return $"{stand.Codigo} | {stand.Setor} | {status}";
+    }
+
+    private sealed class StandMapPoint
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+
+    private sealed record StandLayoutOption(string Label, int Size)
+    {
+        public int Capacity => Size * Size;
+    }
+
+    private sealed record StandSectorGroup(string Key, IReadOnlyList<StandSpaceViewModel> Stands);
 
     private async Task LoadAdminSalesDashboard()
     {
@@ -2172,6 +3356,7 @@ else
         try
         {
             await JS.InvokeVoidAsync("geekTopQrScanner.stop");
+            await JS.InvokeVoidAsync("geekTopStandMap.dispose", StandMapDropElementId);
         }
         catch
         {
@@ -2179,6 +3364,7 @@ else
         }
 
         qrScannerReference?.Dispose();
+        standMapReference?.Dispose();
     }
 
     private static string GetPaymentMethodLabel(string paymentMethod)

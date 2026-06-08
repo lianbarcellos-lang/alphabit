@@ -29,6 +29,7 @@ A nova identidade funcional do sistema passa a priorizar:
 - categorias geek para classificacao dos eventos
 - atividades internas dos eventos
 - convidados e associacao de convidados aos eventos
+- mapa de stands e expositores por evento, com organizacao automatica por grade e ajuste manual
 - tipos de ingresso como Normal, VIP, Premium, Day Pass e Meet and Greet
 - check-in com QR Code
 - dashboard administrativo
@@ -73,6 +74,8 @@ A pivotagem sera considerada bem encaminhada quando:
 - eventos tiverem categoria, cidade, local, faixa etaria, banner e organizadora
 - reservas suportarem tipos de ingresso e status
 - existir controle de capacidade para eventos e atividades
+- existir mapa de stands por evento com alocacao administrativa e visualizacao publica
+- o administrador conseguir organizar stands automaticamente por grade antes dos ajustes manuais
 - check-in impedir duplicidade
 - dashboard apresentar metricas administrativas basicas
 - os testes principais continuarem passando

@@ -55,17 +55,24 @@ else
                                     </div>
 
                                 <div class="cart-item__controls">
-                                    <label>
-                                        Quantidade
-                                        <span class="cart-item__count">@item.Quantidade ingresso(s)</span>
-                                    </label>
-                                    <strong>R$ @item.Subtotal.ToString("0.00")</strong>
-                                    <div class="cart-quantity-actions">
-                                        <button class="ghost-button" type="button" @onclick="() => UpdateQuantity(item, item.Quantidade - 1)" disabled="@(item.Quantidade <= 1)">-</button>
-                                        <button class="ghost-button" type="button" @onclick="() => UpdateQuantity(item, item.Quantidade + 1)" disabled="@(item.Quantidade >= 2)">+</button>
+                                    <div class="cart-item__quantity">
+                                        <span>Quantidade</span>
+                                        <div class="cart-quantity-actions">
+                                            <button class="ghost-button" type="button" @onclick="() => UpdateQuantity(item, item.Quantidade - 1)" disabled="@(item.Quantidade <= 1)">-</button>
+                                            <strong>@item.Quantidade</strong>
+                                            <button class="ghost-button" type="button" @onclick="() => UpdateQuantity(item, item.Quantidade + 1)" disabled="@(item.Quantidade >= 2)">+</button>
+                                        </div>
                                     </div>
-                                    <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}/assentos")'>Alterar ingresso</button>
-                                    <button class="ghost-button" type="button" @onclick='() => RemoveItem(item.EventoId, item.TipoIngressoId)'>Remover</button>
+
+                                    <div class="cart-item__subtotal">
+                                        <span>Subtotal</span>
+                                        <strong>R$ @item.Subtotal.ToString("0.00")</strong>
+                                    </div>
+
+                                    <div class="cart-item__actions">
+                                        <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}/assentos")'>Alterar ingresso</button>
+                                        <button class="ghost-button" type="button" @onclick='() => RemoveItem(item.EventoId, item.TipoIngressoId)'>Remover</button>
+                                    </div>
                                 </div>
                             </div>
                         </article>
@@ -91,7 +98,7 @@ else
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="field cart-payment-field">
                         <label for="formaPagamento">Forma de pagamento</label>
                         <select id="formaPagamento" class="field__input" @bind="paymentMethod">
                             <option value="Pix">Pix</option>

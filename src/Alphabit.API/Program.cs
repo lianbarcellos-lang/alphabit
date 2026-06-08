@@ -92,7 +92,8 @@ using (var connection = new SqliteConnection(connectionString))
             CapacidadeTotal INTEGER NOT NULL,
             DataEvento TEXT NOT NULL,
             PrecoPadrao REAL NOT NULL,
-            ImagemUrl TEXT
+            ImagemUrl TEXT,
+            MapaImagemUrl TEXT NOT NULL DEFAULT ''
         );
 
         CREATE TABLE IF NOT EXISTS Cupons (
@@ -154,6 +155,37 @@ using (var connection = new SqliteConnection(connectionString))
             PRIMARY KEY (EventoId, ConvidadoId),
             FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE,
             FOREIGN KEY (ConvidadoId) REFERENCES Convidados(Id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS StandsEspacos (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            EventoId INTEGER NOT NULL,
+            Setor TEXT NOT NULL,
+            Codigo TEXT NOT NULL,
+            PosicaoX INTEGER NOT NULL,
+            PosicaoY INTEGER NOT NULL,
+            Largura INTEGER NOT NULL DEFAULT 1,
+            Altura INTEGER NOT NULL DEFAULT 1,
+            TipoArea TEXT NOT NULL DEFAULT 'Stand',
+            AreaX REAL NOT NULL DEFAULT 0,
+            AreaY REAL NOT NULL DEFAULT 0,
+            AreaLargura REAL NOT NULL DEFAULT 12,
+            AreaAltura REAL NOT NULL DEFAULT 8,
+            AreaMetrosQuadrados REAL NOT NULL DEFAULT 0,
+            PrecoPorMetroQuadrado REAL NOT NULL DEFAULT 0,
+            PrecoFixo REAL NOT NULL DEFAULT 0,
+            Reservado INTEGER NOT NULL DEFAULT 0,
+            NomeOcupante TEXT NOT NULL DEFAULT '',
+            TipoOcupante TEXT NOT NULL DEFAULT '',
+            Descricao TEXT NOT NULL DEFAULT '',
+            FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS StandSetores (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            EventoId INTEGER NOT NULL,
+            Nome TEXT NOT NULL,
+            FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS Checkins (
@@ -223,6 +255,14 @@ using (var connection = new SqliteConnection(connectionString))
         ON Convidados (Nome COLLATE NOCASE, Tipo COLLATE NOCASE);");
 
     connection.Execute(@"
+        CREATE UNIQUE INDEX IF NOT EXISTS IX_StandsEspacos_Evento_Codigo
+        ON StandsEspacos (EventoId, Codigo COLLATE NOCASE);");
+
+    connection.Execute(@"
+        CREATE UNIQUE INDEX IF NOT EXISTS IX_StandSetores_Evento_Nome
+        ON StandSetores (EventoId, Nome COLLATE NOCASE);");
+
+    connection.Execute(@"
         CREATE UNIQUE INDEX IF NOT EXISTS IX_Checkins_Reserva
         ON Checkins (ReservaId);");
 
@@ -243,10 +283,19 @@ using (var connection = new SqliteConnection(connectionString))
     EnsureColumnExists(connection, "Usuarios", "DataNascimento", "TEXT NULL");
     EnsureColumnExists(connection, "Usuarios", "Sexo", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "ImagemUrl", "TEXT");
+    EnsureColumnExists(connection, "Eventos", "MapaImagemUrl", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "LocalEvento", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "CidadeEvento", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "Artista", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "GeneroMusical", "TEXT NOT NULL DEFAULT ''");
+    EnsureColumnExists(connection, "StandsEspacos", "TipoArea", "TEXT NOT NULL DEFAULT 'Stand'");
+    EnsureColumnExists(connection, "StandsEspacos", "AreaX", "REAL NOT NULL DEFAULT 0");
+    EnsureColumnExists(connection, "StandsEspacos", "AreaY", "REAL NOT NULL DEFAULT 0");
+    EnsureColumnExists(connection, "StandsEspacos", "AreaLargura", "REAL NOT NULL DEFAULT 12");
+    EnsureColumnExists(connection, "StandsEspacos", "AreaAltura", "REAL NOT NULL DEFAULT 8");
+    EnsureColumnExists(connection, "StandsEspacos", "AreaMetrosQuadrados", "REAL NOT NULL DEFAULT 0");
+    EnsureColumnExists(connection, "StandsEspacos", "PrecoPorMetroQuadrado", "REAL NOT NULL DEFAULT 0");
+    EnsureColumnExists(connection, "StandsEspacos", "PrecoFixo", "REAL NOT NULL DEFAULT 0");
     EnsureColumnExists(connection, "Reservas", "TipoIngressoId", "INTEGER NULL");
     EnsureReservasSchema(connection);
     EnsureMusicGenresCatalog(connection);
@@ -256,6 +305,7 @@ using (var connection = new SqliteConnection(connectionString))
     EnsureTicketTypesCatalog(connection);
     EnsureDemoActivities(connection);
     EnsureDemoGuests(connection);
+    EnsureDemoStands(connection);
     EnsureCheckinsForExistingReservations(connection);
     EnsureMusicGenresCatalog(connection);
     EnsureCitiesCatalog(connection);
@@ -804,6 +854,7 @@ app.MapPost("/api/eventos", (Evento evento, HttpContext httpContext) =>
 
     EnsureDefaultTicketTypesForEvent(connection, eventId, evento.PrecoPadrao, evento.CapacidadeTotal);
     EnsureDefaultActivitiesForEvent(connection, eventId, evento.Nome, evento.DataEvento);
+    EnsureDefaultStandSectorsForEvent(connection, eventId);
 
     if (!string.IsNullOrWhiteSpace(evento.GeneroMusical))
     {
@@ -851,6 +902,402 @@ app.MapGet("/api/admin/eventos", (HttpContext httpContext) =>
         ORDER BY e.DataEvento").ToList();
 
     return Results.Ok(eventos);
+});
+
+app.MapGet("/api/eventos/{id:int}/stands", (int id) =>
+{
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var eventoExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Eventos WHERE Id = @id",
+        new { id }) > 0;
+
+    if (!eventoExiste)
+        return Results.NotFound("Evento não encontrado.");
+
+    return Results.Ok(GetStandsForEvent(connection, id));
+});
+
+app.MapGet("/api/eventos/{id:int}/stand-setores", (int id) =>
+{
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var eventoExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Eventos WHERE Id = @id",
+        new { id }) > 0;
+
+    if (!eventoExiste)
+        return Results.NotFound("Evento não encontrado.");
+
+    var sectors = connection.Query<string>(@"
+        SELECT Nome
+        FROM StandSetores
+        WHERE EventoId = @id
+        ORDER BY Nome",
+        new { id }).ToList();
+
+    return Results.Ok(sectors);
+});
+
+app.MapPut("/api/admin/eventos/{id:int}/mapa-imagem", (int id, EventoMapaImagemRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var mapaImagemUrl = (request.MapaImagemUrl ?? string.Empty).Trim();
+    if (mapaImagemUrl.Length > 2_000_000)
+        return Results.BadRequest("A imagem da planta é muito grande. Use uma imagem menor ou um link externo.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var eventoExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Eventos WHERE Id = @id",
+        new { id }) > 0;
+
+    if (!eventoExiste)
+        return Results.NotFound("Evento não encontrado.");
+
+    connection.Execute(
+        "UPDATE Eventos SET MapaImagemUrl = @mapaImagemUrl WHERE Id = @id",
+        new { id, mapaImagemUrl });
+
+    return Results.Ok("Planta do evento atualizada com sucesso.");
+});
+
+app.MapPost("/api/admin/eventos/{id:int}/stand-setores", (int id, StandSetorRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nome = (request.Nome ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(nome))
+        return Results.BadRequest("Informe o nome da linha.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var eventoExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Eventos WHERE Id = @id",
+        new { id }) > 0;
+
+    if (!eventoExiste)
+        return Results.NotFound("Evento não encontrado.");
+
+    try
+    {
+        connection.Execute(
+            "INSERT INTO StandSetores (EventoId, Nome) VALUES (@id, @nome)",
+            new { id, nome });
+    }
+    catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+    {
+        return Results.BadRequest("Já existe uma linha com este nome.");
+    }
+
+    return Results.Ok("Linha criada com sucesso.");
+});
+
+app.MapPut("/api/admin/eventos/{id:int}/stand-setores/{nomeAtual}", (int id, string nomeAtual, StandSetorRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var currentName = Uri.UnescapeDataString(nomeAtual).Trim();
+    var newName = (request.Nome ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(currentName) || string.IsNullOrWhiteSpace(newName))
+        return Results.BadRequest("Informe o nome da linha.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    using var transaction = connection.BeginTransaction();
+    try
+    {
+        var rows = connection.Execute(@"
+            UPDATE StandSetores
+            SET Nome = @newName
+            WHERE EventoId = @id AND Nome = @currentName COLLATE NOCASE",
+            new { id, currentName, newName },
+            transaction);
+
+        if (rows == 0)
+        {
+            connection.Execute(
+                "INSERT INTO StandSetores (EventoId, Nome) VALUES (@id, @newName)",
+                new { id, newName },
+                transaction);
+        }
+
+        connection.Execute(@"
+            UPDATE StandsEspacos
+            SET Setor = @newName
+            WHERE EventoId = @id AND Setor = @currentName COLLATE NOCASE",
+            new { id, currentName, newName },
+            transaction);
+
+        transaction.Commit();
+    }
+    catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+    {
+        transaction.Rollback();
+        return Results.BadRequest("Já existe uma linha com este nome.");
+    }
+
+    return Results.Ok("Linha renomeada com sucesso.");
+});
+
+app.MapDelete("/api/admin/eventos/{id:int}/stand-setores/{nome}", (int id, string nome, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var sectorName = Uri.UnescapeDataString(nome).Trim();
+    if (string.IsNullOrWhiteSpace(sectorName))
+        return Results.BadRequest("Informe o nome da linha.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var hasStands = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM StandsEspacos
+        WHERE EventoId = @id AND Setor = @sectorName COLLATE NOCASE",
+        new { id, sectorName }) > 0;
+
+    if (hasStands)
+        return Results.BadRequest("Esta linha ainda possui stands. Mova ou apague os stands antes de excluir a linha.");
+
+    var rows = connection.Execute(@"
+        DELETE FROM StandSetores
+        WHERE EventoId = @id AND Nome = @sectorName COLLATE NOCASE",
+        new { id, sectorName });
+
+    return rows == 0
+        ? Results.NotFound("Linha não encontrada.")
+        : Results.Ok("Linha excluída com sucesso.");
+});
+
+app.MapPost("/api/admin/eventos/{id:int}/stands", (int id, StandAlocacaoRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var codigo = (request.Codigo ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(codigo))
+        return Results.BadRequest("Informe o código do stand.");
+
+    var setor = string.IsNullOrWhiteSpace(request.Setor) ? "Linha 1" : request.Setor.Trim();
+    var tipoArea = string.IsNullOrWhiteSpace(request.TipoArea) ? "Stand" : request.TipoArea.Trim();
+    var nomeOcupante = (request.NomeOcupante ?? string.Empty).Trim();
+    var tipoOcupante = (request.TipoOcupante ?? string.Empty).Trim();
+    var descricao = (request.Descricao ?? string.Empty).Trim();
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var eventoExiste = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM Eventos WHERE Id = @id",
+        new { id }) > 0;
+
+    if (!eventoExiste)
+        return Results.NotFound("Evento não encontrado.");
+
+    var codigoDuplicado = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM StandsEspacos
+        WHERE EventoId = @id
+          AND Codigo = @codigo COLLATE NOCASE",
+        new { id, codigo }) > 0;
+
+    if (codigoDuplicado)
+        return Results.BadRequest("Já existe outro stand com este código.");
+
+    if (!string.IsNullOrWhiteSpace(nomeOcupante))
+    {
+        var nomeDuplicado = connection.ExecuteScalar<int>(@"
+            SELECT COUNT(*)
+            FROM StandsEspacos
+            WHERE EventoId = @id
+              AND NomeOcupante = @nomeOcupante COLLATE NOCASE",
+            new { id, nomeOcupante }) > 0;
+
+        if (nomeDuplicado)
+            return Results.BadRequest("Já existe um stand cadastrado com esse nome.");
+    }
+
+    connection.Execute(@"
+        INSERT OR IGNORE INTO StandSetores (EventoId, Nome)
+        VALUES (@id, @setor)",
+        new { id, setor });
+
+    var nextPosition = connection.ExecuteScalar<int>(
+        "SELECT COALESCE(MAX(PosicaoX), 0) + 1 FROM StandsEspacos WHERE EventoId = @id AND Setor = @setor COLLATE NOCASE",
+        new { id, setor });
+
+    connection.Execute(@"
+        INSERT INTO StandsEspacos (
+            EventoId, Setor, Codigo, PosicaoX, PosicaoY, Largura, Altura, TipoArea,
+            AreaX, AreaY, AreaLargura, AreaAltura, AreaMetrosQuadrados, PrecoPorMetroQuadrado, PrecoFixo,
+            Reservado, NomeOcupante, TipoOcupante, Descricao)
+        VALUES (
+            @id, @setor, @codigo, @posicaoX, 9, 1, 1, @tipoArea,
+            @areaX, @areaY, @areaLargura, @areaAltura, @areaMetrosQuadrados, @precoPorMetroQuadrado, @precoFixo,
+            @reservado, @nomeOcupante, @tipoOcupante, @descricao)",
+        new
+        {
+            id,
+            setor,
+            codigo,
+            posicaoX = Math.Max(1, nextPosition),
+            tipoArea,
+            areaX = Math.Clamp(request.AreaX, 0, 100),
+            areaY = Math.Clamp(request.AreaY, 0, 100),
+            areaLargura = Math.Clamp(request.AreaLargura <= 0 ? 12 : request.AreaLargura, 1, 100),
+            areaAltura = Math.Clamp(request.AreaAltura <= 0 ? 8 : request.AreaAltura, 1, 100),
+            areaMetrosQuadrados = Math.Max(0, request.AreaMetrosQuadrados),
+            precoPorMetroQuadrado = Math.Max(0, request.PrecoPorMetroQuadrado),
+            precoFixo = Math.Max(0, request.PrecoFixo),
+            reservado = !string.IsNullOrWhiteSpace(nomeOcupante) ? 1 : 0,
+            nomeOcupante = string.IsNullOrWhiteSpace(nomeOcupante) ? string.Empty : nomeOcupante,
+            tipoOcupante = string.IsNullOrWhiteSpace(nomeOcupante) ? string.Empty : tipoOcupante,
+            descricao = string.IsNullOrWhiteSpace(nomeOcupante) ? string.Empty : descricao
+        });
+
+    return Results.Ok("Stand cadastrado com sucesso.");
+});
+
+app.MapPut("/api/admin/eventos/{id:int}/stands/{standId:int}", (int id, int standId, StandAlocacaoRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    var nomeOcupante = (request.NomeOcupante ?? string.Empty).Trim();
+    var tipoOcupante = (request.TipoOcupante ?? string.Empty).Trim();
+    var descricao = (request.Descricao ?? string.Empty).Trim();
+    var setor = string.IsNullOrWhiteSpace(request.Setor) ? "Linha 1" : request.Setor.Trim();
+    var codigo = (request.Codigo ?? string.Empty).Trim();
+    var tipoArea = string.IsNullOrWhiteSpace(request.TipoArea) ? "Stand" : request.TipoArea.Trim();
+    var areaX = Math.Clamp(request.AreaX, 0, 100);
+    var areaY = Math.Clamp(request.AreaY, 0, 100);
+    var areaLargura = Math.Clamp(request.AreaLargura <= 0 ? 12 : request.AreaLargura, 1, 100);
+    var areaAltura = Math.Clamp(request.AreaAltura <= 0 ? 8 : request.AreaAltura, 1, 100);
+    var areaMetrosQuadrados = Math.Max(0, request.AreaMetrosQuadrados);
+    var precoPorMetroQuadrado = Math.Max(0, request.PrecoPorMetroQuadrado);
+    var precoFixo = Math.Max(0, request.PrecoFixo);
+
+    if (request.Reservado && string.IsNullOrWhiteSpace(nomeOcupante))
+        return Results.BadRequest("Informe a empresa, marca ou atração que ficará neste stand.");
+
+    if (string.IsNullOrWhiteSpace(codigo))
+        return Results.BadRequest("Informe o código do stand.");
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var standExiste = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM StandsEspacos
+        WHERE Id = @standId AND EventoId = @id",
+        new { standId, id }) > 0;
+
+    if (!standExiste)
+        return Results.NotFound("Stand não encontrado para este evento.");
+
+    var codigoDuplicado = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM StandsEspacos
+        WHERE EventoId = @id
+          AND Id <> @standId
+          AND Codigo = @codigo COLLATE NOCASE",
+        new { id, standId, codigo }) > 0;
+
+    if (codigoDuplicado)
+        return Results.BadRequest("Já existe outro stand com este código.");
+
+    if (!string.IsNullOrWhiteSpace(nomeOcupante))
+    {
+        var nomeDuplicado = connection.ExecuteScalar<int>(@"
+            SELECT COUNT(*)
+            FROM StandsEspacos
+            WHERE EventoId = @id
+              AND Id <> @standId
+              AND NomeOcupante = @nomeOcupante COLLATE NOCASE",
+            new { id, standId, nomeOcupante }) > 0;
+
+        if (nomeDuplicado)
+            return Results.BadRequest("Já existe um stand cadastrado com esse nome.");
+    }
+
+    connection.Execute(@"
+        INSERT OR IGNORE INTO StandSetores (EventoId, Nome)
+        VALUES (@id, @setor)",
+        new { id, setor });
+
+    connection.Execute(@"
+        UPDATE StandsEspacos
+        SET Setor = @setor,
+            Codigo = @codigo,
+            Reservado = @reservado,
+            TipoArea = @tipoArea,
+            AreaX = @areaX,
+            AreaY = @areaY,
+            AreaLargura = @areaLargura,
+            AreaAltura = @areaAltura,
+            AreaMetrosQuadrados = @areaMetrosQuadrados,
+            PrecoPorMetroQuadrado = @precoPorMetroQuadrado,
+            PrecoFixo = @precoFixo,
+            NomeOcupante = @nomeOcupante,
+            TipoOcupante = @tipoOcupante,
+            Descricao = @descricao
+        WHERE Id = @standId AND EventoId = @id",
+        new
+        {
+            id,
+            standId,
+            setor,
+            codigo,
+            reservado = request.Reservado ? 1 : 0,
+            tipoArea,
+            areaX,
+            areaY,
+            areaLargura,
+            areaAltura,
+            areaMetrosQuadrados,
+            precoPorMetroQuadrado,
+            precoFixo,
+            nomeOcupante = request.Reservado ? nomeOcupante : string.Empty,
+            tipoOcupante = request.Reservado ? tipoOcupante : string.Empty,
+            descricao = request.Reservado ? descricao : string.Empty
+        });
+
+    return Results.Ok("Stand atualizado com sucesso.");
+});
+
+app.MapDelete("/api/admin/eventos/{id:int}/stands/{standId:int}", (int id, int standId, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var rows = connection.Execute(
+        "DELETE FROM StandsEspacos WHERE Id = @standId AND EventoId = @id",
+        new { id, standId });
+
+    return rows == 0
+        ? Results.NotFound("Stand não encontrado para este evento.")
+        : Results.Ok("Stand apagado com sucesso.");
 });
 
 app.MapGet("/api/admin/generos", (HttpContext httpContext) =>
@@ -2366,6 +2813,7 @@ app.MapGet("/api/reservas/{cpf}", (string cpf, HttpContext httpContext) =>
             r.UsuarioCpf,
             r.EventoId,
             e.Nome AS EventoNome,
+            e.CidadeEvento AS EventoCidade,
             r.TipoIngressoId,
             COALESCE(t.Nome, 'Normal') AS TipoIngressoNome,
             COALESCE(r.CupomUtilizado, '') AS CupomUtilizado,
@@ -2967,6 +3415,68 @@ static bool IsValidActivity(Atividade atividade)
            !string.IsNullOrWhiteSpace(atividade.Tipo) &&
            atividade.Horario > DateTime.MinValue &&
            atividade.LimiteParticipantes > 0;
+}
+
+static void EnsureDemoStands(SqliteConnection connection)
+{
+    var eventIds = connection.Query<int>("SELECT Id FROM Eventos").ToList();
+
+    foreach (var eventId in eventIds)
+    {
+        EnsureDefaultStandSectorsForEvent(connection, eventId);
+    }
+}
+
+static void EnsureDefaultStandSectorsForEvent(SqliteConnection connection, int eventId)
+{
+    var existingSectors = connection.ExecuteScalar<int>(
+        "SELECT COUNT(*) FROM StandSetores WHERE EventoId = @eventId",
+        new { eventId });
+
+    if (existingSectors > 0)
+        return;
+
+    var sectors = new[] { "Linha Azul", "Linha Vermelha", "Linha Verde", "Linha Amarela" };
+
+    foreach (var sector in sectors)
+    {
+        connection.Execute(@"
+            INSERT OR IGNORE INTO StandSetores (EventoId, Nome)
+            VALUES (@eventId, @sector)",
+            new { eventId, sector });
+    }
+}
+
+static List<StandEspaco> GetStandsForEvent(SqliteConnection connection, int eventId)
+{
+    return connection.Query<StandEspaco>(@"
+        SELECT
+            s.Id,
+            s.EventoId,
+            s.Setor,
+            s.Codigo,
+            s.PosicaoX,
+            s.PosicaoY,
+            s.Largura,
+            s.Altura,
+            s.TipoArea,
+            s.AreaX,
+            s.AreaY,
+            s.AreaLargura,
+            s.AreaAltura,
+            s.AreaMetrosQuadrados,
+            s.PrecoPorMetroQuadrado,
+            s.PrecoFixo,
+            CAST(s.Reservado AS INTEGER) AS Reservado,
+            s.NomeOcupante,
+            s.TipoOcupante,
+            s.Descricao,
+            e.MapaImagemUrl
+        FROM StandsEspacos s
+        INNER JOIN Eventos e ON e.Id = s.EventoId
+        WHERE s.EventoId = @eventId
+        ORDER BY PosicaoY, PosicaoX, Codigo",
+        new { eventId }).ToList();
 }
 
 static void EnsureDemoGuests(SqliteConnection connection)

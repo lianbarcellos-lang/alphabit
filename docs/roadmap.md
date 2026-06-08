@@ -37,13 +37,19 @@ Legenda:
 | 26 | Media de avaliacoes no evento | Avaliacoes | Sim | Sim | Concluido |
 | 27 | Moderacao de avaliacoes | Avaliacoes e admin | Sim | Sim | Concluido |
 | 28 | Correcao visual e textos em portugues | Telas implementadas | Sim | Sim | Concluido |
-| 29 | Documentacao final | Projeto implementado | Sim | Em andamento | Em andamento |
-| 30 | Limpeza final de dados de QA | Testes manuais locais | Parcial | Parcial | Opcional |
+| 29 | Mapa de stands e expositores | Eventos e admin | Sim | Sim | Concluido |
+| 29.1 | Organizacao de stands por linhas/setores | Mapa de stands e admin | Sim | Sim | Concluido |
+| 29.2 | Edicao e movimentacao de stands entre linhas | Mapa de stands e admin | Sim | Sim | Concluido |
+| 29.3 | Precificacao comercial de stands | Mapa de stands | Sim | Sim | Concluido |
+| 29.4 | Planta enviada pelo administrador com drag/drop de stands | Mapa de stands e admin | Sim | Sim | Concluido |
+| 29.5 | Organizacao automatica de stands por grades 2x2 a 8x8 | Mapa de stands e admin | Sim | Sim | Concluido |
+| 30 | Documentacao final | Projeto implementado | Sim | Em andamento | Em andamento |
+| 31 | Limpeza final de dados de QA | Testes manuais locais | Parcial | Parcial | Opcional |
 
 ## Ordem recomendada para futuras melhorias
 
 1. Revisar documentacao final e manter `docs` atualizada.
-2. Fazer uma passada visual completa em Home, Eventos, Detalhe, Reservas e Admin.
+2. Fazer uma passada visual completa em Home, Eventos, Detalhe, Mapa de stands, Reservas e Admin.
 3. Limpar dados locais de teste antes de apresentacao, se necessario.
 4. Adicionar campos literais opcionais do PDF, caso sejam exigidos:
    - `FaixaEtaria`;

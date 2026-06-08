@@ -2,6 +2,7 @@
 @inject AlphabitApiClient ApiClient
 @inject UserSessionState Session
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 @using System.Text
 @using QRCoder
 
@@ -56,6 +57,14 @@ else
                         <p>@item.DataReserva.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                         <p>Valor pago: <strong>R$ @item.ValorFinalPago.ToString("0.00")</strong></p>
                         <p>Check-in: <strong>@item.CheckinStatus</strong></p>
+                        <div class="reservation-actions">
+                            <button class="reservation-map-button"
+                                    type="button"
+                                    disabled="@mapIsLoading"
+                                    @onclick="() => OpenEventMap(item)">
+                                Ver mapa do evento
+                            </button>
+                        </div>
                         @if (!string.IsNullOrWhiteSpace(item.QrCode))
                         {
                             <div class="reservation-ticket">
@@ -129,6 +138,92 @@ else
                 }
             </section>
         }
+
+        @if (selectedMapEventId is not null)
+        {
+            <div class="reservation-map-modal" role="dialog" aria-modal="true" aria-labelledby="reservation-map-title">
+                <div class="reservation-map-modal__backdrop" @onclick="CloseEventMap"></div>
+                <section class="reservation-map-modal__panel">
+                    <div class="reservation-map-modal__head">
+                        <div>
+                            <span class="eyebrow">Mapa do evento</span>
+                            <h2 id="reservation-map-title">@selectedMapEventName</h2>
+                            <p>Planta oficial configurada pelo administrador.</p>
+                        </div>
+                        <button class="reservation-map-modal__close" type="button" @onclick="CloseEventMap">Fechar</button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(mapErrorMessage))
+                    {
+                        <div class="status-box status-box--error">@mapErrorMessage</div>
+                    }
+                    else if (mapIsLoading)
+                    {
+                        <div class="status-box">Carregando mapa do evento...</div>
+                    }
+                    else if (selectedMapStands.Count == 0)
+                    {
+                        <div class="status-box">Este evento ainda não possui mapa de stands cadastrado.</div>
+                    }
+                    else
+                    {
+                        <div class="reservation-map-modal__actions">
+                            <button class="reservation-map-print"
+                                    type="button"
+                                    @onclick="PrintEventMap">
+                                Salvar mapa em PDF
+                            </button>
+                            <a class="reservation-map-download"
+                               href="@BuildMapDownloadHref()"
+                               download="@BuildMapDownloadFileName()">
+                                Baixar resumo
+                            </a>
+                        </div>
+
+                        @if (HasSelectedMapImage)
+                        {
+                            <div class="reservation-stand-image-map">
+                                <img src="@SelectedMapImageUrl" alt="Planta do evento @selectedMapEventName" />
+                                @foreach (var stand in selectedMapStands)
+                                {
+                                    <article class="reservation-stand-pin @(stand.Reservado ? "reservation-stand-pin--reserved" : null)"
+                                             @key="stand.Id"
+                                             style="@BuildReservationStandPinStyle(stand)"
+                                             title="@BuildReservationStandTitle(stand)">
+                                        <strong>@stand.Codigo</strong>
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="reservation-stand-map" style="@BuildReservationStandMapStyle()">
+                                @foreach (var stand in selectedMapStands)
+                                {
+                                    <article class="reservation-stand-block @(stand.Reservado ? "reservation-stand-block--reserved" : null)"
+                                             @key="stand.Id"
+                                             style="@BuildReservationStandStyle(stand)">
+                                        <span>@stand.Codigo</span>
+                                        <strong>@(stand.Reservado ? stand.NomeOcupante : "Livre")</strong>
+                                        <small>@stand.Setor</small>
+                                    </article>
+                                }
+                            </div>
+                        }
+
+                        <div class="reservation-stand-legend">
+                            @foreach (var stand in selectedMapStands.OrderBy(stand => stand.Codigo))
+                            {
+                                <article>
+                                    <strong>@stand.Codigo</strong>
+                                    <span>@(stand.Reservado ? $"{stand.NomeOcupante} - {stand.TipoOcupante}" : "Disponível")</span>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            </div>
+        }
     </div>
 }
 
@@ -143,6 +238,12 @@ else
     private string errorMessage = string.Empty;
     private string reviewMessage = string.Empty;
     private int? expandedQrReservationId;
+    private readonly List<StandSpaceViewModel> selectedMapStands = [];
+    private int? selectedMapEventId;
+    private string selectedMapEventName = string.Empty;
+    private string selectedMapEventCity = string.Empty;
+    private string mapErrorMessage = string.Empty;
+    private bool mapIsLoading;
 
     private static string GetQrCodeDataUrl(string payload)
     {
@@ -161,6 +262,114 @@ else
     private void CloseExpandedQrCode()
     {
         expandedQrReservationId = null;
+    }
+
+    private async Task OpenEventMap(ReservationViewModel reservation)
+    {
+        selectedMapEventId = reservation.EventoId;
+        selectedMapEventName = reservation.EventoNome;
+        selectedMapEventCity = reservation.EventoCidade;
+        selectedMapStands.Clear();
+        mapErrorMessage = string.Empty;
+        mapIsLoading = true;
+
+        try
+        {
+            selectedMapStands.AddRange(await ApiClient.GetEventStandsAsync(reservation.EventoId));
+        }
+        catch
+        {
+            mapErrorMessage = "Não foi possível carregar o mapa deste evento agora.";
+        }
+        finally
+        {
+            mapIsLoading = false;
+        }
+    }
+
+    private void CloseEventMap()
+    {
+        selectedMapEventId = null;
+        selectedMapEventName = string.Empty;
+        selectedMapEventCity = string.Empty;
+        selectedMapStands.Clear();
+        mapErrorMessage = string.Empty;
+        mapIsLoading = false;
+    }
+
+    private string BuildReservationStandMapStyle()
+    {
+        var maxColumn = Math.Max(4, selectedMapStands.Count == 0 ? 4 : selectedMapStands.Max(stand => stand.PosicaoX + stand.Largura - 1));
+        var maxRow = Math.Max(7, selectedMapStands.Count == 0 ? 7 : selectedMapStands.Max(stand => stand.PosicaoY + stand.Altura - 1));
+        return $"--stand-columns:{maxColumn};--stand-rows:{maxRow};";
+    }
+
+    private static string BuildReservationStandStyle(StandSpaceViewModel stand)
+    {
+        return $"grid-column:{stand.PosicaoX} / span {Math.Max(1, stand.Largura)};grid-row:{stand.PosicaoY} / span {Math.Max(1, stand.Altura)};";
+    }
+
+    private string SelectedMapImageUrl => selectedMapStands.FirstOrDefault(stand => !string.IsNullOrWhiteSpace(stand.MapaImagemUrl))?.MapaImagemUrl ?? string.Empty;
+
+    private bool HasSelectedMapImage => !string.IsNullOrWhiteSpace(SelectedMapImageUrl);
+
+    private static string BuildReservationStandPinStyle(StandSpaceViewModel stand)
+    {
+        var left = Math.Clamp(stand.AreaX <= 0 ? 50 : stand.AreaX, 0, 100);
+        var top = Math.Clamp(stand.AreaY <= 0 ? 50 : stand.AreaY, 0, 100);
+        return FormattableString.Invariant($"left:{left:0.###}%;top:{top:0.###}%;");
+    }
+
+    private static string BuildReservationStandTitle(StandSpaceViewModel stand)
+    {
+        var status = stand.Reservado && !string.IsNullOrWhiteSpace(stand.NomeOcupante)
+            ? $"{stand.NomeOcupante} - {stand.TipoOcupante}"
+            : "Disponível";
+
+        return $"{stand.Codigo} | {stand.Setor} | {status}";
+    }
+
+    private async Task PrintEventMap()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private string BuildMapDownloadFileName()
+    {
+        return BuildSafeMapFileName("txt");
+    }
+
+    private string BuildSafeMapFileName(string extension)
+    {
+        var safeName = new string(selectedMapEventName
+            .Select(character => char.IsLetterOrDigit(character) ? character : '-')
+            .ToArray())
+            .Trim('-');
+
+        return $"mapa-{(string.IsNullOrWhiteSpace(safeName) ? "evento" : safeName.ToLowerInvariant())}.{extension}";
+    }
+
+    private string BuildMapDownloadHref()
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Mapa do evento: {selectedMapEventName}");
+        if (!string.IsNullOrWhiteSpace(selectedMapEventCity))
+            builder.AppendLine($"Cidade/modelo: {selectedMapEventCity}");
+        builder.AppendLine();
+
+        foreach (var sector in selectedMapStands.GroupBy(stand => stand.Setor))
+        {
+            builder.AppendLine(sector.Key);
+            foreach (var stand in sector.OrderBy(item => item.Codigo))
+            {
+                var occupant = stand.Reservado ? $"{stand.NomeOcupante} - {stand.TipoOcupante}" : "Disponível";
+                builder.AppendLine($"{stand.Codigo}: {occupant}");
+            }
+
+            builder.AppendLine();
+        }
+
+        return $"data:text/plain;charset=utf-8,{Uri.EscapeDataString(builder.ToString())}";
     }
 
     protected override async Task OnInitializedAsync()

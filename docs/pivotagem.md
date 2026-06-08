@@ -63,6 +63,7 @@ A plataforma deve evoluir para conter os seguintes modulos:
 - Categorias geek
 - Atividades
 - Convidados
+- Mapa de stands e expositores
 - Tipos de ingresso
 - Dashboard
 - Check-in
@@ -122,6 +123,41 @@ Campos desejados:
 - Tipo
 - LimiteParticipantes
 
+## Mapa de stands e expositores
+
+Eventos podem conter um mapa interno com stands organizados por linhas ou setores.
+
+Exemplos de setores:
+
+- Linha Azul
+- Linha Vermelha
+- Linha Verde
+- Linha Amarela
+
+Cada stand pode ser reservado pelo administrador para empresas, marcas, lojas, arenas ou atrações.
+
+O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grades 2x2, 3x3, 4x4, 5x5 ou 8x8 e arrastar cada stand para a posição desejada. O sistema salva as coordenadas em porcentagem, junto com ocupante, tipo, area em m², preço por m² ou preço fixo para espaços premium. Ao abrir a planta novamente, a imagem e os stands posicionados são carregados automaticamente.
+
+Campos implementados:
+
+- Id
+- EventoId
+- Setor
+- Codigo
+- PosicaoX
+- PosicaoY
+- Largura
+- Altura
+- TipoArea
+- AreaX
+- AreaY
+- AreaLargura
+- AreaAltura
+- Reservado
+- NomeOcupante
+- TipoOcupante
+- Descricao
+
 ## Tipos de ingresso
 
 Tipos de ingresso previstos:
@@ -153,6 +189,10 @@ Campos desejados:
 - RN03 - ingressos VIP devem ter precos diferentes.
 - RN04 - meet and greet deve ter vagas limitadas.
 - RN05 - impedir check-in duplicado.
+- RN06 - stand reservado deve ter nome de empresa, marca ou atração.
+- RN07 - apenas administrador pode alterar alocacao de stands.
+- RN08 - cliente pode visualizar e baixar o mapa, mas nao pode alterar áreas.
+- RN09 - organização automática de stands deve respeitar a capacidade da grade escolhida e permitir ajuste manual depois.
 
 ## Tabelas previstas
 
@@ -161,6 +201,7 @@ Campos desejados:
 - CategoriasGeek
 - Convidados
 - EventoConvidados
+- StandsEspacos
 - Atividades
 - TiposIngresso
 - Reservas
@@ -178,6 +219,14 @@ Campos desejados:
 - `GET /api/reservas/{cpf}`
 - `POST /api/checkin`
 - `GET /api/dashboard`
+- `GET /api/eventos/{id}/stands`
+- `POST /api/admin/eventos/{id}/stands`
+- `PUT /api/admin/eventos/{id}/mapa-imagem`
+- `PUT /api/admin/eventos/{id}/stands/{standId}`
+- `DELETE /api/admin/eventos/{id}/stands/{standId}`
+- `POST /api/admin/eventos/{id}/stand-setores`
+- `PUT /api/admin/eventos/{id}/stand-setores/{nomeAtual}`
+- `DELETE /api/admin/eventos/{id}/stand-setores/{nome}`
 
 ## Testes
 
@@ -188,6 +237,7 @@ Criar ou manter testes xUnit para:
 - capacidade do evento
 - check-in duplicado
 - limite de atividades
+- alocacao administrativa de stands
 
 ## Roadmap
 
@@ -216,6 +266,7 @@ Criar ou manter testes xUnit para:
 - QR Code
 - check-in
 - avaliacoes
+- mapa de stands e expositores
 
 ## Meta final
 

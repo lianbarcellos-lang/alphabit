@@ -309,7 +309,69 @@ Testes:
 - rejeitar reserva cancelada
 - aceitar check-in valido
 
-## Fase 7 - Dashboard administrativo
+## Fase 7 - Mapa de stands e expositores
+
+Objetivo: permitir que o administrador organize espaços internos do evento para empresas, lojas, arenas e atrações.
+
+Status atual: implementado como melhoria de organização do evento.
+
+Tabela prevista:
+
+- `StandsEspacos`
+- precificacao de stands por m² ou preço fixo
+
+Campos:
+
+- `Id`
+- `EventoId`
+- `Setor`
+- `Codigo`
+- `PosicaoX`
+- `PosicaoY`
+- `Largura`
+- `Altura`
+- `Reservado`
+- `NomeOcupante`
+- `TipoOcupante`
+- `Descricao`
+
+Endpoints previstos:
+
+- `GET /api/eventos/{id}/stands`
+- `POST /api/admin/eventos/{id}/stands`
+- `PUT /api/admin/eventos/{id}/mapa-imagem`
+- `PUT /api/admin/eventos/{id}/stands/{standId}`
+- `DELETE /api/admin/eventos/{id}/stands/{standId}`
+- `POST /api/admin/eventos/{id}/stand-setores`
+- `PUT /api/admin/eventos/{id}/stand-setores/{nomeAtual}`
+- `DELETE /api/admin/eventos/{id}/stand-setores/{nome}`
+
+Regras:
+
+- stand pertence a um evento;
+- stand reservado precisa ter nome de ocupante;
+- cliente apenas visualiza o mapa;
+- administrador pode reservar e liberar espaços;
+- administrador pode aplicar organizacao automatica por grades 2x2, 3x3, 4x4, 5x5 e 8x8;
+- grade automatica so fica disponivel quando comporta a quantidade atual de stands;
+- depois da grade automatica, o administrador ainda pode arrastar os stands manualmente.
+
+Frontend:
+
+- aba `Mapa de stands` no painel administrativo;
+- mapa em blocos clicáveis e planta enviada pelo administrador com organizacao automatica por grade e posicionamento manual;
+- visualização publica no detalhe do evento;
+- lista por linhas/setores.
+
+Testes:
+
+- tabela e indices existem;
+- rota publica expõe o mapa;
+- rota administrativa exige token;
+- atualização grava ocupante e status;
+- tela administrativa exibe as grades automaticas e mantem drag/drop.
+
+## Fase 8 - Dashboard administrativo
 
 Objetivo: oferecer visao administrativa do desempenho dos eventos.
 
@@ -343,7 +405,7 @@ Testes:
 - listar eventos populares
 - calcular capacidade restante
 
-## Fase 8 - Avaliacoes e historico
+## Fase 9 - Avaliacoes e historico
 
 Objetivo: completar a experiencia pos-evento.
 
@@ -385,7 +447,7 @@ Testes:
 - impedir avaliacao duplicada
 - rejeitar nota invalida
 
-## Fase 9 - Curadoria administrativa de avaliacoes
+## Fase 10 - Curadoria administrativa de avaliacoes
 
 Objetivo: permitir que o administrador acompanhe a qualidade pos-evento e remova avaliacoes indevidas.
 
@@ -421,9 +483,10 @@ Testes:
 4. Atividades.
 5. Convidados.
 6. Check-in com QR Code.
-7. Dashboard.
-8. Avaliacoes.
-9. Curadoria administrativa de avaliacoes.
+7. Mapa de stands e expositores.
+8. Dashboard.
+9. Avaliacoes.
+10. Curadoria administrativa de avaliacoes.
 
 ## Comparacao com o PDF atualizado
 
@@ -433,8 +496,8 @@ Atendido:
 
 - stack mantida: C#, ASP.NET Core Minimal API, Blazor Server / Razor Components, Dapper, SQLite e xUnit
 - sem Entity Framework, Clean Architecture, Microservices, Redis, Docker, CQRS, MediatR, JWT, Kubernetes, SQL Server ou MariaDB
-- modulos de usuarios, eventos, reservas, cupons, atividades, convidados, tipos de ingresso, dashboard e check-in
-- tabelas `Convidados`, `EventoConvidados`, `Atividades`, `TiposIngresso`, `Reservas`, `Cupons`, `Checkins` e `Avaliacoes`
+- modulos de usuarios, eventos, reservas, cupons, atividades, convidados, mapa de stands, tipos de ingresso, dashboard e check-in
+- tabelas `Convidados`, `EventoConvidados`, `StandsEspacos`, `Atividades`, `TiposIngresso`, `Reservas`, `Cupons`, `Checkins` e `Avaliacoes`
 - regras de capacidade, inscricao duplicada, preco de VIP, limite de Meet and Greet e check-in unico
 - testes xUnit cobrindo regras principais e riscos da pivotagem
 

@@ -46,6 +46,7 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 - check-in administrativo manual ou por câmera/webcam, com bloqueio de duplicidade e rejeição de reserva cancelada
 - convidados e associação de convidados aos eventos
 - atividades internas com limite de vagas e inscrição
+- mapa de stands e expositores por evento, com imagem de planta enviada pelo administrador, organização automática por grades 2x2, 3x3, 4x4, 5x5 e 8x8, posicionamento manual por drag/drop, alocação administrativa por linhas/setores, preço por m²/preço fixo e visualização no detalhe/ingressos
 - avaliações de eventos com bloqueio de duplicidade e média exibida junto ao preço
 - dashboard administrativo com relatório de vendas, eventos populares, compras recentes, cupons, avaliações, check-ins e capacidade
 
@@ -57,7 +58,7 @@ Primeiro entre na pasta raiz do projeto. Os comandos abaixo precisam ser executa
 cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
 ```
 
-Se o comando for executado em `C:\Users\rapha`, o .NET nao encontra `.\src\Alphabit.API\Alphabit.API.csproj` e retorna erro de projeto inexistente.
+Se o comando for executado em `C:\Users\rapha`, o .NET não encontra `.\src\Alphabit.API\Alphabit.API.csproj` e retorna erro de projeto inexistente.
 
 Depois, no primeiro terminal, suba a API:
 
@@ -146,21 +147,29 @@ Esse caminho foi mantido por compatibilidade técnica com a base original.
 - `PUT /api/admin/cidades/{nomeAtual}`
 - `DELETE /api/admin/cidades/{nomeAtual}`
 
-### Tipos de ingresso, atividades e convidados
+### Tipos de ingresso, atividades, convidados e stands
 
 - `GET /api/eventos/{id}/tipos-ingresso`
 - `GET /api/eventos/{id}/atividades`
 - `POST /api/atividades/{id}/inscricao`
 - `GET /api/eventos/{id}/convidados`
-- `GET /api/admin/convidados`
-- `POST /api/admin/convidados`
-- `POST /api/admin/eventos/convidados`
+- `GET /api/convidados`
+- `POST /api/convidados`
+- `POST /api/eventos/{id}/convidados`
+- `GET /api/eventos/{id}/stands`
+- `POST /api/admin/eventos/{id}/stands`
+- `PUT /api/admin/eventos/{id}/mapa-imagem`
+- `PUT /api/admin/eventos/{id}/stands/{standId}`
+- `DELETE /api/admin/eventos/{id}/stands/{standId}`
+- `POST /api/admin/eventos/{id}/stand-setores`
+- `PUT /api/admin/eventos/{id}/stand-setores/{nomeAtual}`
+- `DELETE /api/admin/eventos/{id}/stand-setores/{nome}`
 
 ### Reservas, check-in e avaliações
 
 - `POST /api/reservas`
 - `GET /api/reservas/{cpf}`
-- `POST /api/admin/checkins/validar`
+- `POST /api/checkin`
 - `GET /api/eventos/{id}/avaliacoes`
 - `POST /api/avaliacoes`
 - `DELETE /api/admin/avaliacoes/{id}`

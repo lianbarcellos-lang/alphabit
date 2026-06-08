@@ -7,33 +7,10 @@
 @if (Overlay.IsOpen)
 {
     <div class="auth-overlay" @onclick="Close">
-        <div class="auth-modal" @onclick:stopPropagation="true">
+        <div class="auth-modal @(IsRegister ? "auth-modal--wide" : null)" @onclick:stopPropagation="true">
             <button class="auth-modal__close" type="button" @onclick="Close" aria-label="Fechar">x</button>
 
             <div class="auth-modal__layout">
-                <aside class="auth-aside">
-                    <span class="eyebrow">GeekTop Access</span>
-                    <h2>@AsideTitle</h2>
-                    <p>
-                        @AsideDescription
-                    </p>
-
-                    <div class="auth-aside__highlights">
-                        <article>
-                            <strong>Reserva rápida</strong>
-                            <span>Escolha ingressos, carrinho e checkout no mesmo fluxo.</span>
-                        </article>
-                        <article>
-                            <strong>Eventos em alta</strong>
-                            <span>Anime, games, cosplay e cultura pop com curadoria visual.</span>
-                        </article>
-                        <article>
-                            <strong>Sua conta centralizada</strong>
-                            <span>Reservas, perfil e histórico em um só lugar.</span>
-                        </article>
-                    </div>
-                </aside>
-
                 <section class="auth-panel">
                     <div class="auth-panel__head">
                         <span class="auth-panel__pill">Conta GeekTop</span>
@@ -88,7 +65,7 @@
                                     <InputText id="overlaySenha" class="field__input field__input--password" type="@(showLoginPassword ? "text" : "password")" @bind-Value="loginModel.Senha" placeholder="Digite sua senha" />
                                     <div class="field__toggle-row">
                                         <button class="field__toggle" type="button" @onclick="ToggleLoginPassword" aria-label="Exibir ou ocultar senha">
-                                            @(showLoginPassword ? "Ocultar senha" : "Mostrar senha")
+                                            @(showLoginPassword ? "Ocultar" : "Mostrar")
                                         </button>
                                     </div>
                                 </div>
@@ -109,7 +86,7 @@
                     }
                     else if (IsRegister)
                     {
-                        <EditForm Model="@registerModel" OnValidSubmit="HandleRegister" FormName="overlay-register" class="auth-form">
+                        <EditForm Model="@registerModel" OnValidSubmit="HandleRegister" FormName="overlay-register" class="auth-form auth-form--register">
                             <DataAnnotationsValidator />
 
                             <div class="field">
@@ -143,10 +120,10 @@
                             <div class="field">
                                 <label for="overlayCadastroSenha">Senha</label>
                                 <div class="field__password">
-                                    <InputText id="overlayCadastroSenha" class="field__input field__input--password" type="@(showRegisterPassword ? "text" : "password")" @bind-Value="registerModel.Senha" placeholder="Crie uma senha segura" />
+                                    <InputText id="overlayCadastroSenha" class="field__input field__input--password" type="@(showRegisterPassword ? "text" : "password")" @bind-Value="registerModel.Senha" placeholder="Senha segura" />
                                     <div class="field__toggle-row">
                                         <button class="field__toggle" type="button" @onclick="ToggleRegisterPassword" aria-label="Exibir ou ocultar senha">
-                                            @(showRegisterPassword ? "Ocultar senha" : "Mostrar senha")
+                                            @(showRegisterPassword ? "Ocultar" : "Mostrar")
                                         </button>
                                     </div>
                                 </div>
@@ -156,10 +133,10 @@
                             <div class="field">
                                 <label for="overlayConfirmarSenha">Confirmar senha</label>
                                 <div class="field__password">
-                                    <InputText id="overlayConfirmarSenha" class="field__input field__input--password" type="@(showRegisterConfirmPassword ? "text" : "password")" @bind-Value="registerModel.ConfirmarSenha" placeholder="Repita sua senha" />
+                                    <InputText id="overlayConfirmarSenha" class="field__input field__input--password" type="@(showRegisterConfirmPassword ? "text" : "password")" @bind-Value="registerModel.ConfirmarSenha" placeholder="Repita a senha" />
                                     <div class="field__toggle-row">
                                         <button class="field__toggle" type="button" @onclick="ToggleRegisterConfirmPassword" aria-label="Exibir ou ocultar senha">
-                                            @(showRegisterConfirmPassword ? "Ocultar senha" : "Mostrar senha")
+                                            @(showRegisterConfirmPassword ? "Ocultar" : "Mostrar")
                                         </button>
                                     </div>
                                 </div>
@@ -219,7 +196,7 @@
                                         <InputText id="overlayNovaSenha" class="field__input field__input--password" type="@(showResetPassword ? "text" : "password")" @bind-Value="resetPasswordModel.NovaSenha" placeholder="Crie sua nova senha" />
                                         <div class="field__toggle-row">
                                             <button class="field__toggle" type="button" @onclick="ToggleResetPassword" aria-label="Exibir ou ocultar senha">
-                                                @(showResetPassword ? "Ocultar senha" : "Mostrar senha")
+                                                @(showResetPassword ? "Ocultar" : "Mostrar")
                                             </button>
                                         </div>
                                     </div>
@@ -231,7 +208,7 @@
                                         <InputText id="overlayConfirmarNovaSenha" class="field__input field__input--password" type="@(showResetConfirmPassword ? "text" : "password")" @bind-Value="resetPasswordModel.ConfirmarSenha" placeholder="Repita a nova senha" />
                                         <div class="field__toggle-row">
                                             <button class="field__toggle" type="button" @onclick="ToggleResetConfirmPassword" aria-label="Exibir ou ocultar senha">
-                                                @(showResetConfirmPassword ? "Ocultar senha" : "Mostrar senha")
+                                                @(showResetConfirmPassword ? "Ocultar" : "Mostrar")
                                             </button>
                                         </div>
                                     </div>

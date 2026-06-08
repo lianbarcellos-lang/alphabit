@@ -197,7 +197,7 @@
 
 .home-event-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
     gap: 1rem;
 }
 
@@ -207,42 +207,56 @@
     background: #fff;
     border: 1px solid rgba(17, 33, 63, 0.08);
     box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
 }
 
 .home-event-card img {
     width: 100%;
-    height: 220px;
+    height: 190px;
     object-fit: cover;
     display: block;
 }
 
 .home-event-card__body {
     padding: 1.2rem;
-    display: grid;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     gap: 0.55rem;
 }
 
 .home-event-card__body h3 {
     margin: 0.2rem 0 0;
     color: #11213f;
+    font-size: 1.35rem;
+    line-height: 1.18;
+    min-height: 3.2rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
 }
 
 .home-event-card__body p {
     margin: 0;
     color: #66758f;
+    line-height: 1.45;
 }
 
 .home-event-card__footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: center;
-    margin-top: 0.7rem;
+    display: grid;
+    gap: 0.85rem;
+    margin-top: auto;
+    padding-top: 0.95rem;
+    border-top: 1px solid rgba(17, 33, 63, 0.08);
 }
 
 .home-event-card__pricing {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.6rem;
     flex-wrap: wrap;
 }
@@ -250,6 +264,7 @@
 .home-event-card__pricing strong {
     color: #11213f;
     font-weight: 900;
+    font-size: 1.35rem;
 }
 
 .home-event-card__pricing span {
@@ -262,11 +277,17 @@
 }
 
 .home-event-card__actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+}
+
+.home-event-card__actions .ghost-button,
+.home-event-card__actions .secondary-button {
+    width: 100%;
+    min-height: 3rem;
+    justify-content: center;
+    text-align: center;
 }
 
 .showcase-panel {
@@ -356,10 +377,16 @@
     }
 
     .section-head,
-    .home-event-card__footer,
     .landing-search {
         flex-direction: column;
         align-items: stretch;
     }
 
+    .home-event-card {
+        min-height: auto;
+    }
+
+    .home-event-card__actions {
+        grid-template-columns: 1fr;
+    }
 }

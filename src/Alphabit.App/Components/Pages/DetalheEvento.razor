@@ -169,11 +169,69 @@ else
             }
         </section>
 
+        <section class="event-detail-panel event-stand-panel">
+            <div class="event-activity-head">
+                <div>
+                    <span class="eyebrow">Mapa do evento</span>
+                    <h2>Stands e atrações</h2>
+                </div>
+                <span>@stands.Count espaço(s)</span>
+            </div>
+
+            @if (stands.Count == 0)
+            {
+                <p>O mapa de stands deste evento ainda está sendo organizado.</p>
+            }
+            else
+            {
+                @if (HasStandMapImage)
+                {
+                    <div class="event-stand-image-map">
+                        <img src="@StandMapImageUrl" alt="Planta do evento @eventItem.Nome" />
+                        @foreach (var stand in stands)
+                        {
+                            <article class="event-stand-pin @(stand.Reservado ? "event-stand-pin--reserved" : null)"
+                                     @key="stand.Id"
+                                     style="@BuildStandPinStyle(stand)"
+                                     title="@BuildStandTitle(stand)">
+                                <strong>@stand.Codigo</strong>
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="event-stand-map" style="@BuildStandMapStyle()">
+                        @foreach (var stand in stands)
+                        {
+                            <article class="event-stand-block @(stand.Reservado ? "event-stand-block--reserved" : null)"
+                                     @key="stand.Id"
+                                     style="@BuildStandStyle(stand)">
+                                <span>@stand.Codigo</span>
+                                <strong>@(stand.Reservado ? stand.NomeOcupante : "Livre")</strong>
+                                <small>@stand.Setor</small>
+                            </article>
+                        }
+                    </div>
+                }
+
+                <div class="event-stand-legend">
+                    @foreach (var stand in stands.OrderBy(stand => stand.Codigo))
+                    {
+                        <article>
+                            <strong>@stand.Codigo</strong>
+                            <span>@(stand.Reservado ? $"{stand.NomeOcupante} - {stand.TipoOcupante}" : "Disponível")</span>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
         <section class="event-detail-panel event-review-panel">
             <div class="event-activity-head">
                 <div>
-                    <span class="eyebrow">Avaliacoes</span>
-                    <h2>Historico da comunidade</h2>
+                    <span class="eyebrow">Avaliações</span>
+                    <h2>Histórico da comunidade</h2>
                 </div>
                 <span>@reviews.Count avaliação(ões)</span>
             </div>
@@ -212,6 +270,7 @@ else
     private readonly List<ActivityViewModel> activities = [];
     private readonly List<GuestViewModel> guests = [];
     private readonly List<EventReviewViewModel> reviews = [];
+    private readonly List<StandSpaceViewModel> stands = [];
     private bool isLoading = true;
     private bool activityIsBusy;
     private bool activityStatusIsError;
@@ -222,7 +281,7 @@ else
         try
         {
             eventItem = await ApiClient.GetEventByIdAsync(Id);
-            await Task.WhenAll(LoadActivities(), LoadGuests(), LoadReviews());
+            await Task.WhenAll(LoadActivities(), LoadGuests(), LoadReviews(), LoadStands());
         }
         finally
         {
@@ -262,6 +321,44 @@ else
     {
         reviews.Clear();
         reviews.AddRange(await ApiClient.GetEventReviewsAsync(Id));
+    }
+
+    private async Task LoadStands()
+    {
+        stands.Clear();
+        stands.AddRange(await ApiClient.GetEventStandsAsync(Id));
+    }
+
+    private string StandMapImageUrl => stands.FirstOrDefault(stand => !string.IsNullOrWhiteSpace(stand.MapaImagemUrl))?.MapaImagemUrl ?? string.Empty;
+
+    private bool HasStandMapImage => !string.IsNullOrWhiteSpace(StandMapImageUrl);
+
+    private string BuildStandMapStyle()
+    {
+        var maxColumn = Math.Max(4, stands.Count == 0 ? 4 : stands.Max(stand => stand.PosicaoX + stand.Largura - 1));
+        var maxRow = Math.Max(7, stands.Count == 0 ? 7 : stands.Max(stand => stand.PosicaoY + stand.Altura - 1));
+        return $"--stand-columns:{maxColumn};--stand-rows:{maxRow};";
+    }
+
+    private static string BuildStandStyle(StandSpaceViewModel stand)
+    {
+        return $"grid-column:{stand.PosicaoX} / span {Math.Max(1, stand.Largura)};grid-row:{stand.PosicaoY} / span {Math.Max(1, stand.Altura)};";
+    }
+
+    private static string BuildStandPinStyle(StandSpaceViewModel stand)
+    {
+        var left = Math.Clamp(stand.AreaX <= 0 ? 50 : stand.AreaX, 0, 100);
+        var top = Math.Clamp(stand.AreaY <= 0 ? 50 : stand.AreaY, 0, 100);
+        return FormattableString.Invariant($"left:{left:0.###}%;top:{top:0.###}%;");
+    }
+
+    private static string BuildStandTitle(StandSpaceViewModel stand)
+    {
+        var status = stand.Reservado && !string.IsNullOrWhiteSpace(stand.NomeOcupante)
+            ? $"{stand.NomeOcupante} - {stand.TipoOcupante}"
+            : "Disponível";
+
+        return $"{stand.Codigo} | {stand.Setor} | {status}";
     }
 
     private static string RenderRating(int rating)

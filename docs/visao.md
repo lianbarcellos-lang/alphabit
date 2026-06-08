@@ -8,13 +8,13 @@ A proposta e permitir que o cliente encontre eventos, veja detalhes, escolha ing
 
 ## Problema que o projeto resolve
 
-Eventos geek normalmente envolvem varias informacoes importantes: local, cidade, categoria, convidados, atividades, tipos de ingresso, capacidade, reservas, check-in e avaliacoes. O GeekTop centraliza esse fluxo em uma unica aplicacao, separando a experiencia do cliente da operacao administrativa.
+Eventos geek normalmente envolvem varias informacoes importantes: local, cidade, categoria, convidados, atividades, stands, expositores, tipos de ingresso, capacidade, reservas, check-in e avaliacoes. O GeekTop centraliza esse fluxo em uma unica aplicacao, separando a experiencia do cliente da operacao administrativa.
 
 ## Publico-alvo
 
 - Clientes interessados em eventos geek, anime, games, cosplay e cultura pop.
 - Administradores responsaveis por cadastrar eventos, acompanhar vendas e validar entradas.
-- Organizadores que precisam controlar convidados, atividades, cupons, reservas e check-ins.
+- Organizadores que precisam controlar convidados, atividades, stands, cupons, reservas e check-ins.
 
 ## Experiencia do cliente
 
@@ -25,6 +25,7 @@ O cliente pode:
 - filtrar eventos por cidade, data, atracao e categoria geek;
 - abrir o detalhe do evento;
 - visualizar convidados e atividades;
+- visualizar mapa de stands, empresas expositoras e atrações por setor;
 - escolher tipo e quantidade de ingresso;
 - aplicar cupom no carrinho;
 - finalizar reserva;
@@ -43,6 +44,8 @@ O administrador pode:
 - cadastrar e editar cupons;
 - cadastrar convidados;
 - associar convidados aos eventos;
+- reservar stands para empresas, lojas, arenas e atrações;
+- organizar automaticamente stands por grades e ajustar a posição manualmente na planta;
 - acompanhar relatorio de vendas;
 - visualizar compras, formas de pagamento, capacidade e ranking de eventos;
 - moderar avaliacoes;
@@ -78,4 +81,4 @@ Nao fazem parte desta entrega:
 
 ## Estado atual
 
-O projeto ja possui vitrine publica, fluxo de compra, reservas, cupons, tipos de ingresso, convidados, atividades, avaliacoes, dashboard administrativo e check-in com QR Code.
+O projeto ja possui vitrine publica, fluxo de compra, reservas, cupons, tipos de ingresso, convidados, atividades, mapa de stands, avaliacoes, dashboard administrativo e check-in com QR Code.

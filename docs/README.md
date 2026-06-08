@@ -14,6 +14,7 @@ Sistema de venda e vitrine de eventos geek/anime com API em .NET 9, banco SQLite
 - tipos de ingresso por evento
 - atividades internas com inscrição
 - convidados associados aos eventos
+- mapa de stands e expositores por evento, com organização automática por grades e ajuste manual por drag/drop
 - check-in administrativo com QR Code
 - avaliações de eventos por clientes com reserva
 - dashboard administrativo com receita, reservas, check-ins, capacidade, cupons e avaliações
@@ -36,7 +37,7 @@ Todos os comandos devem ser executados a partir da raiz do projeto:
 cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"
 ```
 
-Se o terminal estiver em `C:\Users\rapha`, os caminhos `.\src\...` nao existem e o comando `dotnet run` falha com erro de projeto inexistente.
+Se o terminal estiver em `C:\Users\rapha`, os caminhos `.\src\...` não existem e o comando `dotnet run` falha com erro de projeto inexistente.
 
 Abra dois terminais.
 
@@ -93,6 +94,8 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 - gerenciar cidades e categorias geek
 - cadastrar atividades e convidados
 - associar convidados aos eventos
+- reservar/liberar stands para empresas, lojas, arenas e atrações
+- organizar automaticamente os stands em grades 2x2, 3x3, 4x4, 5x5 ou 8x8 antes dos ajustes manuais
 - validar check-in por QR Code
 - acompanhar métricas do dashboard
 - moderar avaliações recentes
@@ -117,6 +120,7 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 - `GET /api/eventos/{id}/tipos-ingresso`
 - `GET /api/eventos/{id}/atividades`
 - `GET /api/eventos/{id}/convidados`
+- `GET /api/eventos/{id}/stands`
 - `GET /api/admin/eventos`
 - `PUT /api/admin/eventos/{id}`
 - `DELETE /api/admin/eventos/{id}`
@@ -134,20 +138,31 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 
 ### Convidados e atividades
 
-- `GET /api/admin/convidados`
-- `POST /api/admin/convidados`
-- `POST /api/admin/eventos/convidados`
-- `DELETE /api/admin/eventos/{eventoId}/convidados/{convidadoId}`
+- `GET /api/convidados`
+- `POST /api/convidados`
+- `POST /api/eventos/{id}/convidados`
+- `DELETE /api/eventos/{id}/convidados/{convidadoId}`
 - `DELETE /api/admin/convidados/{id}`
 - `POST /api/atividades`
 - `POST /api/atividades/{id}/inscricao`
 - `DELETE /api/admin/atividades/{id}`
 
+### Mapa de stands
+
+- `GET /api/eventos/{id}/stands`
+- `POST /api/admin/eventos/{id}/stands`
+- `PUT /api/admin/eventos/{id}/mapa-imagem`
+- `PUT /api/admin/eventos/{id}/stands/{standId}`
+- `DELETE /api/admin/eventos/{id}/stands/{standId}`
+- `POST /api/admin/eventos/{id}/stand-setores`
+- `PUT /api/admin/eventos/{id}/stand-setores/{nomeAtual}`
+- `DELETE /api/admin/eventos/{id}/stand-setores/{nome}`
+
 ### Reservas e check-in
 
 - `POST /api/reservas`
 - `GET /api/reservas/{cpf}`
-- `POST /api/admin/checkins/validar`
+- `POST /api/checkin`
 
 ### Avaliações
 
@@ -243,6 +258,7 @@ Os testes cobrem regras como:
 - tipos de ingresso
 - atividades internas
 - convidados
+- mapa de stands
 - check-in com QR Code
 - avaliações de eventos
 

@@ -150,7 +150,7 @@
 .events-grid {
     display: grid;
     gap: 1.1rem;
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
 }
 
 .event-card {
@@ -159,7 +159,7 @@
     display: flex;
     flex-direction: column;
     border-radius: 1.65rem;
-    min-height: 640px;
+    min-height: 580px;
     background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
     border: 1px solid rgba(24, 32, 45, 0.08);
     box-shadow: 0 22px 60px rgba(24, 32, 45, 0.09);
@@ -168,7 +168,7 @@
 
 .event-card__image {
     width: 100%;
-    height: 190px;
+    height: 180px;
     object-fit: cover;
     display: block;
 }
@@ -229,7 +229,13 @@
 .event-card h2 {
     margin: 1.2rem 0 0.7rem;
     color: #11213f;
-    font-size: 1.55rem;
+    font-size: 1.42rem;
+    line-height: 1.18;
+    display: -webkit-box;
+    min-height: 3.35rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .event-card__date {
@@ -254,6 +260,10 @@
     margin: 0 0 1rem;
     color: #556883;
     line-height: 1.6;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
 }
 
 .event-card__pricing {
@@ -265,7 +275,7 @@
 }
 
 .event-card__pricing strong {
-    font-size: 1.7rem;
+    font-size: 1.58rem;
     font-weight: 800;
     color: #11213f;
 }
@@ -280,9 +290,10 @@
 }
 
 .event-card__actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.8rem;
-    align-items: center;
+    align-items: stretch;
     margin-top: auto;
     padding-top: 0.75rem;
 }
@@ -290,6 +301,11 @@
 .event-card__actions .ghost-button,
 .event-card__actions .buy-button {
     width: 100%;
+    min-height: 3.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .event-card:hover {
@@ -299,10 +315,13 @@
 
 @media (max-width: 640px) {
     .events-hero,
-    .events-hero__search,
-    .event-card__actions {
+    .events-hero__search {
         flex-direction: column;
         align-items: start;
+    }
+
+    .event-card__actions {
+        grid-template-columns: 1fr;
     }
 
     .events-hero__aside {

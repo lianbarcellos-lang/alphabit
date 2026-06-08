@@ -75,6 +75,16 @@ public class AlphabitApiClient(HttpClient httpClient)
         return await httpClient.GetFromJsonAsync<List<EventReviewViewModel>>($"api/eventos/{eventId}/avaliacoes") ?? [];
     }
 
+    public async Task<List<StandSpaceViewModel>> GetEventStandsAsync(int eventId)
+    {
+        return await httpClient.GetFromJsonAsync<List<StandSpaceViewModel>>($"api/eventos/{eventId}/stands") ?? [];
+    }
+
+    public async Task<List<string>> GetEventStandSectorsAsync(int eventId)
+    {
+        return await httpClient.GetFromJsonAsync<List<string>>($"api/eventos/{eventId}/stand-setores") ?? [];
+    }
+
     public async Task<ApiResult> CreateEventReviewAsync(EventReviewRequest request, string userCpf)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, "api/avaliacoes")
@@ -479,6 +489,126 @@ public class AlphabitApiClient(HttpClient httpClient)
         {
             Success = response.IsSuccessStatusCode,
             Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento removido com sucesso." : "Não foi possível remover o evento.")
+        };
+    }
+
+    public async Task<ApiResult> UpdateStandAllocationAsync(int eventId, int standId, StandAllocationRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/eventos/{eventId}/stands/{standId}")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Stand atualizado com sucesso." : "Não foi possível atualizar o stand.")
+        };
+    }
+
+    public async Task<ApiResult> CreateStandAsync(int eventId, StandAllocationRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, $"api/admin/eventos/{eventId}/stands")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Stand cadastrado com sucesso." : "Não foi possível cadastrar o stand.")
+        };
+    }
+
+    public async Task<ApiResult> UpdateEventMapImageAsync(int eventId, string mapImageUrl, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/eventos/{eventId}/mapa-imagem")
+        {
+            Content = JsonContent.Create(new EventMapImageRequest { MapaImagemUrl = mapImageUrl })
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Planta do evento atualizada com sucesso." : "Não foi possível atualizar a planta do evento.")
+        };
+    }
+
+    public async Task<ApiResult> DeleteStandAsync(int eventId, int standId, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Delete, $"api/admin/eventos/{eventId}/stands/{standId}");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Stand apagado com sucesso." : "Não foi possível apagar o stand.")
+        };
+    }
+
+    public async Task<ApiResult> CreateStandSectorAsync(int eventId, string name, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, $"api/admin/eventos/{eventId}/stand-setores")
+        {
+            Content = JsonContent.Create(new StandSectorRequest { Nome = name })
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Linha criada com sucesso." : "Não foi possível criar a linha.")
+        };
+    }
+
+    public async Task<ApiResult> RenameStandSectorAsync(int eventId, string currentName, string newName, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/eventos/{eventId}/stand-setores/{Uri.EscapeDataString(currentName)}")
+        {
+            Content = JsonContent.Create(new StandSectorRequest { Nome = newName })
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Linha renomeada com sucesso." : "Não foi possível renomear a linha.")
+        };
+    }
+
+    public async Task<ApiResult> DeleteStandSectorAsync(int eventId, string name, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Delete, $"api/admin/eventos/{eventId}/stand-setores/{Uri.EscapeDataString(name)}");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Linha excluída com sucesso." : "Não foi possível excluir a linha.")
         };
     }
 
