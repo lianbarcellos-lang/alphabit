@@ -14,4 +14,5 @@ public class EventViewModel
     public double MediaAvaliacoes { get; set; }
     public int TotalAvaliacoes { get; set; }
     public string? ImagemUrl { get; set; }
+    public bool EhDestaque { get; set; }
 }

@@ -11,4 +11,5 @@ public class AdminEventUpdateRequest
     public DateTime DataEvento { get; set; }
     public decimal PrecoPadrao { get; set; }
     public string? ImagemUrl { get; set; }
+    public bool EhDestaque { get; set; }
 }

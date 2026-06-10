@@ -10,7 +10,7 @@
 {
     <div class="cart-shell">
         <div class="status-box status-box--error">Entre com uma conta de cliente para acessar o carrinho.</div>
-        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Ir para o login</button>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Ir para eventos</button>
     </div>
 }
 else
@@ -70,7 +70,7 @@ else
                                     </div>
 
                                     <div class="cart-item__actions">
-                                        <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}/assentos")'>Alterar ingresso</button>
+                                        <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.EventoId}#compra")'>Alterar ingresso</button>
                                         <button class="ghost-button" type="button" @onclick='() => RemoveItem(item.EventoId, item.TipoIngressoId)'>Remover</button>
                                     </div>
                                 </div>

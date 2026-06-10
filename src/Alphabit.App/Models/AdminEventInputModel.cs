@@ -29,4 +29,6 @@ public class AdminEventInputModel
 
     [Required(ErrorMessage = "Informe a URL da imagem.")]
     public string ImagemUrl { get; set; } = string.Empty;
+
+    public bool EhDestaque { get; set; }
 }

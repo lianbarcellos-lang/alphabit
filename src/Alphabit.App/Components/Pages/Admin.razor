@@ -24,7 +24,7 @@
             </div>
             <button class="secondary-button" type="button" @onclick="OpenAdminLogin">Entrar como administrador</button>
         }
-        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/")'>Voltar para o início</button>
+        <button class="ghost-button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para eventos</button>
     </div>
 }
 else
@@ -32,28 +32,15 @@ else
     <div class="admin-shell">
         <section class="admin-hero">
             <div class="admin-hero__copy">
-                <span class="eyebrow">Painel GeekTop</span>
-                <h1>Gerencie eventos, imagens e cupons da temporada</h1>
-                <p>Use esta área para publicar convenções, torneios e experiências geek na agenda comercial do site.</p>
-
-                <div class="admin-hero__chips">
-                    <span>Eventos em destaque</span>
-                    <span>Cupons promocionais</span>
-                    <span>Atualização rápida</span>
-                </div>
-
                 <div class="admin-view-switcher">
                     <button class="@(activeAdminView == "operacao" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("operacao")'>Controle de ingressos</button>
                     <button class="@(activeAdminView == "vendas" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("vendas")'>Relatório de vendas</button>
+                    <button class="@(activeAdminView == "programacao" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("programacao")'>Programação</button>
                     <button class="@(activeAdminView == "mapa" ? "secondary-button" : "ghost-button")" type="button" @onclick='() => SetAdminView("mapa")'>Mapa de stands</button>
                 </div>
             </div>
 
             <div class="admin-hero__actions">
-                <div class="admin-hero__badge">
-                    <strong>@adminEvents.Count</strong>
-                    <span>eventos ativos na vitrine</span>
-                </div>
                 <button class="ghost-button" @onclick="Logout">Sair do ADM</button>
             </div>
         </section>
@@ -270,6 +257,123 @@ else
         </section>
         }
 
+        @if (activeAdminView == "programacao")
+        {
+            <section class="admin-panel admin-program-panel">
+                <div class="admin-list-header">
+                    <div>
+                        <span class="admin-panel__pill">Programação</span>
+                        <h2>Atividades internas</h2>
+                        <p>Cadastre workshops, competições, painéis e meet and greet com capacidade própria para inscrição.</p>
+                    </div>
+                    <button class="ghost-button" type="button" @onclick="LoadSelectedEventActivities" disabled="@isBusy">Atualizar</button>
+                </div>
+
+                <div class="admin-form__grid">
+                    <div class="field">
+                        <label for="activityEvent">Evento</label>
+                        <select id="activityEvent" class="field__input" @bind="selectedActivityEventId" @bind:after="HandleActivityEventChanged">
+                            @foreach (var item in adminEvents)
+                            {
+                                <option value="@item.Id">@item.Nome</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Controle de lugares</label>
+                        <div class="admin-note">
+                            <strong>Assentos automáticos</strong>
+                            <span>A capacidade cadastrada gera os lugares que o cliente escolhe no modal de inscrição.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-form">
+                    <div class="admin-form__grid">
+                        <div class="field">
+                            <label for="activityName">Nome da atividade</label>
+                            <InputText id="activityName" class="field__input" @bind-Value="activityModel.Nome" placeholder="Ex.: Painel de convidados" />
+                        </div>
+                        <div class="field">
+                            <label for="activityType">Tipo</label>
+                            <InputText id="activityType" class="field__input" @bind-Value="activityModel.Tipo" placeholder="workshop, competição, palestra..." />
+                        </div>
+                    </div>
+
+                    <div class="admin-form__grid admin-form__grid--triple">
+                        <div class="field">
+                            <label for="activityDate">Dia</label>
+                            <InputDate id="activityDate" class="field__input" @bind-Value="activityDateOnly" />
+                        </div>
+                        <div class="field">
+                            <label for="activityStart">Início</label>
+                            <InputText id="activityStart" class="field__input" @bind-Value="activityStartTime" placeholder="18:00" />
+                        </div>
+                        <div class="field">
+                            <label for="activityEnd">Término</label>
+                            <InputText id="activityEnd" class="field__input" @bind-Value="activityEndTime" placeholder="19:00" />
+                        </div>
+                    </div>
+
+                    <div class="admin-form__grid">
+                        <div class="field">
+                            <label for="activityLimit">Capacidade máxima</label>
+                            <InputNumber id="activityLimit" class="field__input" @bind-Value="activityModel.LimiteParticipantes" />
+                        </div>
+                        <div class="field">
+                            <label for="activityDescription">Descrição curta</label>
+                            <InputTextArea id="activityDescription" class="field__input" @bind-Value="activityModel.Descricao" placeholder="Opcional" />
+                        </div>
+                    </div>
+
+                    <button class="secondary-button" type="button" @onclick="HandleCreateActivity" disabled="@isBusy">Cadastrar atividade</button>
+                </div>
+            </section>
+
+            <section class="admin-panel">
+                <div class="admin-list-header">
+                    <div>
+                        <h2>Programação cadastrada</h2>
+                        <p>@selectedEventActivities.Count atividade(s) no evento selecionado.</p>
+                    </div>
+                </div>
+
+                @if (selectedActivityEventId <= 0)
+                {
+                    <div class="status-box">Selecione um evento para visualizar a programação.</div>
+                }
+                else if (selectedEventActivities.Count == 0)
+                {
+                    <div class="status-box">Nenhuma atividade cadastrada para este evento ainda.</div>
+                }
+                else
+                {
+                    <div class="admin-activity-list">
+                        @foreach (var activity in selectedEventActivities)
+                        {
+                            <article class="admin-activity-card" @key="activity.Id">
+                                <div>
+                                    <span class="admin-panel__pill">@activity.Tipo</span>
+                                    <h3>@activity.Nome</h3>
+                                    <p>@FormatActivitySchedule(activity)</p>
+                                    @if (!string.IsNullOrWhiteSpace(activity.Descricao))
+                                    {
+                                        <p>@activity.Descricao</p>
+                                    }
+                                </div>
+                                <div class="admin-activity-card__meta">
+                                    <strong>@activity.LimiteParticipantes lugar(es)</strong>
+                                    <span>@activity.Inscritos inscrito(s)</span>
+                                    <span>@activity.VagasRestantes vaga(s) restante(s)</span>
+                                </div>
+                                <button class="danger-button" type="button" @onclick="() => HandleDeleteActivity(activity.Id)" disabled="@isBusy">Excluir</button>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        }
+
         @if (activeAdminView == "mapa")
         {
             <section class="admin-panel admin-stand-panel">
@@ -375,7 +479,7 @@ else
                                     {
                                         <button class="ghost-button"
                                                 type="button"
-                                                disabled="@(isBusy || eventStands.Count == 0 || eventStands.Count > option.Capacity)"
+                                                disabled="@(isBusy || eventStands.Count == 0)"
                                                 title="@GetStandLayoutOptionTitle(option)"
                                                 @onclick="() => ApplyStandLayoutGrid(option.Size)">
                                             @option.Label
@@ -608,6 +712,11 @@ else
                             </div>
                         </div>
                     }
+
+                    <label class="field-check">
+                        <InputCheckbox @bind-Value="eventModel.EhDestaque" />
+                        <span>Exibir este evento no carrossel de destaques da página principal.</span>
+                    </label>
 
                     <button class="secondary-button" type="submit" disabled="@isBusy">Publicar evento</button>
                 </EditForm>
@@ -915,6 +1024,10 @@ else
                                 <div class="admin-event-card__meta">
                                     <span class="pill">@item.DataEvento.ToString("dd/MM/yyyy")</span>
                                     <span class="pill pill--muted">@item.CapacidadeTotal lugares</span>
+                                    @if (item.EhDestaque)
+                                    {
+                                        <span class="pill pill--highlight">Destaque</span>
+                                    }
                                 </div>
                                 <h3>@item.Nome</h3>
                                 <p class="admin-event-card__copy">@item.LocalEvento, @item.CidadeEvento</p>
@@ -926,6 +1039,9 @@ else
                                 </div>
 
                                 <div class="admin-event-card__actions">
+                                    <button class="ghost-button" type="button" @onclick='() => ToggleEventHighlight(item)' disabled="@isBusy">
+                                        @(item.EhDestaque ? "Remover destaque" : "Destacar")
+                                    </button>
                                     <button class="ghost-button" type="button" @onclick='() => StartEdit(item)'>Editar</button>
                                     <button class="danger-button" type="button" @onclick='() => HandleDeleteEvent(item.Id)'>Excluir</button>
                                 </div>
@@ -1032,6 +1148,11 @@ else
                                 </div>
                             </div>
                         }
+
+                        <label class="field-check">
+                            <InputCheckbox @bind-Value="editingEvent.EhDestaque" />
+                            <span>Exibir este evento no carrossel de destaques da página principal.</span>
+                        </label>
 
                         <div class="admin-modal__actions">
                             <button class="secondary-button" type="submit" disabled="@isBusy">Salvar alteracoes</button>
@@ -1177,19 +1298,19 @@ else
     private readonly List<CouponViewModel> adminCoupons = new();
     private readonly List<GuestViewModel> adminGuests = new();
     private readonly List<GuestViewModel> selectedEventGuests = new();
+    private readonly List<ActivityViewModel> selectedEventActivities = new();
     private readonly List<StandSpaceViewModel> eventStands = new();
     private readonly List<string> standSectors = new();
     private readonly List<string> availableGenres = new();
     private readonly List<string> availableCities = new();
     private readonly StandAllocationRequest standAllocationModel = new();
+    private readonly ActivityCreateRequest activityModel = new();
     private readonly Dictionary<string, string> sectorRenameInputs = new(StringComparer.OrdinalIgnoreCase);
     private readonly IReadOnlyList<StandLayoutOption> standLayoutOptions =
     [
         new("2x2", 2),
         new("3x3", 3),
-        new("4x4", 4),
-        new("5x5", 5),
-        new("8x8", 8)
+        new("4x4", 4)
     ];
     private const string StandMapDropElementId = "admin-stand-image-map";
     private AdminSalesDashboardViewModel? salesDashboard;
@@ -1215,6 +1336,7 @@ else
     private string cityModalInput = string.Empty;
     private string? editingCityOriginalName;
     private int selectedGuestEventId;
+    private int selectedActivityEventId;
     private int selectedGuestId;
     private int selectedStandEventId;
     private int selectedStandId;
@@ -1223,6 +1345,9 @@ else
     private string standEditCode = string.Empty;
     private string standEditSector = string.Empty;
     private string newStandSectorName = string.Empty;
+    private DateTime activityDateOnly = DateTime.Today;
+    private string activityStartTime = "18:00";
+    private string activityEndTime = "19:00";
     private string checkinQrCode = string.Empty;
     private bool checkinCodeLoadedFromUrl;
     private bool isQrScannerOpen;
@@ -1242,6 +1367,7 @@ else
         await LoadAdminEvents();
         await LoadAdminCoupons();
         await LoadGuests();
+        await LoadSelectedEventActivities();
         await LoadEventStands();
         await LoadAdminSalesDashboard();
     }
@@ -1361,7 +1487,8 @@ else
                 CapacidadeTotal = eventModel.CapacidadeTotal,
                 DataEvento = schedule,
                 PrecoPadrao = eventModel.PrecoPadrao,
-                ImagemUrl = eventModel.ImagemUrl
+                ImagemUrl = eventModel.ImagemUrl,
+                EhDestaque = eventModel.EhDestaque
             }, Session.AdminToken!);
 
             isError = !result.Success;
@@ -1377,6 +1504,7 @@ else
                 eventModel.CapacidadeTotal = 1000;
                 eventModel.PrecoPadrao = 99.90m;
                 eventModel.ImagemUrl = string.Empty;
+                eventModel.EhDestaque = false;
                 eventDateOnly = DateTime.Today.AddDays(15);
                 eventTime = "20:00";
                 if (availableGenres.Count > 0)
@@ -1493,6 +1621,12 @@ else
 
             if (selectedGuestEventId == 0 && adminEvents.Count > 0)
                 selectedGuestEventId = adminEvents[0].Id;
+
+            if (selectedActivityEventId == 0 && adminEvents.Count > 0)
+            {
+                selectedActivityEventId = adminEvents[0].Id;
+                activityDateOnly = adminEvents[0].DataEvento.Date;
+            }
 
             if (selectedStandEventId == 0 && adminEvents.Count > 0)
                 selectedStandEventId = adminEvents[0].Id;
@@ -2019,16 +2153,9 @@ else
             return;
         }
 
-        if (eventStands.Count > gridSize * gridSize)
-        {
-            isError = true;
-            statusMessage = $"A grade {gridSize}x{gridSize} comporta até {gridSize * gridSize} stand(s). Escolha uma grade maior.";
-            return;
-        }
-
-        var points = BuildStandLayoutGrid(eventStands.Count, gridSize);
         var standWidth = GetStandLayoutWidth(eventStands.Count, gridSize);
         var standHeight = GetStandLayoutHeight(eventStands.Count, gridSize);
+        var points = BuildStandLayoutGrid(eventStands.Count, gridSize, standWidth, standHeight);
         var orderedStands = eventStands
             .OrderBy(stand => NormalizeStandSector(stand.Setor), StringComparer.OrdinalIgnoreCase)
             .ThenBy(stand => stand.Codigo, StringComparer.OrdinalIgnoreCase)
@@ -2051,33 +2178,40 @@ else
             selectedStand?.Codigo);
     }
 
-    private static List<StandMapPoint> BuildStandLayoutGrid(int standCount, int gridSize)
+    private static List<StandMapPoint> BuildStandLayoutGrid(int standCount, int gridSize, double standWidth, double standHeight)
     {
-        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, (int)Math.Ceiling(Math.Sqrt(standCount))));
-        var rows = Math.Max(1, (int)Math.Ceiling(standCount / (double)columns));
-        var effectiveGridSize = Math.Max(columns, rows);
+        const double safeMinX = 18.0;
+        const double safeMaxX = 82.0;
+        const double safeMinY = 18.0;
+        const double safeMaxY = 54.0;
 
-        var horizontalMargin = effectiveGridSize <= 2 ? 30.0 : effectiveGridSize <= 3 ? 24.0 : effectiveGridSize <= 5 ? 16.0 : 10.0;
-        var verticalMargin = effectiveGridSize <= 2 ? 32.0 : effectiveGridSize <= 3 ? 26.0 : effectiveGridSize <= 5 ? 18.0 : 12.0;
-        var usableWidth = 100 - horizontalMargin * 2;
-        var usableHeight = 100 - verticalMargin * 2;
+        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, standCount));
+        var rows = Math.Max(1, (int)Math.Ceiling(standCount / (double)columns));
+        var horizontalGap = gridSize <= 2 ? 9.0 : gridSize == 3 ? 5.4 : 6.8;
+        var verticalGap = gridSize <= 2 ? 6.6 : gridSize == 3 ? 4.0 : 5.4;
+        var safeCenterX = (safeMinX + safeMaxX) / 2;
+        var safeCenterY = (safeMinY + safeMaxY) / 2;
+        var groupWidth = columns * standWidth + Math.Max(0, columns - 1) * horizontalGap;
+        var groupHeight = rows * standHeight + Math.Max(0, rows - 1) * verticalGap;
+        var startX = safeCenterX - groupWidth / 2 + standWidth / 2;
+        var startY = safeCenterY - groupHeight / 2 + standHeight / 2;
+        var minCenterX = safeMinX + standWidth / 2;
+        var maxCenterX = safeMaxX - standWidth / 2;
+        var minCenterY = safeMinY + standHeight / 2;
+        var maxCenterY = safeMaxY - standHeight / 2;
         var points = new List<StandMapPoint>(standCount);
 
         for (var index = 0; index < standCount; index++)
         {
             var column = index % columns;
             var row = index / columns;
-            var x = columns == 1
-                ? 50
-                : horizontalMargin + (usableWidth * column / (columns - 1));
-            var y = rows == 1
-                ? 50
-                : verticalMargin + (usableHeight * row / (rows - 1));
+            var x = startX + column * (standWidth + horizontalGap);
+            var y = startY + row * (standHeight + verticalGap);
 
             points.Add(new StandMapPoint
             {
-                X = Math.Clamp(x, 6, 94),
-                Y = Math.Clamp(y, 8, 92)
+                X = Math.Clamp(x, minCenterX, maxCenterX),
+                Y = Math.Clamp(y, minCenterY, maxCenterY)
             });
         }
 
@@ -2086,22 +2220,27 @@ else
 
     private static double GetStandLayoutWidth(int standCount, int gridSize)
     {
-        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, (int)Math.Ceiling(Math.Sqrt(standCount))));
-        return Math.Clamp(72.0 / columns, 6.5, 12.0);
+        return gridSize switch
+        {
+            <= 2 => 8.8,
+            3 => 8.4,
+            _ => 7.8
+        };
     }
 
     private static double GetStandLayoutHeight(int standCount, int gridSize)
     {
-        var columns = Math.Min(Math.Max(1, gridSize), Math.Max(1, (int)Math.Ceiling(Math.Sqrt(standCount))));
-        var rows = Math.Max(1, (int)Math.Ceiling(standCount / (double)columns));
-        return Math.Clamp(52.0 / rows, 6.5, 9.0);
+        return gridSize switch
+        {
+            <= 2 => 6.6,
+            3 => 6.4,
+            _ => 6.1
+        };
     }
 
     private string GetStandLayoutOptionTitle(StandLayoutOption option)
     {
-        return eventStands.Count > option.Capacity
-            ? $"{option.Label} comporta até {option.Capacity} stand(s)."
-            : $"Organizar {eventStands.Count} stand(s) em grade {option.Label}.";
+        return $"Organizar {eventStands.Count} stand(s) em grade {option.Label}.";
     }
 
     [JSInvokable]
@@ -2420,6 +2559,144 @@ else
         activeAdminView = view;
     }
 
+    private async Task HandleActivityEventChanged()
+    {
+        var selectedEvent = adminEvents.FirstOrDefault(item => item.Id == selectedActivityEventId);
+        if (selectedEvent is not null)
+            activityDateOnly = selectedEvent.DataEvento.Date;
+
+        await LoadSelectedEventActivities();
+    }
+
+    private async Task LoadSelectedEventActivities()
+    {
+        selectedEventActivities.Clear();
+
+        if (selectedActivityEventId <= 0)
+            return;
+
+        selectedEventActivities.AddRange(await ApiClient.GetActivitiesAsync(selectedActivityEventId));
+    }
+
+    private async Task HandleCreateActivity()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isError = false;
+
+        if (selectedActivityEventId <= 0)
+        {
+            statusMessage = "Selecione um evento para cadastrar a atividade.";
+            isError = true;
+            return;
+        }
+
+        if (!TryBuildActivitySchedule(out var start, out var end))
+        {
+            statusMessage = "Informe horários válidos. O término deve ser depois do início.";
+            isError = true;
+            return;
+        }
+
+        if (activityModel.LimiteParticipantes <= 0)
+        {
+            statusMessage = "A capacidade da atividade precisa ser maior que zero.";
+            isError = true;
+            return;
+        }
+
+        activityModel.EventoId = selectedActivityEventId;
+        activityModel.Horario = start;
+        activityModel.HorarioFim = end;
+
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.CreateActivityAsync(activityModel, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+            {
+                ResetActivityForm();
+                await LoadSelectedEventActivities();
+            }
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível cadastrar a atividade agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task HandleDeleteActivity(int activityId)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.DeleteActivityAsync(activityId, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+                await LoadSelectedEventActivities();
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível excluir a atividade agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private bool TryBuildActivitySchedule(out DateTime start, out DateTime end)
+    {
+        start = activityDateOnly.Date;
+        end = activityDateOnly.Date;
+
+        if (!TimeSpan.TryParse(activityStartTime, out var startTime) ||
+            !TimeSpan.TryParse(activityEndTime, out var endTime))
+            return false;
+
+        start = activityDateOnly.Date.Add(startTime);
+        end = activityDateOnly.Date.Add(endTime);
+
+        return end > start;
+    }
+
+    private void ResetActivityForm()
+    {
+        activityModel.Nome = string.Empty;
+        activityModel.Tipo = string.Empty;
+        activityModel.Descricao = string.Empty;
+        activityModel.LimiteParticipantes = 20;
+        activityStartTime = "18:00";
+        activityEndTime = "19:00";
+    }
+
+    private static string FormatActivitySchedule(ActivityViewModel activity)
+    {
+        if (activity.HorarioFim > activity.Horario)
+            return $"{activity.Horario:dd/MM/yyyy 'das' HH:mm} às {activity.HorarioFim:HH:mm}";
+
+        return activity.Horario.ToString("dd/MM/yyyy 'as' HH:mm");
+    }
+
     private async Task HandleDeleteReview(int reviewId)
     {
         if (string.IsNullOrWhiteSpace(Session.AdminToken))
@@ -2674,7 +2951,8 @@ else
             CapacidadeTotal = item.CapacidadeTotal,
             DataEvento = item.DataEvento,
             PrecoPadrao = item.PrecoPadrao,
-            ImagemUrl = item.ImagemUrl ?? string.Empty
+            ImagemUrl = item.ImagemUrl ?? string.Empty,
+            EhDestaque = item.EhDestaque
         };
         editDateOnly = item.DataEvento.Date;
         editTime = item.DataEvento.ToString("HH:mm");
@@ -3193,7 +3471,8 @@ else
                 CapacidadeTotal = editingEvent.CapacidadeTotal,
                 DataEvento = BuildEditEventDateTime(),
                 PrecoPadrao = editingEvent.PrecoPadrao,
-                ImagemUrl = editingEvent.ImagemUrl
+                ImagemUrl = editingEvent.ImagemUrl,
+                EhDestaque = editingEvent.EhDestaque
             }, Session.AdminToken);
 
             isError = !result.Success;
@@ -3210,6 +3489,35 @@ else
         {
             isError = true;
             statusMessage = "Não foi possível atualizar o evento agora.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task ToggleEventHighlight(EventViewModel item)
+    {
+        if (string.IsNullOrWhiteSpace(Session.AdminToken))
+            return;
+
+        statusMessage = string.Empty;
+        isError = false;
+        isBusy = true;
+
+        try
+        {
+            var result = await ApiClient.UpdateEventHighlightAsync(item.Id, !item.EhDestaque, Session.AdminToken);
+            isError = !result.Success;
+            statusMessage = result.Message;
+
+            if (result.Success)
+                await LoadAdminEvents();
+        }
+        catch
+        {
+            isError = true;
+            statusMessage = "Não foi possível atualizar o destaque do evento agora.";
         }
         finally
         {
@@ -3348,7 +3656,7 @@ else
     private void Logout()
     {
         Session.Logout();
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo("/eventos");
     }
 
     public async ValueTask DisposeAsync()

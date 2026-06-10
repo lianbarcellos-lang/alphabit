@@ -9,6 +9,12 @@ using Alphabit.API;
 using Alphabit.API.modelos;
 
 var builder = WebApplication.CreateBuilder(args);
+var railwayPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(railwayPort))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{railwayPort}");
+}
+
 builder.Services.AddHttpClient();
 var app = builder.Build();
 
@@ -93,7 +99,8 @@ using (var connection = new SqliteConnection(connectionString))
             DataEvento TEXT NOT NULL,
             PrecoPadrao REAL NOT NULL,
             ImagemUrl TEXT,
-            MapaImagemUrl TEXT NOT NULL DEFAULT ''
+            MapaImagemUrl TEXT NOT NULL DEFAULT '',
+            EhDestaque INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS Cupons (
@@ -127,7 +134,9 @@ using (var connection = new SqliteConnection(connectionString))
             EventoId INTEGER NOT NULL,
             Nome TEXT NOT NULL,
             Horario TEXT NOT NULL,
+            HorarioFim TEXT NOT NULL DEFAULT '',
             Tipo TEXT NOT NULL,
+            Descricao TEXT NOT NULL DEFAULT '',
             LimiteParticipantes INTEGER NOT NULL,
             FOREIGN KEY (EventoId) REFERENCES Eventos(Id) ON DELETE CASCADE
         );
@@ -136,6 +145,8 @@ using (var connection = new SqliteConnection(connectionString))
             Id INTEGER PRIMARY KEY AUTOINCREMENT,
             AtividadeId INTEGER NOT NULL,
             UsuarioCpf TEXT NOT NULL,
+            Quantidade INTEGER NOT NULL DEFAULT 1,
+            Assentos TEXT NOT NULL DEFAULT '',
             CriadoEm TEXT NOT NULL,
             FOREIGN KEY (AtividadeId) REFERENCES Atividades(Id) ON DELETE CASCADE,
             FOREIGN KEY (UsuarioCpf) REFERENCES Usuarios(Cpf) ON DELETE CASCADE
@@ -288,6 +299,11 @@ using (var connection = new SqliteConnection(connectionString))
     EnsureColumnExists(connection, "Eventos", "CidadeEvento", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "Artista", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Eventos", "GeneroMusical", "TEXT NOT NULL DEFAULT ''");
+    EnsureColumnExists(connection, "Eventos", "EhDestaque", "INTEGER NOT NULL DEFAULT 0");
+    EnsureColumnExists(connection, "Atividades", "HorarioFim", "TEXT NOT NULL DEFAULT ''");
+    EnsureColumnExists(connection, "Atividades", "Descricao", "TEXT NOT NULL DEFAULT ''");
+    EnsureColumnExists(connection, "InscricoesAtividades", "Quantidade", "INTEGER NOT NULL DEFAULT 1");
+    EnsureColumnExists(connection, "InscricoesAtividades", "Assentos", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "StandsEspacos", "TipoArea", "TEXT NOT NULL DEFAULT 'Stand'");
     EnsureColumnExists(connection, "StandsEspacos", "AreaX", "REAL NOT NULL DEFAULT 0");
     EnsureColumnExists(connection, "StandsEspacos", "AreaY", "REAL NOT NULL DEFAULT 0");
@@ -296,6 +312,11 @@ using (var connection = new SqliteConnection(connectionString))
     EnsureColumnExists(connection, "StandsEspacos", "AreaMetrosQuadrados", "REAL NOT NULL DEFAULT 0");
     EnsureColumnExists(connection, "StandsEspacos", "PrecoPorMetroQuadrado", "REAL NOT NULL DEFAULT 0");
     EnsureColumnExists(connection, "StandsEspacos", "PrecoFixo", "REAL NOT NULL DEFAULT 0");
+
+    connection.Execute(@"
+        UPDATE Atividades
+        SET HorarioFim = datetime(Horario, '+1 hour')
+        WHERE TRIM(COALESCE(HorarioFim, '')) = '';");
     EnsureColumnExists(connection, "Reservas", "TipoIngressoId", "INTEGER NULL");
     EnsureReservasSchema(connection);
     EnsureMusicGenresCatalog(connection);
@@ -837,8 +858,8 @@ app.MapPost("/api/eventos", (Evento evento, HttpContext httpContext) =>
     connection.Open();
 
     var eventId = connection.ExecuteScalar<int>(@"
-        INSERT INTO Eventos (Nome, LocalEvento, CidadeEvento, Artista, GeneroMusical, CapacidadeTotal, DataEvento, PrecoPadrao, ImagemUrl)
-        VALUES (@nome, @local, @cidade, @artista, @genero, @capacidade, @data, @preco, @imagem);
+        INSERT INTO Eventos (Nome, LocalEvento, CidadeEvento, Artista, GeneroMusical, CapacidadeTotal, DataEvento, PrecoPadrao, ImagemUrl, EhDestaque)
+        VALUES (@nome, @local, @cidade, @artista, @genero, @capacidade, @data, @preco, @imagem, @ehDestaque);
         SELECT last_insert_rowid();", new
     {
         nome = evento.Nome,
@@ -849,7 +870,8 @@ app.MapPost("/api/eventos", (Evento evento, HttpContext httpContext) =>
         capacidade = evento.CapacidadeTotal,
         data = evento.DataEvento.ToString("s"),
         preco = evento.PrecoPadrao,
-        imagem = string.IsNullOrWhiteSpace(evento.ImagemUrl) ? null : evento.ImagemUrl
+        imagem = string.IsNullOrWhiteSpace(evento.ImagemUrl) ? null : evento.ImagemUrl,
+        ehDestaque = evento.EhDestaque ? 1 : 0
     });
 
     EnsureDefaultTicketTypesForEvent(connection, eventId, evento.PrecoPadrao, evento.CapacidadeTotal);
@@ -894,11 +916,12 @@ app.MapGet("/api/admin/eventos", (HttpContext httpContext) =>
             e.DataEvento,
             e.PrecoPadrao,
             e.ImagemUrl,
+            e.EhDestaque,
             CAST(COALESCE(ROUND(AVG(a.Nota), 1), 0.0) AS REAL) AS MediaAvaliacoes,
             COUNT(a.Id) AS TotalAvaliacoes
         FROM Eventos e
         LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
-        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl
+        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl, e.EhDestaque
         ORDER BY e.DataEvento").ToList();
 
     return Results.Ok(eventos);
@@ -1582,7 +1605,8 @@ app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, Ht
         CapacidadeTotal = evento.CapacidadeTotal,
         DataEvento = evento.DataEvento,
         PrecoPadrao = evento.PrecoPadrao,
-        ImagemUrl = evento.ImagemUrl
+        ImagemUrl = evento.ImagemUrl,
+        EhDestaque = evento.EhDestaque
     }))
         return Results.BadRequest("Preencha os dados do evento corretamente.");
 
@@ -1599,7 +1623,8 @@ app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, Ht
             CapacidadeTotal = $capacidade,
             DataEvento = $data,
             PrecoPadrao = $preco,
-            ImagemUrl = $imagem
+            ImagemUrl = $imagem,
+            EhDestaque = $ehDestaque
         WHERE Id = $id", new
     {
         id,
@@ -1611,7 +1636,8 @@ app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, Ht
         capacidade = evento.CapacidadeTotal,
         data = evento.DataEvento.ToString("s"),
         preco = evento.PrecoPadrao,
-        imagem = string.IsNullOrWhiteSpace(evento.ImagemUrl) ? null : evento.ImagemUrl
+        imagem = string.IsNullOrWhiteSpace(evento.ImagemUrl) ? null : evento.ImagemUrl,
+        ehDestaque = evento.EhDestaque ? 1 : 0
     });
     if (updated == 0)
         return Results.NotFound("Evento não encontrado.");
@@ -1633,6 +1659,27 @@ app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, Ht
     }
 
     return Results.Ok("Evento atualizado com sucesso!");
+});
+
+app.MapPut("/api/admin/eventos/{id:int}/destaque", (int id, EventoAdminRequest request, HttpContext httpContext) =>
+{
+    var adminResult = EnsureAdminAccess(httpContext);
+    if (adminResult is not null)
+        return adminResult;
+
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+
+    var updated = connection.Execute(
+        "UPDATE Eventos SET EhDestaque = @ehDestaque WHERE Id = @id",
+        new { id, ehDestaque = request.EhDestaque ? 1 : 0 });
+
+    if (updated == 0)
+        return Results.NotFound("Evento não encontrado.");
+
+    return Results.Ok(request.EhDestaque
+        ? "Evento adicionado aos destaques."
+        : "Evento removido dos destaques.");
 });
 
 app.MapDelete("/api/admin/eventos/{id:int}", (int id, HttpContext httpContext) =>
@@ -1689,11 +1736,12 @@ app.MapGet("/api/eventos", () =>
             e.DataEvento,
             e.PrecoPadrao,
             e.ImagemUrl,
+            e.EhDestaque,
             CAST(COALESCE(ROUND(AVG(a.Nota), 1), 0.0) AS REAL) AS MediaAvaliacoes,
             COUNT(a.Id) AS TotalAvaliacoes
         FROM Eventos e
         LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
-        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl").ToList();
+        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl, e.EhDestaque").ToList();
 
     return Results.Ok(eventos);
 });
@@ -1716,12 +1764,13 @@ app.MapGet("/api/eventos/{id:int}", (int id) =>
             e.DataEvento,
             e.PrecoPadrao,
             e.ImagemUrl,
+            e.EhDestaque,
             CAST(COALESCE(ROUND(AVG(a.Nota), 1), 0.0) AS REAL) AS MediaAvaliacoes,
             COUNT(a.Id) AS TotalAvaliacoes
         FROM Eventos e
         LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
         WHERE e.Id = @id
-        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl",
+        GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl, e.EhDestaque",
         new { id });
 
     return evento is null ? Results.NotFound("Evento não encontrado.") : Results.Ok(evento);
@@ -1798,11 +1847,13 @@ app.MapGet("/api/eventos/{id:int}/atividades", (int id, HttpContext httpContext)
             a.EventoId,
             a.Nome,
             a.Horario,
+            a.HorarioFim,
             a.Tipo,
+            a.Descricao,
             a.LimiteParticipantes,
-            COUNT(i.Id) AS Inscritos,
+            COALESCE(SUM(CASE WHEN i.Id IS NULL THEN 0 ELSE COALESCE(i.Quantidade, 1) END), 0) AS Inscritos,
             MAX(a.LimiteParticipantes - (
-                SELECT COUNT(*) FROM InscricoesAtividades total
+                SELECT COALESCE(SUM(COALESCE(total.Quantidade, 1)), 0) FROM InscricoesAtividades total
                 WHERE total.AtividadeId = a.Id
             ), 0) AS VagasRestantes,
             CASE
@@ -1811,11 +1862,26 @@ app.MapGet("/api/eventos/{id:int}/atividades", (int id, HttpContext httpContext)
                     WHERE ui.AtividadeId = a.Id AND ui.UsuarioCpf = @usuarioCpf
                 ) THEN 1
                 ELSE 0
-            END AS UsuarioInscrito
+            END AS UsuarioInscrito,
+            COALESCE((
+                SELECT COALESCE(uiq.Quantidade, 1) FROM InscricoesAtividades uiq
+                WHERE uiq.AtividadeId = a.Id AND uiq.UsuarioCpf = @usuarioCpf
+                LIMIT 1
+            ), 0) AS UsuarioQuantidade,
+            COALESCE((
+                SELECT uiq.Assentos FROM InscricoesAtividades uiq
+                WHERE uiq.AtividadeId = a.Id AND uiq.UsuarioCpf = @usuarioCpf
+                LIMIT 1
+            ), '') AS UsuarioAssentos,
+            COALESCE((
+                SELECT GROUP_CONCAT(NULLIF(TRIM(total.Assentos), ''), ',')
+                FROM InscricoesAtividades total
+                WHERE total.AtividadeId = a.Id
+            ), '') AS AssentosOcupados
         FROM Atividades a
         LEFT JOIN InscricoesAtividades i ON i.AtividadeId = a.Id
         WHERE a.EventoId = @id
-        GROUP BY a.Id, a.EventoId, a.Nome, a.Horario, a.Tipo, a.LimiteParticipantes
+        GROUP BY a.Id, a.EventoId, a.Nome, a.Horario, a.HorarioFim, a.Tipo, a.Descricao, a.LimiteParticipantes
         ORDER BY a.Horario, a.Id",
         new { id, usuarioCpf }).ToList();
 
@@ -2126,13 +2192,15 @@ app.MapPost("/api/atividades", (Atividade atividade, HttpContext httpContext) =>
         return Results.BadRequest("Já existe uma atividade com este nome para o evento.");
 
     connection.Execute(@"
-        INSERT INTO Atividades (EventoId, Nome, Horario, Tipo, LimiteParticipantes)
-        VALUES (@EventoId, @Nome, @Horario, @Tipo, @LimiteParticipantes)", new
+        INSERT INTO Atividades (EventoId, Nome, Horario, HorarioFim, Tipo, Descricao, LimiteParticipantes)
+        VALUES (@EventoId, @Nome, @Horario, @HorarioFim, @Tipo, @Descricao, @LimiteParticipantes)", new
     {
         atividade.EventoId,
         Nome = atividade.Nome.Trim(),
         Horario = atividade.Horario.ToString("s"),
+        HorarioFim = atividade.HorarioFim.ToString("s"),
         Tipo = atividade.Tipo.Trim(),
+        Descricao = (atividade.Descricao ?? string.Empty).Trim(),
         atividade.LimiteParticipantes
     });
 
@@ -2141,9 +2209,16 @@ app.MapPost("/api/atividades", (Atividade atividade, HttpContext httpContext) =>
 
 app.MapPost("/api/atividades/{id:int}/inscricao", (int id, AtividadeInscricaoRequest request, HttpContext httpContext) =>
 {
+    request.UsuarioCpf = (request.UsuarioCpf ?? string.Empty).Trim();
+    request.Quantidade = Math.Clamp(request.Quantidade, 1, 2);
+    var requestedSeats = NormalizeSeatList(request.Assentos);
+
     var accessResult = EnsureUserAccess(httpContext, request.UsuarioCpf);
     if (accessResult is not null)
         return accessResult;
+
+    if (requestedSeats.Count != request.Quantidade)
+        return Results.BadRequest("Selecione a quantidade exata de assentos para a atividade.");
 
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
@@ -2158,47 +2233,90 @@ app.MapPost("/api/atividades/{id:int}/inscricao", (int id, AtividadeInscricaoReq
     using var transaction = connection.BeginTransaction();
 
     var atividade = connection.QueryFirstOrDefault<Atividade>(@"
-        SELECT Id, EventoId, Nome, Horario, Tipo, LimiteParticipantes
+        SELECT Id, EventoId, Nome, Horario, HorarioFim, Tipo, Descricao, LimiteParticipantes
         FROM Atividades
         WHERE Id = @id", new { id }, transaction);
 
     if (atividade is null)
         return Results.NotFound("Atividade não encontrada.");
 
-    var inscricaoExiste = connection.ExecuteScalar<int>(@"
-        SELECT COUNT(*) FROM InscricoesAtividades
+    var quantidadeAtual = connection.ExecuteScalar<int>(@"
+        SELECT COALESCE(Quantidade, 1) FROM InscricoesAtividades
         WHERE AtividadeId = @id AND UsuarioCpf = @cpf",
         new { id, cpf = request.UsuarioCpf }, transaction);
 
-    if (inscricaoExiste > 0)
-        return Results.BadRequest("Usuário já inscrito nesta atividade.");
+    var totalUsuarioOutrasAtividades = connection.ExecuteScalar<int>(@"
+        SELECT COALESCE(SUM(COALESCE(i.Quantidade, 1)), 0)
+        FROM InscricoesAtividades i
+        INNER JOIN Atividades a ON a.Id = i.AtividadeId
+        WHERE a.EventoId = @eventoId
+          AND i.UsuarioCpf = @cpf
+          AND i.AtividadeId <> @id",
+        new { eventoId = atividade.EventoId, id, cpf = request.UsuarioCpf }, transaction);
+
+    if (totalUsuarioOutrasAtividades + request.Quantidade > 2)
+        return Results.BadRequest("Cada usuário pode reservar no máximo 2 vagas em atividades deste evento.");
 
     var inscritos = connection.ExecuteScalar<int>(
-        "SELECT COUNT(*) FROM InscricoesAtividades WHERE AtividadeId = @id",
-        new { id }, transaction);
+        "SELECT COALESCE(SUM(COALESCE(Quantidade, 1)), 0) FROM InscricoesAtividades WHERE AtividadeId = @id AND UsuarioCpf <> @cpf",
+        new { id, cpf = request.UsuarioCpf }, transaction);
 
-    if (inscritos >= atividade.LimiteParticipantes)
+    if (inscritos + request.Quantidade > atividade.LimiteParticipantes)
         return Results.BadRequest("Atividade sem vagas disponiveis.");
+
+    var occupiedSeats = connection.Query<string>(@"
+        SELECT Assentos
+        FROM InscricoesAtividades
+        WHERE AtividadeId = @id AND UsuarioCpf <> @cpf AND TRIM(Assentos) <> ''",
+        new { id, cpf = request.UsuarioCpf }, transaction)
+        .SelectMany(NormalizeSeatList)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    if (requestedSeats.Any(occupiedSeats.Contains))
+        return Results.BadRequest("Um ou mais assentos selecionados já foram reservados.");
+
+    var normalizedSeats = string.Join(", ", requestedSeats);
 
     try
     {
-        connection.Execute(@"
-            INSERT INTO InscricoesAtividades (AtividadeId, UsuarioCpf, CriadoEm)
-            VALUES (@id, @cpf, @criadoEm)", new
+        if (quantidadeAtual > 0)
         {
-            id,
-            cpf = request.UsuarioCpf,
-            criadoEm = DateTime.UtcNow.ToString("s")
-        }, transaction);
+            connection.Execute(@"
+                UPDATE InscricoesAtividades
+                SET Quantidade = @quantidade,
+                    Assentos = @assentos
+                WHERE AtividadeId = @id AND UsuarioCpf = @cpf", new
+            {
+                id,
+                cpf = request.UsuarioCpf,
+                quantidade = request.Quantidade,
+                assentos = normalizedSeats
+            }, transaction);
+        }
+        else
+        {
+            connection.Execute(@"
+                INSERT INTO InscricoesAtividades (AtividadeId, UsuarioCpf, Quantidade, Assentos, CriadoEm)
+                VALUES (@id, @cpf, @quantidade, @assentos, @criadoEm)", new
+            {
+                id,
+                cpf = request.UsuarioCpf,
+                quantidade = request.Quantidade,
+                assentos = normalizedSeats,
+                criadoEm = DateTime.UtcNow.ToString("s")
+            }, transaction);
+        }
     }
     catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
     {
-        return Results.BadRequest("Usuário já inscrito nesta atividade.");
+        return Results.BadRequest("Não foi possível atualizar a inscrição nesta atividade.");
     }
 
     transaction.Commit();
 
-    return Results.Ok("Inscrição realizada com sucesso!");
+    return Results.Ok(quantidadeAtual > 0
+        ? "Inscrição atualizada com sucesso!"
+        : "Inscrição realizada com sucesso!");
 });
 
 app.MapDelete("/api/atividades/{id:int}/inscricao/{usuarioCpf}", (int id, string usuarioCpf, HttpContext httpContext) =>
@@ -3342,8 +3460,8 @@ static void EnsureDefaultActivitiesForEvent(
     foreach (var atividade in atividades)
     {
         connection.Execute(@"
-            INSERT INTO Atividades (EventoId, Nome, Horario, Tipo, LimiteParticipantes)
-            SELECT @EventoId, @Nome, @Horario, @Tipo, @LimiteParticipantes
+            INSERT INTO Atividades (EventoId, Nome, Horario, HorarioFim, Tipo, Descricao, LimiteParticipantes)
+            SELECT @EventoId, @Nome, @Horario, @HorarioFim, @Tipo, @Descricao, @LimiteParticipantes
             WHERE NOT EXISTS (
                 SELECT 1 FROM Atividades
                 WHERE EventoId = @EventoId AND lower(Nome) = lower(@Nome)
@@ -3352,7 +3470,9 @@ static void EnsureDefaultActivitiesForEvent(
             atividade.EventoId,
             atividade.Nome,
             Horario = atividade.Horario.ToString("s"),
+            HorarioFim = atividade.HorarioFim.ToString("s"),
             atividade.Tipo,
+            Descricao = atividade.Descricao,
             atividade.LimiteParticipantes
         });
     }
@@ -3403,7 +3523,9 @@ static Atividade BuildActivity(int eventId, string name, DateTime schedule, stri
         EventoId = eventId,
         Nome = name,
         Horario = schedule,
+        HorarioFim = schedule.AddHours(1),
         Tipo = type,
+        Descricao = string.Empty,
         LimiteParticipantes = participantLimit
     };
 }
@@ -3414,7 +3536,19 @@ static bool IsValidActivity(Atividade atividade)
            !string.IsNullOrWhiteSpace(atividade.Nome) &&
            !string.IsNullOrWhiteSpace(atividade.Tipo) &&
            atividade.Horario > DateTime.MinValue &&
+           atividade.HorarioFim >= atividade.Horario &&
            atividade.LimiteParticipantes > 0;
+}
+
+static List<string> NormalizeSeatList(string? seats)
+{
+    return (seats ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(seat => seat.ToUpperInvariant())
+        .Where(seat => seat.Length is > 0 and <= 8)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(seat => seat, StringComparer.OrdinalIgnoreCase)
+        .ToList();
 }
 
 static void EnsureDemoStands(SqliteConnection connection)

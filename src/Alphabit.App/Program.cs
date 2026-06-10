@@ -2,6 +2,11 @@ using Alphabit.App.Components;
 using Alphabit.App.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var railwayPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(railwayPort))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{railwayPort}");
+}
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -20,6 +25,7 @@ builder.Services.AddHttpClient<AlphabitApiClient>(client =>
 builder.Services.AddScoped<UserSessionState>();
 builder.Services.AddScoped<CartState>();
 builder.Services.AddScoped<AuthOverlayState>();
+builder.Services.AddScoped<EventSearchState>();
 
 var app = builder.Build();
 

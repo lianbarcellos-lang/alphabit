@@ -6,6 +6,8 @@ public class Atividade
     public int EventoId { get; set; }
     public string Nome { get; set; } = string.Empty;
     public DateTime Horario { get; set; }
+    public DateTime HorarioFim { get; set; }
     public string Tipo { get; set; } = string.Empty;
+    public string Descricao { get; set; } = string.Empty;
     public int LimiteParticipantes { get; set; }
 }

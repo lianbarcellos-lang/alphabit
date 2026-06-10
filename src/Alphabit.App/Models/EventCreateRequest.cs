@@ -11,4 +11,5 @@ public class EventCreateRequest
     public DateTime DataEvento { get; set; } = DateTime.Now.AddDays(10);
     public decimal PrecoPadrao { get; set; }
     public string? ImagemUrl { get; set; }
+    public bool EhDestaque { get; set; }
 }

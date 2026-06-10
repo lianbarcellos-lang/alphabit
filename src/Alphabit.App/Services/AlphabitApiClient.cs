@@ -180,11 +180,11 @@ public class AlphabitApiClient(HttpClient httpClient)
         };
     }
 
-    public async Task<ApiResult> SignUpForActivityAsync(int activityId, string userCpf)
+    public async Task<ApiResult> SignUpForActivityAsync(int activityId, string userCpf, int quantity, string seats)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, $"api/atividades/{activityId}/inscricao")
         {
-            Content = JsonContent.Create(new ActivitySignupRequest { UsuarioCpf = userCpf })
+            Content = JsonContent.Create(new ActivitySignupRequest { UsuarioCpf = userCpf, Quantidade = quantity, Assentos = seats })
         };
         message.Headers.Add("X-User-Cpf", userCpf);
 
@@ -210,6 +210,39 @@ public class AlphabitApiClient(HttpClient httpClient)
         {
             Success = response.IsSuccessStatusCode,
             Message = TrimMessage(content, response.IsSuccessStatusCode ? "Inscrição cancelada com sucesso." : "Não foi possível cancelar a inscrição.")
+        };
+    }
+
+    public async Task<ApiResult> CreateActivityAsync(ActivityCreateRequest request, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, "api/atividades")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Atividade criada com sucesso." : "Não foi possível criar a atividade.")
+        };
+    }
+
+    public async Task<ApiResult> DeleteActivityAsync(int activityId, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Delete, $"api/admin/atividades/{activityId}");
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, response.IsSuccessStatusCode ? "Atividade removida com sucesso." : "Não foi possível remover a atividade.")
         };
     }
 
@@ -474,6 +507,24 @@ public class AlphabitApiClient(HttpClient httpClient)
         {
             Success = response.IsSuccessStatusCode,
             Message = TrimMessage(content, response.IsSuccessStatusCode ? "Evento atualizado com sucesso." : "Não foi possível atualizar o evento.")
+        };
+    }
+
+    public async Task<ApiResult> UpdateEventHighlightAsync(int id, bool isHighlighted, string adminToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Put, $"api/admin/eventos/{id}/destaque")
+        {
+            Content = JsonContent.Create(new AdminEventUpdateRequest { EhDestaque = isHighlighted })
+        };
+        message.Headers.Add("X-Admin-Token", adminToken);
+
+        var response = await httpClient.SendAsync(message);
+        var content = await response.Content.ReadAsStringAsync();
+
+        return new ApiResult
+        {
+            Success = response.IsSuccessStatusCode,
+            Message = TrimMessage(content, isHighlighted ? "Evento adicionado aos destaques." : "Evento removido dos destaques.")
         };
     }
 

@@ -3,9 +3,10 @@
 @inject UserSessionState Session
 @inject CartState Cart
 @inject NavigationManager Navigation
+@inject EventSearchState EventSearch
 
 <nav class="site-nav">
-    <a class="navbar-brand" href="">
+    <a class="navbar-brand" href="eventos">
         <span class="brand-mark">G</span>
         <span class="brand-copy">
             <strong>GeekTop</strong>
@@ -15,13 +16,14 @@
 
     <div class="site-nav__search">
         <span class="bi bi-search-nav-menu" aria-hidden="true"></span>
-        <input class="site-nav__input" value="Anime, games, cosplay e cultura pop" readonly />
+        <input class="site-nav__input"
+               placeholder="Anime, games, cosplay e cultura pop"
+               value="@SearchText"
+               @oninput="HandleSearchInput"
+               aria-label="Pesquisar eventos" />
     </div>
 
     <div class="site-nav__links">
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
-        <NavLink class="nav-link" href="eventos">Eventos</NavLink>
-
         @if (Session.IsAuthenticated && !Session.IsAdmin)
         {
             <NavLink class="nav-link" href="minha-conta">Minha conta</NavLink>
@@ -31,6 +33,7 @@
 
         @if (Session.IsAdmin)
         {
+            <NavLink class="nav-link" href="eventos">Eventos</NavLink>
             <NavLink class="nav-link" href="admin">Painel</NavLink>
         }
     </div>
@@ -60,6 +63,20 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private string SearchText => EventSearch.SearchText;
+
+    private void HandleSearchInput(ChangeEventArgs args)
+    {
+        EventSearch.SetSearch(args.Value?.ToString());
+
+        var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (!currentPath.StartsWith("eventos", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(EventSearch.SearchText))
+        {
+            Navigation.NavigateTo("/eventos");
+        }
+    }
+
     private void OpenLogin()
     {
         AuthOverlay.OpenLogin();
@@ -73,7 +90,7 @@
     private void Logout()
     {
         Session.Logout();
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo("/eventos");
     }
 
     public void Dispose()

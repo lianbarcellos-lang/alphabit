@@ -1,6 +1,7 @@
 @page "/eventos/{Id:int}"
 @inject AlphabitApiClient ApiClient
 @inject AuthOverlayState AuthOverlay
+@inject CartState Cart
 @inject UserSessionState Session
 @inject NavigationManager Navigation
 
@@ -41,45 +42,159 @@ else
             </div>
         </section>
 
-        <div class="event-detail-grid">
-            <section class="event-detail-panel">
-                <span class="eyebrow">Sobre o evento</span>
-                <h2>Uma página feita para orientar a reserva</h2>
-                <p>@GetDescription(eventItem)</p>
-
-                <div class="event-detail-info">
-                    <article>
-                        <strong>Local</strong>
-                        <span>@eventItem.LocalEvento</span>
-                    </article>
-                    <article>
-                        <strong>Cidade</strong>
-                        <span>@eventItem.CidadeEvento</span>
-                    </article>
-                    <article>
-                        <strong>Capacidade</strong>
-                        <span>@eventItem.CapacidadeTotal lugares</span>
-                    </article>
-                    <article>
-                        <strong>Categoria</strong>
-                        <span>@eventItem.GeneroMusical</span>
-                    </article>
+        <section id="compra" class="event-detail-panel event-purchase-panel">
+            <div class="event-activity-head">
+                <div>
+                    <span class="eyebrow">Compra</span>
+                    <h2>Escolha seu ingresso</h2>
                 </div>
-            </section>
+                <span>Entrada geral</span>
+            </div>
 
-            <aside class="event-detail-panel event-detail-panel--buy">
-                <span class="eyebrow">Ingressos</span>
-                <h2>Escolha seu ingresso e siga para o checkout</h2>
-                <div class="event-detail-price-row">
-                    <div class="event-detail-price">R$ @eventItem.PrecoPadrao.ToString("0.00")</div>
-                    <span>@FormatRating(eventItem)</span>
-                </div>
-                <p>Garanta sua entrada no evento. Vagas limitadas de workshops, torneios e meet and greet ficam na programação interna.</p>
+            @if (!string.IsNullOrWhiteSpace(purchaseStatusMessage))
+            {
+                <div class="status-box @(purchaseStatusIsError ? "status-box--error" : "status-box--success")">@purchaseStatusMessage</div>
+            }
 
-                <button class="secondary-button" type="button" @onclick="GoToSeats">Comprar agora</button>
-                <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo("/eventos")'>Voltar para agenda</button>
-            </aside>
-        </div>
+            <div class="event-purchase-grid">
+                <article class="event-purchase-activities">
+                    <div class="event-activity-head">
+                        <div>
+                            <span class="eyebrow">Programação interna</span>
+                            <h3>Atividades do evento</h3>
+                        </div>
+                        <span>@activities.Count atividade(s)</span>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(activityStatusMessage))
+                    {
+                        <div class="status-box @(activityStatusIsError ? "status-box--error" : "status-box--success")">@activityStatusMessage</div>
+                    }
+
+                    @if (activities.Count == 0)
+                    {
+                        <p>A programação deste evento ainda está sendo preparada.</p>
+                    }
+                    else
+                    {
+                        <div class="event-activity-list">
+                            @foreach (var activity in activities)
+                            {
+                                <article class="event-activity-card">
+                                    <div>
+                                        <span class="pill event-activity-card__type">@activity.Tipo</span>
+                                        <h3>@activity.Nome</h3>
+                                        <p>@FormatActivitySchedule(activity)</p>
+                                        @if (!string.IsNullOrWhiteSpace(activity.Descricao))
+                                        {
+                                            <p>@activity.Descricao</p>
+                                        }
+                                        <p>@activity.VagasRestantes vaga(s) restante(s) de @activity.LimiteParticipantes</p>
+                                    </div>
+                                    @if (activity.UsuarioInscrito)
+                                    {
+                                        <div class="event-activity-actions">
+                                            <span class="event-activity-selected">Inscrito: @activity.UsuarioQuantidade vaga(s)</span>
+                                            @if (!string.IsNullOrWhiteSpace(activity.UsuarioAssentos))
+                                            {
+                                                <span class="event-activity-selected">Cadeiras: @activity.UsuarioAssentos</span>
+                                            }
+                                            <span class="event-activity-quantity-label">Lugares</span>
+                                            <div class="quantity-control activity-quantity-control">
+                                                <button type="button" @onclick="() => DecreaseActivityQuantity(activity)" disabled="@(activityIsBusy || GetActivityQuantity(activity) <= 1)">-</button>
+                                                <strong>@GetActivityQuantity(activity)</strong>
+                                                <button type="button" @onclick="() => IncreaseActivityQuantity(activity)" disabled="@(activityIsBusy || GetActivityQuantity(activity) >= GetMaxActivityQuantity(activity))">+</button>
+                                            </div>
+                                            <button class="ghost-button"
+                                                    type="button"
+                                                    disabled="@activityIsBusy"
+                                                    @onclick="() => OpenSeatSelection(activity)">
+                                                Atualizar
+                                            </button>
+                                            <button class="ghost-button ghost-button--danger"
+                                                    type="button"
+                                                    disabled="@activityIsBusy"
+                                                    @onclick="() => CancelActivitySignup(activity.Id)">
+                                                Cancelar inscrição
+                                            </button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="event-activity-actions">
+                                            <span class="event-activity-quantity-label">Lugares</span>
+                                            <div class="quantity-control activity-quantity-control">
+                                                <button type="button" @onclick="() => DecreaseActivityQuantity(activity)" disabled="@(activityIsBusy || GetActivityQuantity(activity) <= 1)">-</button>
+                                                <strong>@GetActivityQuantity(activity)</strong>
+                                                <button type="button" @onclick="() => IncreaseActivityQuantity(activity)" disabled="@(activityIsBusy || GetActivityQuantity(activity) >= GetMaxActivityQuantity(activity))">+</button>
+                                            </div>
+                                            <button class="ghost-button"
+                                                    type="button"
+                                                    disabled="@(activity.VagasRestantes <= 0 || GetRemainingActivitySlotsForUser(activity) <= 0 || activityIsBusy)"
+                                                    @onclick="() => OpenSeatSelection(activity)">
+                                                @(activity.VagasRestantes <= 0 ? "Esgotado" : "Inscrever")
+                                            </button>
+                                        </div>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    }
+                </article>
+
+                <article class="event-purchase-summary">
+                    <h3>Seu pedido</h3>
+                    <p>Escolha o tipo de ingresso e a quantidade. Cada CPF pode reservar até 2 ingressos por evento.</p>
+
+                    <div class="summary-row">
+                        <span>Tipo</span>
+                        <strong>@SelectedTicketTypeName</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Valor unitário</span>
+                        <strong>R$ @SelectedTicketPrice.ToString("0.00")</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Reserva</span>
+                        <strong>Entrada sem assento marcado</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Quantidade</span>
+                        <div class="quantity-control">
+                            <button type="button" @onclick="DecreaseQuantity" disabled="@(quantity <= 1)">-</button>
+                            <strong>@quantity</strong>
+                            <button type="button" @onclick="IncreaseQuantity" disabled="@(quantity >= 2)">+</button>
+                        </div>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total</span>
+                        <strong>R$ @((SelectedTicketPrice * quantity).ToString("0.00"))</strong>
+                    </div>
+
+                    @if (ticketTypes.Count > 0)
+                    {
+                        <div class="ticket-type-list" aria-label="Tipos de ingresso">
+                            @foreach (var ticketType in ticketTypes)
+                            {
+                                <button class="ticket-type-card @(selectedTicketTypeId == ticketType.Id ? "ticket-type-card--active" : string.Empty)"
+                                        type="button"
+                                        @onclick="() => SelectTicketType(ticketType.Id)">
+                                    <span>
+                                        <strong>@ticketType.Nome</strong>
+                                        <small>@ticketType.Beneficios</small>
+                                    </span>
+                                    <span>R$ @ticketType.Preco.ToString("0.00")</span>
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <button class="secondary-button" type="button" @onclick="AddSelectionToCart">
+                        Adicionar ao carrinho
+                    </button>
+                </article>
+            </div>
+        </section>
 
         <section class="event-detail-panel event-guest-panel">
             <div class="event-activity-head">
@@ -109,60 +224,6 @@ else
                                 <h3>@guest.Nome</h3>
                                 <p>@guest.Bio</p>
                             </div>
-                        </article>
-                    }
-                </div>
-            }
-        </section>
-
-        <section class="event-detail-panel event-activity-panel">
-            <div class="event-activity-head">
-                <div>
-                    <span class="eyebrow">Programação interna</span>
-                    <h2>Atividades do evento</h2>
-                </div>
-                <span>@activities.Count atividade(s)</span>
-            </div>
-
-            @if (!string.IsNullOrWhiteSpace(activityStatusMessage))
-            {
-                <div class="status-box @(activityStatusIsError ? "status-box--error" : "status-box--success")">@activityStatusMessage</div>
-            }
-
-            @if (activities.Count == 0)
-            {
-                <p>A programação deste evento ainda está sendo preparada.</p>
-            }
-            else
-            {
-                <div class="event-activity-list">
-                    @foreach (var activity in activities)
-                    {
-                        <article class="event-activity-card">
-                            <div>
-                                <span class="pill event-activity-card__type">@activity.Tipo</span>
-                                <h3>@activity.Nome</h3>
-                                <p>@activity.Horario.ToString("dd/MM/yyyy 'as' HH:mm")</p>
-                                <p>@activity.VagasRestantes vaga(s) restante(s) de @activity.LimiteParticipantes</p>
-                            </div>
-                            @if (activity.UsuarioInscrito)
-                            {
-                                <button class="ghost-button"
-                                        type="button"
-                                        disabled="@activityIsBusy"
-                                        @onclick="() => CancelActivitySignup(activity.Id)">
-                                    Cancelar inscrição
-                                </button>
-                            }
-                            else
-                            {
-                                <button class="ghost-button"
-                                        type="button"
-                                        disabled="@(activity.VagasRestantes <= 0 || activityIsBusy)"
-                                        @onclick="() => SignUpForActivity(activity.Id)">
-                                    @(activity.VagasRestantes <= 0 ? "Esgotado" : "Inscrever")
-                                </button>
-                            }
                         </article>
                     }
                 </div>
@@ -261,6 +322,49 @@ else
             }
         </section>
     </div>
+
+    @if (seatSelectionActivity is not null)
+    {
+        <div class="activity-seat-modal" role="dialog" aria-modal="true" aria-labelledby="activitySeatTitle">
+            <div class="activity-seat-modal__panel">
+                <div class="event-activity-head">
+                    <div>
+                        <span class="eyebrow">Escolha o assento</span>
+                        <h2 id="activitySeatTitle">@seatSelectionActivity.Nome</h2>
+                    </div>
+                    <button class="ghost-button" type="button" @onclick="CloseSeatSelection">Fechar</button>
+                </div>
+
+                <p>Selecione @GetActivityQuantity(seatSelectionActivity) cadeira(s) para confirmar sua inscrição.</p>
+
+                <div class="activity-seat-stage">PALCO / ATIVIDADE</div>
+
+                <div class="activity-seat-grid" aria-label="Cadeiras disponíveis">
+                    @foreach (var seat in BuildActivitySeats(seatSelectionActivity))
+                    {
+                        var isSelected = selectedActivitySeats.Contains(seat);
+                        var isOccupied = IsActivitySeatOccupied(seatSelectionActivity, seat);
+                        <button class="activity-seat @(isSelected ? "activity-seat--selected" : null) @(isOccupied ? "activity-seat--occupied" : null)"
+                                type="button"
+                                disabled="@isOccupied"
+                                @onclick="() => ToggleActivitySeat(seatSelectionActivity, seat)">
+                            @seat
+                        </button>
+                    }
+                </div>
+
+                <div class="activity-seat-modal__footer">
+                    <span>@selectedActivitySeats.Count de @GetActivityQuantity(seatSelectionActivity) cadeira(s) selecionada(s)</span>
+                    <button class="secondary-button"
+                            type="button"
+                            disabled="@(activityIsBusy || selectedActivitySeats.Count != GetActivityQuantity(seatSelectionActivity))"
+                            @onclick="ConfirmSeatSelection">
+                        Confirmar inscrição
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 }
 
 @code {
@@ -271,17 +375,29 @@ else
     private readonly List<GuestViewModel> guests = [];
     private readonly List<EventReviewViewModel> reviews = [];
     private readonly List<StandSpaceViewModel> stands = [];
+    private readonly List<TicketTypeViewModel> ticketTypes = [];
+    private readonly Dictionary<int, int> activityQuantities = [];
+    private readonly HashSet<string> selectedActivitySeats = new(StringComparer.OrdinalIgnoreCase);
+    private ActivityViewModel? seatSelectionActivity;
     private bool isLoading = true;
     private bool activityIsBusy;
     private bool activityStatusIsError;
     private string activityStatusMessage = string.Empty;
+    private bool purchaseStatusIsError;
+    private string purchaseStatusMessage = string.Empty;
+    private int? selectedTicketTypeId;
+    private int quantity = 1;
+
+    private TicketTypeViewModel? SelectedTicketType => ticketTypes.FirstOrDefault(item => item.Id == selectedTicketTypeId);
+    private decimal SelectedTicketPrice => SelectedTicketType?.Preco ?? eventItem?.PrecoPadrao ?? 0;
+    private string SelectedTicketTypeName => SelectedTicketType?.Nome ?? "Normal";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             eventItem = await ApiClient.GetEventByIdAsync(Id);
-            await Task.WhenAll(LoadActivities(), LoadGuests(), LoadReviews(), LoadStands());
+            await Task.WhenAll(LoadTicketTypes(), LoadActivities(), LoadGuests(), LoadReviews(), LoadStands());
         }
         finally
         {
@@ -289,26 +405,23 @@ else
         }
     }
 
-    private void GoToSeats()
-    {
-        if (Session.CurrentUser is null)
-        {
-            AuthOverlay.OpenLogin();
-            return;
-        }
-
-        Navigation.NavigateTo($"/eventos/{Id}/assentos");
-    }
-
-    private static string GetDescription(EventViewModel item)
-    {
-        return $"Prepare-se para {item.Nome}: uma experiência de {item.GeneroMusical.ToLowerInvariant()} com atrações, comunidade e fluxo de reserva direto para o público geek.";
-    }
-
     private async Task LoadActivities()
     {
         activities.Clear();
         activities.AddRange(await ApiClient.GetActivitiesAsync(Id, Session.CurrentUser?.Cpf));
+
+        foreach (var activity in activities)
+        {
+            var preferredQuantity = activity.UsuarioQuantidade > 0 ? activity.UsuarioQuantidade : 1;
+            activityQuantities[activity.Id] = Math.Clamp(preferredQuantity, 1, GetMaxActivityQuantity(activity));
+        }
+    }
+
+    private async Task LoadTicketTypes()
+    {
+        ticketTypes.Clear();
+        ticketTypes.AddRange(await ApiClient.GetTicketTypesAsync(Id));
+        selectedTicketTypeId = ticketTypes.FirstOrDefault()?.Id;
     }
 
     private async Task LoadGuests()
@@ -367,6 +480,14 @@ else
         return $"{new string('*', safeRating)}{new string('-', 5 - safeRating)} {safeRating}/5";
     }
 
+    private static string FormatActivitySchedule(ActivityViewModel activity)
+    {
+        if (activity.HorarioFim > activity.Horario)
+            return $"{activity.Horario:dd/MM/yyyy 'das' HH:mm} às {activity.HorarioFim:HH:mm}";
+
+        return activity.Horario.ToString("dd/MM/yyyy 'as' HH:mm");
+    }
+
     private static string FormatRating(EventViewModel item)
     {
         return item.TotalAvaliacoes == 0
@@ -374,11 +495,72 @@ else
             : $"{item.MediaAvaliacoes:0.0}/5 ({item.TotalAvaliacoes})";
     }
 
-    private async Task SignUpForActivity(int activityId)
+    private void AddSelectionToCart()
     {
         if (Session.CurrentUser is null)
         {
             AuthOverlay.OpenLogin();
+            return;
+        }
+
+        if (eventItem is null || quantity <= 0)
+            return;
+
+        Cart.AddEvent(eventItem, quantity, SelectedTicketType);
+        Navigation.NavigateTo("/carrinho");
+    }
+
+    private void SelectTicketType(int ticketTypeId)
+    {
+        selectedTicketTypeId = ticketTypeId;
+        purchaseStatusIsError = false;
+        purchaseStatusMessage = string.Empty;
+    }
+
+    private void IncreaseQuantity()
+    {
+        quantity = Math.Min(2, quantity + 1);
+        ClampActivityQuantitiesToTicketQuantity();
+    }
+
+    private void DecreaseQuantity()
+    {
+        quantity = Math.Max(1, quantity - 1);
+        ClampActivityQuantitiesToTicketQuantity();
+    }
+
+    private void OpenSeatSelection(ActivityViewModel activity)
+    {
+        if (Session.CurrentUser is null)
+        {
+            AuthOverlay.OpenLogin();
+            return;
+        }
+
+        seatSelectionActivity = activity;
+        selectedActivitySeats.Clear();
+
+        foreach (var seat in SplitSeats(activity.UsuarioAssentos).Take(GetActivityQuantity(activity)))
+        {
+            selectedActivitySeats.Add(seat);
+        }
+    }
+
+    private void CloseSeatSelection()
+    {
+        seatSelectionActivity = null;
+        selectedActivitySeats.Clear();
+    }
+
+    private async Task ConfirmSeatSelection()
+    {
+        if (seatSelectionActivity is null || Session.CurrentUser is null)
+            return;
+
+        if (selectedActivitySeats.Count != GetActivityQuantity(seatSelectionActivity))
+        {
+            activityStatusIsError = true;
+            activityStatusMessage = "Selecione a quantidade exata de cadeiras antes de confirmar.";
             return;
         }
 
@@ -388,10 +570,18 @@ else
 
         try
         {
-            var result = await ApiClient.SignUpForActivityAsync(activityId, Session.CurrentUser.Cpf);
+            var selectedSeats = string.Join(", ", selectedActivitySeats.OrderBy(seat => seat, StringComparer.OrdinalIgnoreCase));
+            var result = await ApiClient.SignUpForActivityAsync(
+                seatSelectionActivity.Id,
+                Session.CurrentUser.Cpf,
+                GetActivityQuantity(seatSelectionActivity),
+                selectedSeats);
+
             activityStatusIsError = !result.Success;
             activityStatusMessage = result.Message;
             await LoadActivities();
+            if (result.Success)
+                CloseSeatSelection();
         }
         catch
         {
@@ -402,6 +592,58 @@ else
         {
             activityIsBusy = false;
         }
+    }
+
+    private static IReadOnlyList<string> BuildActivitySeats(ActivityViewModel activity)
+    {
+        var totalSeats = Math.Max(0, activity.LimiteParticipantes);
+        var seats = new List<string>(totalSeats);
+
+        for (var index = 0; index < totalSeats; index++)
+        {
+            var row = (char)('A' + (index / 10));
+            var number = (index % 10) + 1;
+            seats.Add($"{row}{number}");
+        }
+
+        return seats;
+    }
+
+    private bool IsActivitySeatOccupied(ActivityViewModel activity, string seat)
+    {
+        var userSeats = SplitSeats(activity.UsuarioAssentos).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (userSeats.Contains(seat))
+            return false;
+
+        return SplitSeats(activity.AssentosOcupados).Contains(seat, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void ToggleActivitySeat(ActivityViewModel activity, string seat)
+    {
+        if (IsActivitySeatOccupied(activity, seat))
+            return;
+
+        if (selectedActivitySeats.Contains(seat))
+        {
+            selectedActivitySeats.Remove(seat);
+            return;
+        }
+
+        if (selectedActivitySeats.Count >= GetActivityQuantity(activity))
+            return;
+
+        selectedActivitySeats.Add(seat);
+    }
+
+    private static IReadOnlyList<string> SplitSeats(string? seats)
+    {
+        return (seats ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(seat => seat.ToUpperInvariant())
+            .Where(seat => !string.IsNullOrWhiteSpace(seat))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(seat => seat, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private async Task CancelActivitySignup(int activityId)
@@ -431,6 +673,51 @@ else
         finally
         {
             activityIsBusy = false;
+        }
+    }
+
+    private int GetActivityQuantity(ActivityViewModel activity)
+    {
+        return activityQuantities.TryGetValue(activity.Id, out var selectedQuantity)
+            ? Math.Clamp(selectedQuantity, 1, GetMaxActivityQuantity(activity))
+            : 1;
+    }
+
+    private int GetMaxActivityQuantity(ActivityViewModel activity)
+    {
+        var currentQuantity = Math.Max(0, activity.UsuarioQuantidade);
+        var availableForThisActivity = Math.Max(0, activity.VagasRestantes + currentQuantity);
+        var availableForUser = GetRemainingActivitySlotsForUser(activity) + currentQuantity;
+        return Math.Max(1, Math.Min(quantity, Math.Min(availableForThisActivity, availableForUser)));
+    }
+
+    private int GetRemainingActivitySlotsForUser(ActivityViewModel? ignoredActivity = null)
+    {
+        var usedSlots = activities
+            .Where(activity => ignoredActivity is null || activity.Id != ignoredActivity.Id)
+            .Sum(activity => Math.Max(0, activity.UsuarioQuantidade));
+
+        return Math.Max(0, quantity - usedSlots);
+    }
+
+    private void IncreaseActivityQuantity(ActivityViewModel activity)
+    {
+        activityQuantities[activity.Id] = Math.Min(GetMaxActivityQuantity(activity), GetActivityQuantity(activity) + 1);
+    }
+
+    private void DecreaseActivityQuantity(ActivityViewModel activity)
+    {
+        activityQuantities[activity.Id] = Math.Max(1, GetActivityQuantity(activity) - 1);
+    }
+
+    private void ClampActivityQuantitiesToTicketQuantity()
+    {
+        foreach (var activity in activities)
+        {
+            if (!activityQuantities.ContainsKey(activity.Id))
+                continue;
+
+            activityQuantities[activity.Id] = Math.Min(activityQuantities[activity.Id], GetMaxActivityQuantity(activity));
         }
     }
 }

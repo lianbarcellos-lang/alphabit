@@ -1,58 +1,77 @@
+@page "/"
 @page "/eventos"
 @inject AlphabitApiClient ApiClient
-@inject AuthOverlayState AuthOverlay
-@inject CartState Cart
 @inject UserSessionState Session
 @inject NavigationManager Navigation
+@inject EventSearchState EventSearch
+@implements IDisposable
 
 <PageTitle>Eventos</PageTitle>
 
 <div class="events-shell">
-    <section class="events-hero">
-        <div class="events-hero__copy">
-            <span class="eyebrow">Agenda geek em destaque</span>
-            <h1>Encontre eventos por categoria, cidade, data e atração.</h1>
-            <p>
-                @if (Session.CurrentUser is not null)
-                {
-                    <span>Bem-vindo, <strong>@Session.CurrentUser.Nome</strong>. Explore convenções, campeonatos e experiências para reservar seu lugar.</span>
-                }
-                else
-                {
-                    <span>Confira eventos recomendados, veja os destaques da agenda geek e encontre a melhor opção para você.</span>
-                }
-            </p>
+    <section class="events-featured">
+        <div class="events-featured__head">
+            <div>
+                <h1>Eventos em destaque</h1>
+            </div>
+        </div>
 
-            <div class="events-hero__search">
-                <div>
-                    <span>Busca rápida</span>
-                    <strong>Anime, games, cosplay, card games e cultura pop</strong>
+        @if (isLoading)
+        {
+            <div class="events-featured__empty">Carregando destaques...</div>
+        }
+        else if (featuredEvents.Count == 0)
+        {
+            <div class="events-featured__empty">Nenhum evento em destaque no momento.</div>
+        }
+        else
+        {
+            <div class="featured-carousel" aria-label="Eventos em destaque">
+                @if (featuredEvents.Count > 1)
+                {
+                    <button class="featured-carousel__arrow featured-carousel__arrow--prev"
+                            type="button"
+                            aria-label="Voltar destaque"
+                            @onclick="PreviousFeatured">
+                        ‹
+                    </button>
+                }
+
+                <div class="featured-carousel__track">
+                    @foreach (var item in GetVisibleFeaturedItems())
+                    {
+                        <article class="featured-card"
+                                 tabindex="0"
+                                 role="link"
+                                 @onclick="() => OpenEvent(item.Id)"
+                                 @onkeydown="args => HandleEventCardKeyDown(args, item.Id)">
+                            @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
+                            {
+                                <img src="@item.ImagemUrl" alt="@item.Nome" />
+                            }
+                            <div class="featured-card__shade"></div>
+                            <div class="featured-card__content">
+                                <span class="pill">@GetCategory(item)</span>
+                                <h2>@item.Nome</h2>
+                                <strong>@item.Artista</strong>
+                                <p>@item.LocalEvento, @item.CidadeEvento • @item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
+                                <button class="buy-button" type="button" @onclick:stopPropagation="true" @onclick="() => OpenEvent(item.Id)">Ver ingressos</button>
+                            </div>
+                        </article>
+                    }
                 </div>
-                <button class="search-button" type="button" @onclick="ResetFilters">Limpar filtros</button>
-            </div>
-        </div>
 
-        <div class="events-hero__aside">
-            <div class="events-hero__panel">
-                <strong>@events.Count</strong>
-                <span>eventos publicados</span>
+                @if (featuredEvents.Count > 1)
+                {
+                    <button class="featured-carousel__arrow featured-carousel__arrow--next"
+                            type="button"
+                            aria-label="Avançar destaque"
+                            @onclick="NextFeatured">
+                        ›
+                    </button>
+                }
             </div>
-            <div class="events-hero__panel">
-                <strong>@availableCities.Count</strong>
-                <span>cidades com agenda ativa</span>
-            </div>
-        </div>
-    </section>
-
-    <section class="events-highlight">
-        <article class="highlight-panel">
-            <span class="eyebrow">Escolha melhor</span>
-            <strong>Cards grandes, informação clara e caminho rápido para ver ingressos.</strong>
-        </article>
-        <article class="highlight-panel highlight-panel--dark">
-            <span class="eyebrow">Próximo passo</span>
-            <strong>Clique em um evento para abrir os detalhes e escolher seu ingresso.</strong>
-        </article>
+        }
     </section>
 
     <section class="events-filters">
@@ -77,17 +96,7 @@
             </select>
         </div>
         <div class="field">
-            <label for="filtroArtista">Atração</label>
-            <select id="filtroArtista" class="field__input" @bind="selectedArtist">
-                <option value="">Todos</option>
-                @foreach (var artist in availableArtists)
-                {
-                    <option value="@artist">@artist</option>
-                }
-            </select>
-        </div>
-        <div class="field">
-            <label for="filtroGenero">Categoria geek</label>
+            <label for="filtroGenero">Geek</label>
             <select id="filtroGenero" class="field__input" @bind="selectedGenre">
                 <option value="">Todos</option>
                 @foreach (var genre in availableGenres)
@@ -95,6 +104,9 @@
                     <option value="@genre">@genre</option>
                 }
             </select>
+        </div>
+        <div class="field field--action">
+            <button class="filter-clear-button" type="button" @onclick="ResetFilters">Limpar filtros</button>
         </div>
     </section>
 
@@ -119,7 +131,11 @@
         <section class="events-grid">
             @foreach (var item in filteredEvents)
             {
-                <article class="event-card @GetTheme(item)">
+                <article class="event-card @GetTheme(item)"
+                         tabindex="0"
+                         role="link"
+                         @onclick="() => OpenEvent(item.Id)"
+                         @onkeydown="args => HandleEventCardKeyDown(args, item.Id)">
                     @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
                     {
                         <img class="event-card__image" src="@item.ImagemUrl" alt="@item.Nome" />
@@ -135,14 +151,8 @@
                         <p class="event-card__artist">@item.Artista</p>
                         <p class="event-card__location">@item.LocalEvento, @item.CidadeEvento</p>
                         <p class="event-card__date">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
-                        <p class="event-card__description">@GetDescription(item)</p>
-                        <div class="event-card__pricing">
-                            <strong>R$ @item.PrecoPadrao.ToString("0.00")</strong>
-                            <span>@FormatRating(item)</span>
-                        </div>
                         <div class="event-card__actions">
-                            <button class="ghost-button" type="button" @onclick='() => Navigation.NavigateTo($"/eventos/{item.Id}")'>Ver ingressos</button>
-                            <button class="buy-button" type="button" @onclick='() => GoToSeatSelection(item.Id)'>Comprar agora</button>
+                            <button class="buy-button" type="button" @onclick:stopPropagation="true" @onclick="() => OpenEvent(item.Id)">Ver ingressos</button>
                         </div>
                     </div>
                 </article>
@@ -158,23 +168,30 @@
     private string statusMessage = string.Empty;
     private string selectedCity = string.Empty;
     private string selectedDayOfWeek = string.Empty;
-    private string selectedArtist = string.Empty;
     private string selectedGenre = string.Empty;
+    private int featuredIndex;
+    private Timer? featuredTimer;
+
+    private IReadOnlyList<EventViewModel> featuredEvents => events
+        .Where(item => item.EhDestaque)
+        .OrderBy(item => item.DataEvento)
+        .ToList();
 
     private IReadOnlyList<EventViewModel> filteredEvents => events
+        .Where(MatchesSearch)
         .Where(item => string.IsNullOrWhiteSpace(selectedCity) || item.CidadeEvento == selectedCity)
         .Where(item => string.IsNullOrWhiteSpace(selectedDayOfWeek) || GetDayLabel(item.DataEvento.DayOfWeek) == selectedDayOfWeek)
-        .Where(item => string.IsNullOrWhiteSpace(selectedArtist) || item.Artista == selectedArtist)
         .Where(item => string.IsNullOrWhiteSpace(selectedGenre) || item.GeneroMusical == selectedGenre)
         .ToList();
 
     private IReadOnlyList<string> availableCities => events.Select(item => item.CidadeEvento).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
-    private IReadOnlyList<string> availableArtists => events.Select(item => item.Artista).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
     private IReadOnlyList<string> availableGenres => events.Select(item => item.GeneroMusical).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
     private IReadOnlyList<string> availableDaysOfWeek => events.Select(item => GetDayLabel(item.DataEvento.DayOfWeek)).Distinct().ToList();
 
     protected override async Task OnInitializedAsync()
     {
+        EventSearch.OnChange += HandleSearchChanged;
+
         try
         {
             events.Clear();
@@ -187,26 +204,96 @@
         finally
         {
             isLoading = false;
+            StartFeaturedTimer();
         }
-    }
-
-    private void GoToSeatSelection(int eventId)
-    {
-        if (Session.CurrentUser is null)
-        {
-            AuthOverlay.OpenLogin();
-            return;
-        }
-
-        Navigation.NavigateTo($"/eventos/{eventId}/assentos");
     }
 
     private void ResetFilters()
     {
         selectedCity = string.Empty;
         selectedDayOfWeek = string.Empty;
-        selectedArtist = string.Empty;
         selectedGenre = string.Empty;
+        EventSearch.Clear();
+    }
+
+    private void OpenEvent(int eventId)
+    {
+        Navigation.NavigateTo($"/eventos/{eventId}");
+    }
+
+    private void HandleEventCardKeyDown(KeyboardEventArgs args, int eventId)
+    {
+        if (args.Key is "Enter" or " ")
+            OpenEvent(eventId);
+    }
+
+    private void HandleSearchChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private bool MatchesSearch(EventViewModel item)
+    {
+        var searchText = EventSearch.SearchText.Trim();
+        if (string.IsNullOrWhiteSpace(searchText))
+            return true;
+
+        return ContainsSearch(item.Nome, searchText) ||
+               ContainsSearch(item.Artista, searchText) ||
+               ContainsSearch(item.LocalEvento, searchText) ||
+               ContainsSearch(item.CidadeEvento, searchText) ||
+               ContainsSearch(item.GeneroMusical, searchText);
+    }
+
+    private static bool ContainsSearch(string? value, string searchText)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+               value.Contains(searchText, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    private IReadOnlyList<EventViewModel> GetVisibleFeaturedItems()
+    {
+        var items = featuredEvents;
+        if (items.Count <= 2)
+            return items;
+
+        return Enumerable.Range(0, 2)
+            .Select(offset => items[(featuredIndex + offset) % items.Count])
+            .ToList();
+    }
+
+    private void PreviousFeatured()
+    {
+        var count = featuredEvents.Count;
+        if (count <= 1)
+            return;
+
+        featuredIndex = (featuredIndex - 1 + count) % count;
+    }
+
+    private void NextFeatured()
+    {
+        var count = featuredEvents.Count;
+        if (count <= 1)
+            return;
+
+        featuredIndex = (featuredIndex + 1) % count;
+    }
+
+    private void StartFeaturedTimer()
+    {
+        if (featuredEvents.Count <= 2)
+            return;
+
+        featuredTimer?.Dispose();
+        featuredTimer = new Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                NextFeatured();
+                StateHasChanged();
+            });
+        }, null, TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(4));
     }
 
     private static string GetCategory(EventViewModel item)
@@ -243,29 +330,6 @@
         return string.Empty;
     }
 
-    private static string GetDescription(EventViewModel item)
-    {
-        var name = item.GeneroMusical.ToLowerInvariant();
-
-        if (name.Contains("anime"))
-            return "Painéis, lojas temáticas, artistas convidados e uma atmosfera feita para fãs de anime e mangá.";
-        if (name.Contains("game"))
-            return "Estações de gameplay, torneios, ativações e experiências para quem vive o universo dos jogos.";
-        if (name.Contains("cosplay"))
-            return "Desfiles, concursos, fotos e encontros para cosplayers e fãs acompanharem de perto.";
-        if (name.Contains("card"))
-            return "Mesas, campeonatos e comunidades reunidas para partidas competitivas e trocas.";
-
-        return "Uma experiência geek especial para garantir seu lugar com antecedência.";
-    }
-
-    private static string FormatRating(EventViewModel item)
-    {
-        return item.TotalAvaliacoes == 0
-            ? "Sem avaliações"
-            : $"{item.MediaAvaliacoes:0.0}/5 ({item.TotalAvaliacoes})";
-    }
-
     private static string GetDayLabel(DayOfWeek dayOfWeek)
     {
         return dayOfWeek switch
@@ -279,5 +343,11 @@
             DayOfWeek.Saturday => "Sábado",
             _ => string.Empty
         };
+    }
+
+    public void Dispose()
+    {
+        EventSearch.OnChange -= HandleSearchChanged;
+        featuredTimer?.Dispose();
     }
 }

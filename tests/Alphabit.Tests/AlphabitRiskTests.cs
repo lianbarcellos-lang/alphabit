@@ -8,6 +8,11 @@ public class AlphabitRiskTests
     private static readonly string ReservationsCssSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Reservas.razor.css"));
     private static readonly string AdminPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Admin.razor"));
     private static readonly string AdminCssSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Admin.razor.css"));
+    private static readonly string EventDetailPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "DetalheEvento.razor"));
+    private static readonly string EventDetailCssSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "DetalheEvento.razor.css"));
+    private static readonly string SeatsPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Assentos.razor"));
+    private static readonly string EventsPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Eventos.razor"));
+    private static readonly string CartPageSource = File.ReadAllText(GetAppFilePath("Components", "Pages", "Carrinho.razor"));
 
     [Fact]
     public void ReviewRisk_ProfileRoutes_ShouldRequireUserAccessCheck()
@@ -150,10 +155,41 @@ public class AlphabitRiskTests
     }
 
     [Fact]
+    public void ReviewRisk_EventDetail_ShouldContainDirectPurchaseFlowAndKeepSeatsRedirect()
+    {
+        Assert.Contains("@inject CartState Cart", EventDetailPageSource);
+        Assert.Contains("id=\"compra\"", EventDetailPageSource);
+        Assert.Contains("Escolha seu ingresso", EventDetailPageSource);
+        Assert.Contains("Entrada sem assento marcado", EventDetailPageSource);
+        Assert.Contains("GetTicketTypesAsync(Id)", EventDetailPageSource);
+        Assert.Contains("Cart.AddEvent(eventItem, quantity, SelectedTicketType)", EventDetailPageSource);
+        Assert.Contains("Navigation.NavigateTo(\"/carrinho\")", EventDetailPageSource);
+        Assert.Contains("AuthOverlay.OpenLogin()", EventDetailPageSource);
+        Assert.Contains("event-purchase-grid", EventDetailCssSource);
+        Assert.Contains("ticket-type-card--active", EventDetailCssSource);
+
+        Assert.Contains("@page \"/eventos/{Id:int}/assentos\"", SeatsPageSource);
+        Assert.Contains("Navigation.NavigateTo($\"/eventos/{Id}#compra\", replace: true)", SeatsPageSource);
+        Assert.DoesNotContain("Cart.AddEvent", SeatsPageSource);
+        Assert.DoesNotContain("GetTicketTypesAsync", SeatsPageSource);
+
+        Assert.Contains("@page \"/\"", EventsPageSource);
+        Assert.Contains("@page \"/eventos\"", EventsPageSource);
+        Assert.Contains("OpenEvent(item.Id)", EventsPageSource);
+        Assert.Contains("Navigation.NavigateTo($\"/eventos/{item.EventoId}#compra\")", CartPageSource);
+        Assert.DoesNotContain("/assentos", EventsPageSource);
+        Assert.DoesNotContain("/assentos", CartPageSource);
+    }
+
+    [Fact]
     public void ReviewRisk_Activities_ShouldHaveTablesAndSignupLimits()
     {
         Assert.Contains("CREATE TABLE IF NOT EXISTS Atividades", ProgramSource);
         Assert.Contains("CREATE TABLE IF NOT EXISTS InscricoesAtividades", ProgramSource);
+        Assert.Contains("HorarioFim TEXT NOT NULL DEFAULT ''", ProgramSource);
+        Assert.Contains("Descricao TEXT NOT NULL DEFAULT ''", ProgramSource);
+        Assert.Contains("Quantidade INTEGER NOT NULL DEFAULT 1", ProgramSource);
+        Assert.Contains("Assentos TEXT NOT NULL DEFAULT ''", ProgramSource);
         Assert.Contains("CREATE UNIQUE INDEX IF NOT EXISTS IX_InscricoesAtividades_Atividade_Usuario", ProgramSource);
         Assert.Contains("app.MapGet(\"/api/eventos/{id:int}/atividades\"", ProgramSource);
         Assert.Contains("app.MapPost(\"/api/atividades\"", ProgramSource);
@@ -168,10 +204,15 @@ public class AlphabitRiskTests
 
         Assert.Contains("EnsureUserAccess(httpContext, request.UsuarioCpf)", block);
         Assert.Contains("using var transaction = connection.BeginTransaction();", block);
-        Assert.Contains("Usuário já inscrito nesta atividade.", block);
-        Assert.Contains("inscritos >= atividade.LimiteParticipantes", block);
+        Assert.Contains("totalUsuarioOutrasAtividades + request.Quantidade > 2", block);
+        Assert.Contains("inscritos + request.Quantidade > atividade.LimiteParticipantes", block);
+        Assert.Contains("requestedSeats.Count != request.Quantidade", block);
+        Assert.Contains("Um ou mais assentos selecionados já foram reservados.", block);
+        Assert.Contains("UPDATE InscricoesAtividades", block);
+        Assert.Contains("INSERT INTO InscricoesAtividades (AtividadeId, UsuarioCpf, Quantidade, Assentos, CriadoEm)", block);
         Assert.Contains("transaction.Commit()", block);
         Assert.Contains("Já existe uma atividade com este nome para o evento.", createBlock);
+        Assert.Contains("INSERT INTO Atividades (EventoId, Nome, Horario, HorarioFim, Tipo, Descricao, LimiteParticipantes)", createBlock);
         Assert.Contains("EnsureUserAccess(httpContext, usuarioCpf)", cancelBlock);
         Assert.Contains("DELETE FROM InscricoesAtividades", cancelBlock);
 
@@ -338,8 +379,10 @@ public class AlphabitRiskTests
         Assert.Contains("2x2", AdminPageSource);
         Assert.Contains("3x3", AdminPageSource);
         Assert.Contains("4x4", AdminPageSource);
-        Assert.Contains("5x5", AdminPageSource);
-        Assert.Contains("8x8", AdminPageSource);
+        Assert.DoesNotContain("5x5", AdminPageSource);
+        Assert.DoesNotContain("8x8", AdminPageSource);
+        Assert.DoesNotContain("eventStands.Count > option.Capacity", AdminPageSource);
+        Assert.DoesNotContain("A organização automática suporta até 16 stands", AdminPageSource);
         Assert.Contains("StandLayoutOption", AdminPageSource);
         Assert.Contains("admin-stand-layout-tools", AdminCssSource);
         Assert.Contains("admin-stand-grid-options", AdminCssSource);

@@ -52,6 +52,19 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 
 ## Como rodar
 
+### Deploy no Railway
+
+O guia completo esta em [docs/railway.md](docs/railway.md).
+
+Para Railway, publique o projeto como dois servicos:
+
+- API: `src/Alphabit.API`
+- App: `src/Alphabit.App`
+
+No App, configure `AlphabitApi__BaseUrl` com a URL publica da API. Na API, configure `AdminAccess__Token`, `AdminAccess__Login` e `AdminAccess__Password`. Para manter o SQLite depois de redeploy/restart, adicione um volume no servico da API.
+
+### Rodar localmente
+
 Primeiro entre na pasta raiz do projeto. Os comandos abaixo precisam ser executados dentro desta pasta:
 
 ```powershell
@@ -92,7 +105,7 @@ dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 Última validação local:
 
 - build aprovado com 0 erros e 0 avisos
-- 32 testes aprovados
+- 36 testes aprovados
 - 0 falhas
 
 ## Credenciais de demonstração
