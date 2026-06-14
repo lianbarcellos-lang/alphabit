@@ -2,6 +2,17 @@
 
 Este roadmap resume as especificacoes do projeto na ordem recomendada de execucao, considerando dependencias entre funcionalidades e o estado atual da implementacao.
 
+## Referencias de arquitetura
+
+Este roadmap deve ser lido junto com:
+
+- `docs/arch.md`: arquitetura conceitual e tecnica do GeekTop.
+- `docs/arquitetura.md`: descricao detalhada da arquitetura do projeto em portugues.
+- `docs/adr.md`: decisoes arquiteturais e justificativa do motivo de uso de cada tecnologia ou abordagem.
+- `docs/vision.md`: visao de produto e direcao do projeto.
+
+A arquitetura conceitual organiza o dominio em cliente, administrador, eventos, reservas, atividades, stands, check-in e avaliacoes. A arquitetura tecnica define como esses conceitos foram implementados usando .NET, Minimal API, Blazor Server, SQLite, Dapper e xUnit.
+
 Legenda:
 
 - Construido: a estrutura da funcionalidade ja foi criada no projeto.
@@ -42,7 +53,7 @@ Legenda:
 | 29.2 | Edicao e movimentacao de stands entre linhas | Mapa de stands e admin | Sim | Sim | Concluido |
 | 29.3 | Precificacao comercial de stands | Mapa de stands | Sim | Sim | Concluido |
 | 29.4 | Planta enviada pelo administrador com drag/drop de stands | Mapa de stands e admin | Sim | Sim | Concluido |
-| 29.5 | Organizacao automatica de stands por grades 2x2 a 8x8 | Mapa de stands e admin | Sim | Sim | Concluido |
+| 29.5 | Organizacao automatica de stands por grades 2x2, 3x3 e 4x4 | Mapa de stands e admin | Sim | Sim | Concluido |
 | 30 | Documentacao final | Projeto implementado | Sim | Em andamento | Em andamento |
 | 31 | Limpeza final de dados de QA | Testes manuais locais | Parcial | Parcial | Opcional |
 

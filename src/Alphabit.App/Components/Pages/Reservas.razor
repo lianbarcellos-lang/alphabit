@@ -101,7 +101,7 @@ else
 
                         <div class="reservation-review">
                             <h3>Avaliar evento</h3>
-                            @if (reviewedEventIds.Contains(item.EventoId))
+                            @if (item.JaAvaliado)
                             {
                                 <p>Você já avaliou este evento.</p>
                             }
@@ -231,7 +231,6 @@ else
     private readonly List<ReservationViewModel> reservations = [];
     private readonly Dictionary<int, int> reviewRatings = [];
     private readonly Dictionary<int, string> reviewComments = [];
-    private readonly HashSet<int> reviewedEventIds = [];
     private bool isLoading = true;
     private bool reviewIsBusy;
     private bool reviewIsError;
@@ -388,8 +387,6 @@ else
             {
                 reviewRatings.TryAdd(reservation.Id, 5);
             }
-
-            await LoadReviewedEventsForReservations();
         }
         catch
         {
@@ -430,25 +427,6 @@ else
             : $"Assentos: {item.Assentos}";
     }
 
-    private async Task LoadReviewedEventsForReservations()
-    {
-        if (Session.CurrentUser is null)
-            return;
-
-        reviewedEventIds.Clear();
-        var eventIds = reservations
-            .Select(reservation => reservation.EventoId)
-            .Distinct()
-            .ToList();
-
-        foreach (var eventId in eventIds)
-        {
-            var reviews = await ApiClient.GetEventReviewsAsync(eventId);
-            if (reviews.Any(review => string.Equals(review.UsuarioCpf, Session.CurrentUser.Cpf, StringComparison.Ordinal)))
-                reviewedEventIds.Add(eventId);
-        }
-    }
-
     private async Task SubmitReview(ReservationViewModel reservation)
     {
         if (Session.CurrentUser is null)
@@ -472,7 +450,7 @@ else
             reviewMessage = result.Message;
 
             if (result.Success)
-                reviewedEventIds.Add(reservation.EventoId);
+                reservation.JaAvaliado = true;
         }
         catch
         {

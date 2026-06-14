@@ -51,7 +51,7 @@ Como cliente, quero visualizar os eventos disponiveis com imagem e informacoes p
 Como cliente, quero ver imagens relacionadas a games, anime, cosplay e cultura geek, para entender rapidamente a proposta da plataforma.
 
 ### HU14 - Filtros de descoberta
-Como cliente, quero filtrar eventos por cidade, dia da semana, atracao e categoria geek, para encontrar opcoes mais relevantes.
+Como cliente, quero filtrar eventos por cidade, dia da semana e categoria geek, para encontrar opcoes mais relevantes.
 
 ### HU15 - Detalhe do evento
 Como cliente, quero abrir uma pagina de detalhe do evento, para entender local, data, preco e seguir para a escolha de ingressos.
@@ -114,14 +114,12 @@ Como administrador, quero criar, renomear e excluir linhas do mapa, para organiz
 
 Como administrador, quero editar ou excluir um stand diretamente na lista da linha, para corrigir erros sem precisar refazer todo o cadastro.
 
-Como administrador, quero aplicar uma organização automática em grade 2x2, 3x3, 4x4, 5x5 ou 8x8, para distribuir rapidamente os stands antes de fazer ajustes manuais.
+Como administrador, quero aplicar uma organização automática em grade 2x2, 3x3 ou 4x4, para distribuir rapidamente os stands antes de fazer ajustes manuais.
 
 Critérios:
 - grade 2x2 comporta ate 4 stands;
 - grade 3x3 comporta ate 9 stands;
 - grade 4x4 comporta ate 16 stands;
-- grade 5x5 comporta ate 25 stands;
-- grade 8x8 comporta ate 64 stands;
 - grades menores que a quantidade atual de stands devem ficar indisponiveis;
 - depois da organização automática, o administrador deve conseguir arrastar os stands manualmente.
 
@@ -527,7 +525,7 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - senhas de usuarios sao armazenadas como hash SHA-256
 - a API possui fluxo de recuperacao de senha por email com codigo temporario
 - o app Blazor possui modal de login, cadastro, redefinicao de senha e exibicao de senha
-- a vitrine publica possui filtros por cidade, dia da semana, atracao e categoria geek
+- a vitrine publica possui filtros por cidade, dia da semana e categoria geek
 - o carrinho mostra pre-visualizacao do desconto antes da finalizacao e permite escolher a forma de pagamento
 - a rota `GET /api/reservas/{cpf}` usa `INNER JOIN` para retornar o nome do evento
 - a rota `POST /api/reservas` aplica validacao de integridade, limite por CPF, capacidade e cupom

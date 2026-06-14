@@ -93,8 +93,8 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 
 - Filtrar por cidade.
 - Filtrar por dia da semana.
-- Filtrar por atração.
 - Filtrar por categoria geek.
+- Pesquisar eventos pela barra de busca.
 
 ### Regras
 
@@ -178,15 +178,21 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 ### Funcionalidades
 
 - Cadastrar atividades internas.
+- Informar nome, tipo, data, horário inicial, horário final, descrição opcional e capacidade máxima.
 - Listar atividades no detalhe do evento.
 - Inscrever cliente em atividade.
+- Exibir modal para seleção de lugar ao se inscrever.
 - Cancelar inscrição do cliente em atividade.
+- Excluir atividade pelo painel administrativo.
 
 ### Regras
 
 - Atividade deve pertencer a evento existente.
 - Não permitir inscrição duplicada.
 - Não ultrapassar limite de participantes.
+- A capacidade cadastrada deve gerar automaticamente a quantidade de lugares disponíveis.
+- Lugar já ocupado não pode ser escolhido por outro cliente.
+- O cliente não deve conseguir reservar mais lugares em atividades do que a quantidade de ingressos comprada para o evento.
 - Ao cancelar inscrição, a vaga deve voltar a ficar disponível.
 
 ## 12. Convidados
@@ -217,7 +223,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Permitir que o administrador envie uma imagem de planta do evento.
 - Permitir que o administrador cadastre stands manualmente.
 - Permitir que o administrador crie, renomeie e exclua linhas/setores do mapa.
-- Permitir organização automática dos stands por grades 2x2, 3x3, 4x4, 5x5 e 8x8.
+- Permitir organização automática dos stands por grades 2x2, 3x3 e 4x4.
 - Reposicionar todos os stands proporcionalmente dentro da planta ao aplicar uma grade automática.
 - Manter o ajuste manual por drag/drop após a aplicação da grade automática.
 - Permitir que o administrador arraste stands sobre a planta e salve as coordenadas.
@@ -283,7 +289,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - O sistema deve manter o mapa padrão em blocos quando não houver planta enviada.
 - A planta enviada deve usar coordenadas percentuais para funcionar em telas de tamanhos diferentes.
 - Ao criar ou carregar um evento sem stands, o sistema deve gerar o mapa padrão.
-- A grade automática deve respeitar a quantidade de stands cadastrados: 2x2 até 4, 3x3 até 9, 4x4 até 16, 5x5 até 25 e 8x8 até 64.
+- A grade automática deve respeitar a quantidade de stands cadastrados: 2x2 até 4, 3x3 até 9 e 4x4 até 16.
 - A grade automática deve ficar desabilitada quando a quantidade de stands ultrapassar sua capacidade.
 - A grade automática deve recalcular posição e tamanho dos stands para reduzir sobreposições, sem impedir ajustes manuais posteriores.
 
@@ -306,7 +312,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 4. Envia a imagem da planta do evento.
 5. Cadastra ou seleciona um stand.
 6. Preenche empresa ou atração, tipo e descrição.
-7. Opcionalmente aplica uma grade automática 2x2, 3x3, 4x4, 5x5 ou 8x8 para organizar os stands.
+7. Opcionalmente aplica uma grade automática 2x2, 3x3 ou 4x4 para organizar os stands.
 8. Arrasta o stand para o ponto desejado na planta quando precisar de ajuste fino.
 9. Salva a alocação.
 10. Ao reabrir o mapa, a planta e os stands aparecem nas posições salvas.
@@ -379,8 +385,27 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Dados cancelados/reembolsados devem ser tratados corretamente.
 - Relatório deve evitar poluição visual.
 - Cliente não deve ver funções administrativas.
+- Lista de compras deve ser limitada/paginada para evitar lentidão em bases maiores.
 
-## 17. Testes
+## 17. Performance e manutenção
+
+### Funcionalidades técnicas
+
+- Cachear listas e filtros da página de eventos.
+- Evitar reinicialização repetida do drag/drop do mapa de stands.
+- Limitar imagens novas enviadas em base64.
+- Criar índices SQLite idempotentes.
+- Registrar logs simples de tempo em rotas pesadas.
+- Calcular totais do dashboard por SQL agregado.
+
+### Regras
+
+- Melhorias de performance não devem remover rotas existentes.
+- Índices devem usar `CREATE INDEX IF NOT EXISTS`.
+- Imagens antigas devem continuar carregando.
+- Query params novos devem manter compatibilidade quando não forem enviados.
+
+## 18. Testes
 
 Os testes automatizados devem cobrir:
 
@@ -397,8 +422,13 @@ Os testes automatizados devem cobrir:
 - check-in;
 - avaliações.
 
-## 18. Documentos relacionados
+## 19. Documentos relacionados
 
+- `docs/adr.md`
+- `docs/arch.md`
+- `docs/vision.md`
+- `docs/budget.md`
+- `docs/lesson.md`
 - `docs/visao.md`
 - `docs/arquitetura.md`
 - `docs/roadmap.md`

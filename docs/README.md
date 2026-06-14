@@ -95,7 +95,7 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 - cadastrar atividades e convidados
 - associar convidados aos eventos
 - reservar/liberar stands para empresas, lojas, arenas e atrações
-- organizar automaticamente os stands em grades 2x2, 3x3, 4x4, 5x5 ou 8x8 antes dos ajustes manuais
+- organizar automaticamente os stands em grades 2x2, 3x3 ou 4x4 antes dos ajustes manuais
 - validar check-in por QR Code
 - acompanhar métricas do dashboard
 - moderar avaliações recentes

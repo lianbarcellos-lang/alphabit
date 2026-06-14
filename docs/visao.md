@@ -22,7 +22,7 @@ O cliente pode:
 
 - criar conta e fazer login;
 - navegar pela vitrine de eventos;
-- filtrar eventos por cidade, data, atracao e categoria geek;
+- filtrar eventos por cidade, data e categoria geek;
 - abrir o detalhe do evento;
 - visualizar convidados e atividades;
 - visualizar mapa de stands, empresas expositoras e atrações por setor;

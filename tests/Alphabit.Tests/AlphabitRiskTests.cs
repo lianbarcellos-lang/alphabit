@@ -293,7 +293,7 @@ public class AlphabitRiskTests
     {
         Assert.Contains("app.MapGet(\"/api/admin/vendas/dashboard\"", ProgramSource);
         Assert.Contains("app.MapGet(\"/api/dashboard\"", ProgramSource);
-        Assert.Contains("BuildAdminSalesDashboard(connectionString)", ProgramSource);
+        Assert.Contains("BuildAdminSalesDashboard(connectionString", ProgramSource);
 
         var dashboardBlock = ExtractBlock(ProgramSource, "static AdminSalesDashboardResponse BuildAdminSalesDashboard");
 
@@ -310,9 +310,9 @@ public class AlphabitRiskTests
         Assert.Contains("TaxaCheckinPercentual", dashboardBlock);
         Assert.Contains("INNER JOIN Reservas r ON r.Id = c.ReservaId", dashboardBlock);
         Assert.Contains("SELECT COALESCE(SUM(CapacidadeTotal), 0) FROM Eventos", dashboardBlock);
-        Assert.Contains("IsPaidPaymentStatus", dashboardBlock);
-        Assert.Contains("IsPendingPaymentStatus", dashboardBlock);
-        Assert.Contains("IsCancelledOrRefundedPaymentStatus", dashboardBlock);
+        Assert.Contains("LIMIT @limit OFFSET @offset", dashboardBlock);
+        Assert.Contains("StatusPagamento", dashboardBlock);
+        Assert.Contains("ValorFinalPago", dashboardBlock);
     }
 
     [Fact]
@@ -376,7 +376,7 @@ public class AlphabitRiskTests
         Assert.Contains("Organização automática", AdminPageSource);
         Assert.Contains("ApplyStandLayoutGrid", AdminPageSource);
         Assert.Contains("BuildStandLayoutGrid", AdminPageSource);
-        Assert.Contains("2x2", AdminPageSource);
+        Assert.DoesNotContain("2x2", AdminPageSource);
         Assert.Contains("3x3", AdminPageSource);
         Assert.Contains("4x4", AdminPageSource);
         Assert.DoesNotContain("5x5", AdminPageSource);

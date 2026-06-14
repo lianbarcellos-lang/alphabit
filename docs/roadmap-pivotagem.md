@@ -352,7 +352,7 @@ Regras:
 - stand reservado precisa ter nome de ocupante;
 - cliente apenas visualiza o mapa;
 - administrador pode reservar e liberar espaços;
-- administrador pode aplicar organizacao automatica por grades 2x2, 3x3, 4x4, 5x5 e 8x8;
+- administrador pode aplicar organizacao automatica por grades 2x2, 3x3 e 4x4;
 - grade automatica so fica disponivel quando comporta a quantidade atual de stands;
 - depois da grade automatica, o administrador ainda pode arrastar os stands manualmente.
 

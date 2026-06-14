@@ -1308,7 +1308,6 @@ else
     private readonly Dictionary<string, string> sectorRenameInputs = new(StringComparer.OrdinalIgnoreCase);
     private readonly IReadOnlyList<StandLayoutOption> standLayoutOptions =
     [
-        new("2x2", 2),
         new("3x3", 3),
         new("4x4", 4)
     ];
@@ -1352,6 +1351,7 @@ else
     private bool checkinCodeLoadedFromUrl;
     private bool isQrScannerOpen;
     private bool scannerIsError;
+    private bool standMapDraggingEnabled;
     private string scannerMessage = string.Empty;
     private DotNetObjectReference<Admin>? qrScannerReference;
     private DotNetObjectReference<Admin>? standMapReference;
@@ -1362,26 +1362,35 @@ else
         LoadCheckinCodeFromUrl();
         eventDateOnly = eventModel.DataEvento.Date;
         eventTime = eventModel.DataEvento.ToString("HH:mm");
-        await LoadGenresAsync();
-        await LoadCitiesAsync();
-        await LoadAdminEvents();
-        await LoadAdminCoupons();
-        await LoadGuests();
-        await LoadSelectedEventActivities();
-        await LoadEventStands();
-        await LoadAdminSalesDashboard();
+        await Task.WhenAll(
+            LoadGenresAsync(),
+            LoadCitiesAsync(),
+            LoadAdminEvents(),
+            LoadAdminCoupons(),
+            LoadAdminSalesDashboard());
+
+        await Task.WhenAll(
+            LoadGuests(),
+            LoadSelectedEventActivities(),
+            LoadEventStands());
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!Session.IsAdmin || string.IsNullOrWhiteSpace(Session.AdminToken))
+        if (!Session.IsAdmin ||
+            string.IsNullOrWhiteSpace(Session.AdminToken) ||
+            activeAdminView != "mapa" ||
+            standMapDraggingEnabled)
+        {
             return;
+        }
 
         standMapReference ??= DotNetObjectReference.Create(this);
 
         try
         {
             await JS.InvokeVoidAsync("geekTopStandMap.enablePinDragging", StandMapDropElementId, standMapReference);
+            standMapDraggingEnabled = true;
         }
         catch
         {
@@ -1578,13 +1587,13 @@ else
 
         try
         {
-            eventModel.ImagemUrl = await ConvertFileToDataUrlAsync(args.File);
+            eventModel.ImagemUrl = await ConvertFileToDataUrlAsync(args.File, MaxRegularImageFileSize);
             statusMessage = "Imagem carregada do computador com sucesso.";
             isError = false;
         }
         catch
         {
-            statusMessage = "Não foi possível carregar a imagem selecionada.";
+            statusMessage = "Não foi possível carregar a imagem selecionada. Use uma imagem de até 500 KB.";
             isError = true;
         }
     }
@@ -1596,13 +1605,13 @@ else
 
         try
         {
-            guestModel.FotoUrl = await ConvertFileToDataUrlAsync(args.File);
+            guestModel.FotoUrl = await ConvertFileToDataUrlAsync(args.File, MaxRegularImageFileSize);
             statusMessage = "Foto do convidado carregada com sucesso.";
             isError = false;
         }
         catch
         {
-            statusMessage = "Não foi possível carregar a foto selecionada.";
+            statusMessage = "Não foi possível carregar a foto selecionada. Use uma imagem de até 500 KB.";
             isError = true;
         }
     }
@@ -1654,6 +1663,7 @@ else
 
     private async Task LoadEventStands()
     {
+        standMapDraggingEnabled = false;
         eventStands.Clear();
         PrepareNewStandForm();
         standMapImageUrl = string.Empty;
@@ -1707,12 +1717,12 @@ else
 
         try
         {
-            var dataUrl = await ConvertFileToDataUrlAsync(args.File);
+            var dataUrl = await ConvertFileToDataUrlAsync(args.File, MaxMapImageFileSize);
             await SaveStandMapImage(dataUrl);
         }
         catch
         {
-            statusMessage = "Não foi possível carregar a planta selecionada.";
+            statusMessage = "Não foi possível carregar a planta selecionada. Use uma imagem de até 1 MB.";
             isError = true;
         }
     }
@@ -2556,7 +2566,12 @@ else
 
     private void SetAdminView(string view)
     {
+        if (activeAdminView == view)
+            return;
+
         activeAdminView = view;
+        if (view == "mapa")
+            standMapDraggingEnabled = false;
     }
 
     private async Task HandleActivityEventChanged()
@@ -3424,13 +3439,13 @@ else
 
         try
         {
-            editingEvent.ImagemUrl = await ConvertFileToDataUrlAsync(args.File);
+            editingEvent.ImagemUrl = await ConvertFileToDataUrlAsync(args.File, MaxRegularImageFileSize);
             statusMessage = "Imagem da edição carregada com sucesso.";
             isError = false;
         }
         catch
         {
-            statusMessage = "Não foi possível carregar a imagem selecionada para a edição.";
+            statusMessage = "Não foi possível carregar a imagem selecionada para a edição. Use uma imagem de até 500 KB.";
             isError = true;
         }
     }
@@ -3640,9 +3655,13 @@ else
         return editDateOnly.Date.AddHours(20);
     }
 
-    private static async Task<string> ConvertFileToDataUrlAsync(IBrowserFile file)
+    private const long MaxRegularImageFileSize = 500 * 1024;
+    private const long MaxMapImageFileSize = 1024 * 1024;
+
+    private static async Task<string> ConvertFileToDataUrlAsync(IBrowserFile file, long maxFileSize)
     {
-        const long maxFileSize = 5 * 1024 * 1024;
+        if (file.Size > maxFileSize)
+            throw new InvalidOperationException("Arquivo de imagem acima do limite permitido.");
 
         await using var stream = file.OpenReadStream(maxFileSize);
         using var memoryStream = new MemoryStream();

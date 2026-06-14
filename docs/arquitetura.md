@@ -92,7 +92,7 @@ Permite cadastro de convidados e associacao deles aos eventos.
 
 ### Mapa de stands
 
-Permite gerar espaços por evento, organizar por linhas/setores e reservar stands para empresas, lojas, arenas ou atrações. O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grades 2x2, 3x3, 4x4, 5x5 ou 8x8 e depois ajustar cada stand manualmente por drag/drop. As coordenadas ficam salvas em porcentagem para recarregar a planta com os stands no mesmo lugar. O cliente continua visualizando o mapa atualizado no detalhe do evento e na área de ingressos.
+Permite gerar espaços por evento, organizar por linhas/setores e reservar stands para empresas, lojas, arenas ou atrações. O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grades 2x2, 3x3 ou 4x4 e depois ajustar cada stand manualmente por drag/drop. As coordenadas ficam salvas em porcentagem para recarregar a planta com os stands no mesmo lugar. O cliente continua visualizando o mapa atualizado no detalhe do evento e na área de ingressos.
 
 ### Check-in
 

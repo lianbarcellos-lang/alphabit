@@ -21,4 +21,5 @@ public class ReservationViewModel
     public string CheckinStatus { get; set; } = "Pendente";
     public DateTime? DataCheckin { get; set; }
     public DateTime DataReserva { get; set; }
+    public bool JaAvaliado { get; set; }
 }

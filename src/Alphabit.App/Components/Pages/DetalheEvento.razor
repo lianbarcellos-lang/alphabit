@@ -340,7 +340,7 @@ else
                 <div class="activity-seat-stage">PALCO / ATIVIDADE</div>
 
                 <div class="activity-seat-grid" aria-label="Cadeiras disponíveis">
-                    @foreach (var seat in BuildActivitySeats(seatSelectionActivity))
+                    @foreach (var seat in seatSelectionSeats)
                     {
                         var isSelected = selectedActivitySeats.Contains(seat);
                         var isOccupied = IsActivitySeatOccupied(seatSelectionActivity, seat);
@@ -378,6 +378,8 @@ else
     private readonly List<TicketTypeViewModel> ticketTypes = [];
     private readonly Dictionary<int, int> activityQuantities = [];
     private readonly HashSet<string> selectedActivitySeats = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> occupiedActivitySeats = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<string> seatSelectionSeats = [];
     private ActivityViewModel? seatSelectionActivity;
     private bool isLoading = true;
     private bool activityIsBusy;
@@ -539,17 +541,28 @@ else
 
         seatSelectionActivity = activity;
         selectedActivitySeats.Clear();
+        occupiedActivitySeats.Clear();
 
-        foreach (var seat in SplitSeats(activity.UsuarioAssentos).Take(GetActivityQuantity(activity)))
+        var userSeats = SplitSeats(activity.UsuarioAssentos).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var seat in userSeats.Take(GetActivityQuantity(activity)))
         {
             selectedActivitySeats.Add(seat);
         }
+
+        foreach (var seat in SplitSeats(activity.AssentosOcupados).Where(seat => !userSeats.Contains(seat)))
+        {
+            occupiedActivitySeats.Add(seat);
+        }
+
+        seatSelectionSeats = BuildActivitySeats(activity);
     }
 
     private void CloseSeatSelection()
     {
         seatSelectionActivity = null;
         selectedActivitySeats.Clear();
+        occupiedActivitySeats.Clear();
+        seatSelectionSeats = [];
     }
 
     private async Task ConfirmSeatSelection()
@@ -611,11 +624,7 @@ else
 
     private bool IsActivitySeatOccupied(ActivityViewModel activity, string seat)
     {
-        var userSeats = SplitSeats(activity.UsuarioAssentos).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (userSeats.Contains(seat))
-            return false;
-
-        return SplitSeats(activity.AssentosOcupados).Contains(seat, StringComparer.OrdinalIgnoreCase);
+        return occupiedActivitySeats.Contains(seat);
     }
 
     private void ToggleActivitySeat(ActivityViewModel activity, string seat)

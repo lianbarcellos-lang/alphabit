@@ -77,7 +77,7 @@
     <section class="events-filters">
         <div class="field">
             <label for="filtroCidade">Cidade</label>
-            <select id="filtroCidade" class="field__input" @bind="selectedCity">
+            <select id="filtroCidade" class="field__input" @bind="selectedCity" @bind:after="RebuildEventLists">
                 <option value="">Todas</option>
                 @foreach (var city in availableCities)
                 {
@@ -87,7 +87,7 @@
         </div>
         <div class="field">
             <label for="filtroDia">Dia da semana</label>
-            <select id="filtroDia" class="field__input" @bind="selectedDayOfWeek">
+            <select id="filtroDia" class="field__input" @bind="selectedDayOfWeek" @bind:after="RebuildEventLists">
                 <option value="">Todos</option>
                 @foreach (var day in availableDaysOfWeek)
                 {
@@ -97,7 +97,7 @@
         </div>
         <div class="field">
             <label for="filtroGenero">Geek</label>
-            <select id="filtroGenero" class="field__input" @bind="selectedGenre">
+            <select id="filtroGenero" class="field__input" @bind="selectedGenre" @bind:after="RebuildEventLists">
                 <option value="">Todos</option>
                 @foreach (var genre in availableGenres)
                 {
@@ -163,6 +163,11 @@
 
 @code {
     private readonly List<EventViewModel> events = new();
+    private readonly List<EventViewModel> featuredEvents = new();
+    private readonly List<EventViewModel> filteredEvents = new();
+    private readonly List<string> availableCities = new();
+    private readonly List<string> availableGenres = new();
+    private readonly List<string> availableDaysOfWeek = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
     private string statusMessage = string.Empty;
@@ -172,22 +177,6 @@
     private int featuredIndex;
     private Timer? featuredTimer;
 
-    private IReadOnlyList<EventViewModel> featuredEvents => events
-        .Where(item => item.EhDestaque)
-        .OrderBy(item => item.DataEvento)
-        .ToList();
-
-    private IReadOnlyList<EventViewModel> filteredEvents => events
-        .Where(MatchesSearch)
-        .Where(item => string.IsNullOrWhiteSpace(selectedCity) || item.CidadeEvento == selectedCity)
-        .Where(item => string.IsNullOrWhiteSpace(selectedDayOfWeek) || GetDayLabel(item.DataEvento.DayOfWeek) == selectedDayOfWeek)
-        .Where(item => string.IsNullOrWhiteSpace(selectedGenre) || item.GeneroMusical == selectedGenre)
-        .ToList();
-
-    private IReadOnlyList<string> availableCities => events.Select(item => item.CidadeEvento).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
-    private IReadOnlyList<string> availableGenres => events.Select(item => item.GeneroMusical).Where(item => !string.IsNullOrWhiteSpace(item)).Distinct().OrderBy(item => item).ToList();
-    private IReadOnlyList<string> availableDaysOfWeek => events.Select(item => GetDayLabel(item.DataEvento.DayOfWeek)).Distinct().ToList();
-
     protected override async Task OnInitializedAsync()
     {
         EventSearch.OnChange += HandleSearchChanged;
@@ -196,6 +185,7 @@
         {
             events.Clear();
             events.AddRange(await ApiClient.GetEventsAsync());
+            RebuildEventLists();
         }
         catch
         {
@@ -214,6 +204,7 @@
         selectedDayOfWeek = string.Empty;
         selectedGenre = string.Empty;
         EventSearch.Clear();
+        RebuildEventLists();
     }
 
     private void OpenEvent(int eventId)
@@ -229,7 +220,45 @@
 
     private void HandleSearchChanged()
     {
+        RebuildEventLists();
         InvokeAsync(StateHasChanged);
+    }
+
+    private void RebuildEventLists()
+    {
+        featuredEvents.Clear();
+        featuredEvents.AddRange(events
+            .Where(item => item.EhDestaque)
+            .OrderBy(item => item.DataEvento));
+
+        filteredEvents.Clear();
+        filteredEvents.AddRange(events
+            .Where(MatchesSearch)
+            .Where(item => string.IsNullOrWhiteSpace(selectedCity) || item.CidadeEvento == selectedCity)
+            .Where(item => string.IsNullOrWhiteSpace(selectedDayOfWeek) || GetDayLabel(item.DataEvento.DayOfWeek) == selectedDayOfWeek)
+            .Where(item => string.IsNullOrWhiteSpace(selectedGenre) || item.GeneroMusical == selectedGenre));
+
+        availableCities.Clear();
+        availableCities.AddRange(events
+            .Select(item => item.CidadeEvento)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct()
+            .OrderBy(item => item));
+
+        availableGenres.Clear();
+        availableGenres.AddRange(events
+            .Select(item => item.GeneroMusical)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct()
+            .OrderBy(item => item));
+
+        availableDaysOfWeek.Clear();
+        availableDaysOfWeek.AddRange(events
+            .Select(item => GetDayLabel(item.DataEvento.DayOfWeek))
+            .Distinct());
+
+        if (featuredIndex >= featuredEvents.Count)
+            featuredIndex = 0;
     }
 
     private bool MatchesSearch(EventViewModel item)

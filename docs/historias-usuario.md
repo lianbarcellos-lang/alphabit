@@ -15,7 +15,7 @@ Critérios de aceite:
 - eventos sem avaliacao devem exibir `Sem avaliações`.
 
 ### HU02 - Filtros de descoberta
-Como cliente, quero filtrar eventos por cidade, dia da semana, atracao e categoria geek, para encontrar opcoes mais relevantes.
+Como cliente, quero filtrar eventos por cidade, dia da semana e categoria geek, para encontrar opcoes mais relevantes.
 
 Critérios de aceite:
 
@@ -161,7 +161,7 @@ Critérios de aceite:
 - administrador deve poder enviar uma imagem da planta;
 - administrador deve poder cadastrar um stand;
 - administrador deve poder criar, renomear e excluir linhas vazias;
-- administrador deve poder aplicar uma organização automática por grade 2x2, 3x3, 4x4, 5x5 ou 8x8;
+- administrador deve poder aplicar uma organização automática por grade 2x2, 3x3 ou 4x4;
 - sistema deve desabilitar grades que nao comportam a quantidade atual de stands;
 - administrador deve poder arrastar o stand para a posição desejada na planta;
 - administrador deve poder editar ou excluir um stand diretamente na lista da linha;

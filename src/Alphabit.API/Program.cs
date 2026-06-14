@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
@@ -284,6 +285,78 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Execute(@"
         CREATE UNIQUE INDEX IF NOT EXISTS IX_Avaliacoes_Evento_Usuario
         ON Avaliacoes (EventoId, UsuarioCpf);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Eventos_DataEvento
+        ON Eventos (DataEvento);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Eventos_Destaque_Data
+        ON Eventos (EhDestaque, DataEvento);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Atividades_Evento_Horario
+        ON Atividades (EventoId, Horario, Id);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_InscricoesAtividades_Usuario
+        ON InscricoesAtividades (UsuarioCpf, AtividadeId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_Usuario_Data
+        ON Reservas (UsuarioCpf, DataReserva DESC);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_Evento
+        ON Reservas (EventoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_StandsEspacos_Evento_Setor
+        ON StandsEspacos (EventoId, Setor, Codigo);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_EventoConvidados_Convidado
+        ON EventoConvidados (ConvidadoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_EventoId
+        ON Reservas (EventoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_UsuarioCpf
+        ON Reservas (UsuarioCpf);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_TipoIngressoId
+        ON Reservas (TipoIngressoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_DataReserva
+        ON Reservas (DataReserva DESC);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Reservas_StatusPagamento
+        ON Reservas (StatusPagamento);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Checkins_Status
+        ON Checkins (Status);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Avaliacoes_EventoId
+        ON Avaliacoes (EventoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_StandsEspacos_EventoId
+        ON StandsEspacos (EventoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_Atividades_EventoId
+        ON Atividades (EventoId);");
+
+    connection.Execute(@"
+        CREATE INDEX IF NOT EXISTS IX_InscricoesAtividades_UsuarioCpf
+        ON InscricoesAtividades (UsuarioCpf);");
 
     EnsureColumnExists(connection, "Usuarios", "SenhaHash", "TEXT NOT NULL DEFAULT ''");
     EnsureColumnExists(connection, "Usuarios", "Sobrenome", "TEXT NOT NULL DEFAULT ''");
@@ -854,6 +927,9 @@ app.MapPost("/api/eventos", (Evento evento, HttpContext httpContext) =>
     if (!AlphabitRules.IsValidEvent(evento))
         return Results.BadRequest("Preencha os dados do evento corretamente.");
 
+    if (!IsRegularImagePayloadWithinLimit(evento.ImagemUrl))
+        return Results.BadRequest("A imagem do evento é muito grande. Use uma imagem de até 500 KB ou um link externo.");
+
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -901,6 +977,7 @@ app.MapGet("/api/admin/eventos", (HttpContext httpContext) =>
     if (adminResult is not null)
         return adminResult;
 
+    var stopwatch = Stopwatch.StartNew();
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -923,6 +1000,8 @@ app.MapGet("/api/admin/eventos", (HttpContext httpContext) =>
         LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
         GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl, e.EhDestaque
         ORDER BY e.DataEvento").ToList();
+
+    app.Logger.LogInformation("Eventos admin listados em {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
 
     return Results.Ok(eventos);
 });
@@ -971,8 +1050,8 @@ app.MapPut("/api/admin/eventos/{id:int}/mapa-imagem", (int id, EventoMapaImagemR
         return adminResult;
 
     var mapaImagemUrl = (request.MapaImagemUrl ?? string.Empty).Trim();
-    if (mapaImagemUrl.Length > 2_000_000)
-        return Results.BadRequest("A imagem da planta é muito grande. Use uma imagem menor ou um link externo.");
+    if (!IsMapImagePayloadWithinLimit(mapaImagemUrl))
+        return Results.BadRequest("A imagem da planta é muito grande. Use uma imagem de até 1 MB ou um link externo.");
 
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
@@ -1610,6 +1689,9 @@ app.MapPut("/api/admin/eventos/{id:int}", (int id, EventoAdminRequest evento, Ht
     }))
         return Results.BadRequest("Preencha os dados do evento corretamente.");
 
+    if (!IsRegularImagePayloadWithinLimit(evento.ImagemUrl))
+        return Results.BadRequest("A imagem do evento é muito grande. Use uma imagem de até 500 KB ou um link externo.");
+
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -1721,6 +1803,7 @@ app.MapDelete("/api/admin/eventos/{id:int}", (int id, HttpContext httpContext) =
 
 app.MapGet("/api/eventos", () =>
 {
+    var stopwatch = Stopwatch.StartNew();
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
 
@@ -1742,6 +1825,8 @@ app.MapGet("/api/eventos", () =>
         FROM Eventos e
         LEFT JOIN Avaliacoes a ON a.EventoId = e.Id
         GROUP BY e.Id, e.Nome, e.LocalEvento, e.CidadeEvento, e.Artista, e.GeneroMusical, e.CapacidadeTotal, e.DataEvento, e.PrecoPadrao, e.ImagemUrl, e.EhDestaque").ToList();
+
+    app.Logger.LogInformation("Eventos públicos listados em {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
 
     return Results.Ok(eventos);
 });
@@ -2050,6 +2135,9 @@ app.MapPost("/api/convidados", (Convidado convidado, HttpContext httpContext) =>
 
     if (!IsValidGuest(convidado))
         return Results.BadRequest("Preencha os dados do convidado corretamente.");
+
+    if (!IsRegularImagePayloadWithinLimit(convidado.FotoUrl))
+        return Results.BadRequest("A foto do convidado é muito grande. Use uma imagem de até 500 KB ou um link externo.");
 
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
@@ -2945,11 +3033,16 @@ app.MapGet("/api/reservas/{cpf}", (string cpf, HttpContext httpContext) =>
             COALESCE(c.QrCode, '') AS QrCode,
             COALESCE(c.Status, 'Pendente') AS CheckinStatus,
             c.DataCheckin,
-            r.DataReserva
+            r.DataReserva,
+            CASE
+                WHEN av.Id IS NULL THEN 0
+                ELSE 1
+            END AS JaAvaliado
         FROM Reservas r
         INNER JOIN Eventos e ON e.Id = r.EventoId
         LEFT JOIN TiposIngresso t ON t.Id = r.TipoIngressoId
         LEFT JOIN Checkins c ON c.ReservaId = r.Id
+        LEFT JOIN Avaliacoes av ON av.EventoId = r.EventoId AND av.UsuarioCpf = r.UsuarioCpf
         WHERE r.UsuarioCpf = @cpf
         ORDER BY r.DataReserva DESC", new { cpf }).ToList();
 
@@ -3066,24 +3159,28 @@ app.MapPost("/api/checkin", (CheckinRequest request, HttpContext httpContext) =>
     });
 });
 
-app.MapGet("/api/admin/vendas/dashboard", (HttpContext httpContext) =>
+app.MapGet("/api/admin/vendas/dashboard", (HttpContext httpContext, int? comprasLimit, int? comprasOffset) =>
 {
     var accessResult = EnsureAdminAccess(httpContext);
     if (accessResult is not null)
         return accessResult;
 
-    var dashboard = BuildAdminSalesDashboard(connectionString);
+    var stopwatch = Stopwatch.StartNew();
+    var dashboard = BuildAdminSalesDashboard(connectionString, comprasLimit, comprasOffset);
+    app.Logger.LogInformation("Dashboard admin gerado em {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
 
     return Results.Ok(dashboard);
 });
 
-app.MapGet("/api/dashboard", (HttpContext httpContext) =>
+app.MapGet("/api/dashboard", (HttpContext httpContext, int? comprasLimit, int? comprasOffset) =>
 {
     var accessResult = EnsureAdminAccess(httpContext);
     if (accessResult is not null)
         return accessResult;
 
-    var dashboard = BuildAdminSalesDashboard(connectionString);
+    var stopwatch = Stopwatch.StartNew();
+    var dashboard = BuildAdminSalesDashboard(connectionString, comprasLimit, comprasOffset);
+    app.Logger.LogInformation("Dashboard legado gerado em {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
 
     return Results.Ok(dashboard);
 });
@@ -3819,10 +3916,13 @@ static string GenerateQrCode()
     return $"ALP-QR-{Convert.ToHexString(bytes)}";
 }
 
-static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionString)
+static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionString, int? comprasLimit = null, int? comprasOffset = null)
 {
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
+
+    var limit = NormalizeDashboardLimit(comprasLimit);
+    var offset = NormalizeDashboardOffset(comprasOffset);
 
     var compras = connection.Query<AdminSaleResponse>(@"
         SELECT
@@ -3846,31 +3946,35 @@ static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionStr
         INNER JOIN Usuarios u ON u.Cpf = r.UsuarioCpf
         INNER JOIN Eventos e ON e.Id = r.EventoId
         LEFT JOIN TiposIngresso t ON t.Id = r.TipoIngressoId
-        ORDER BY r.DataReserva DESC").ToList();
+        ORDER BY r.DataReserva DESC
+        LIMIT @limit OFFSET @offset",
+        new { limit, offset }).ToList();
 
     foreach (var compra in compras)
     {
         compra.DataCompra = ConvertUtcLikeToBrasília(compra.DataCompra);
     }
 
-    var comprasNaoCanceladas = compras
-        .Where(compra => !IsCancelledOrRefundedPaymentStatus(compra.StatusPagamento))
-        .ToList();
-    var comprasPagas = comprasNaoCanceladas
-        .Where(compra => IsPaidPaymentStatus(compra.StatusPagamento))
-        .ToList();
-    var comprasPendentes = comprasNaoCanceladas
-        .Where(compra => IsPendingPaymentStatus(compra.StatusPagamento))
-        .ToList();
-
     var hoje = ConvertUtcLikeToBrasília(DateTime.UtcNow).Date;
-    var totalVendidoHoje = comprasPagas
-        .Where(compra => compra.DataCompra.Date == hoje)
-        .Sum(compra => compra.ValorPago);
+    var totalVendidoHoje = connection.ExecuteScalar<decimal>(@"
+        SELECT COALESCE(SUM(ValorFinalPago), 0)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') = 'Pago' COLLATE NOCASE
+          AND date(DataReserva) = @hoje",
+        new { hoje = hoje.ToString("yyyy-MM-dd") });
 
-    var receitaTotal = comprasPagas.Sum(compra => compra.ValorPago);
-    var valorPendente = comprasPendentes.Sum(compra => compra.ValorPago);
-    var totalIngressosVendidos = comprasNaoCanceladas.Sum(compra => compra.QuantidadeIngressos);
+    var receitaTotal = connection.ExecuteScalar<decimal>(@"
+        SELECT COALESCE(SUM(ValorFinalPago), 0)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') = 'Pago' COLLATE NOCASE");
+    var valorPendente = connection.ExecuteScalar<decimal>(@"
+        SELECT COALESCE(SUM(ValorFinalPago), 0)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') = 'Pendente' COLLATE NOCASE");
+    var totalIngressosVendidos = connection.ExecuteScalar<int>(@"
+        SELECT COALESCE(SUM(Quantidade), 0)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') NOT IN ('Cancelado', 'Cancelada', 'Reembolsado', 'Reembolsada')");
     var totalEventos = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM Eventos");
     var capacidadeTotal = connection.ExecuteScalar<int>("SELECT COALESCE(SUM(CapacidadeTotal), 0) FROM Eventos");
     var checkinsRealizados = connection.ExecuteScalar<int>(@"
@@ -3885,9 +3989,19 @@ static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionStr
         WHERE CupomUtilizado IS NOT NULL
           AND trim(CupomUtilizado) <> ''
           AND COALESCE(NULLIF(StatusPagamento, ''), 'Pago') NOT IN ('Cancelado', 'Cancelada', 'Reembolsado', 'Reembolsada')");
-    var reservasPagas = comprasPagas.Count;
-    var reservasPendentesPagamento = comprasPendentes.Count;
-    var reservasCanceladas = compras.Count(compra => IsCancelledOrRefundedPaymentStatus(compra.StatusPagamento));
+    var totalCompras = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM Reservas");
+    var reservasPagas = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') = 'Pago' COLLATE NOCASE");
+    var reservasPendentesPagamento = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') = 'Pendente' COLLATE NOCASE");
+    var reservasCanceladas = connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') IN ('Cancelado', 'Cancelada', 'Reembolsado', 'Reembolsada')");
     var totalAvaliacoes = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM Avaliacoes");
     var mediaAvaliacoes = connection.ExecuteScalar<decimal>("SELECT COALESCE(AVG(Nota), 0) FROM Avaliacoes");
     var capacidadeRestante = Math.Max(0, capacidadeTotal - totalIngressosVendidos);
@@ -3898,22 +4012,21 @@ static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionStr
         ? decimal.Round((decimal)checkinsRealizados / totalIngressosVendidos * 100, 2)
         : 0;
 
-    var pagamentosPix = comprasNaoCanceladas.Count(compra => string.Equals(compra.FormaPagamento, "Pix", StringComparison.OrdinalIgnoreCase));
-    var pagamentosCartao = comprasNaoCanceladas.Count(compra => string.Equals(compra.FormaPagamento, "Cartão", StringComparison.OrdinalIgnoreCase));
-    var pagamentosBoleto = comprasNaoCanceladas.Count(compra => string.Equals(compra.FormaPagamento, "Boleto", StringComparison.OrdinalIgnoreCase));
+    var pagamentosPix = CountPaymentMethod(connection, "Pix");
+    var pagamentosCartao = CountPaymentMethod(connection, "Cartão");
+    var pagamentosBoleto = CountPaymentMethod(connection, "Boleto");
 
-    var eventosMaisVendidos = comprasNaoCanceladas
-        .GroupBy(compra => compra.Evento)
-        .Select(group => new AdminTopEventResponse
-        {
-            Evento = group.Key,
-            IngressosVendidos = group.Sum(item => item.QuantidadeIngressos),
-            ValorArrecadado = group.Sum(item => item.ValorPago)
-        })
-        .OrderByDescending(item => item.IngressosVendidos)
-        .ThenByDescending(item => item.ValorArrecadado)
-        .Take(5)
-        .ToList();
+    var eventosMaisVendidos = connection.Query<AdminTopEventResponse>(@"
+        SELECT
+            e.Nome AS Evento,
+            COALESCE(SUM(r.Quantidade), 0) AS IngressosVendidos,
+            COALESCE(SUM(r.ValorFinalPago), 0) AS ValorArrecadado
+        FROM Reservas r
+        INNER JOIN Eventos e ON e.Id = r.EventoId
+        WHERE COALESCE(NULLIF(r.StatusPagamento, ''), 'Pago') NOT IN ('Cancelado', 'Cancelada', 'Reembolsado', 'Reembolsada')
+        GROUP BY e.Nome
+        ORDER BY IngressosVendidos DESC, ValorArrecadado DESC
+        LIMIT 5").ToList();
 
     var ultimasAvaliacoes = connection.Query<AdminReviewResponse>(@"
         SELECT
@@ -3939,7 +4052,7 @@ static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionStr
     return new AdminSalesDashboardResponse
     {
         TotalEventos = totalEventos,
-        TotalReservas = compras.Count,
+        TotalReservas = totalCompras,
         ReceitaTotal = decimal.Round(receitaTotal, 2),
         ValorPendente = decimal.Round(valorPendente, 2),
         TotalVendidoHoje = decimal.Round(totalVendidoHoje, 2),
@@ -3965,22 +4078,49 @@ static AdminSalesDashboardResponse BuildAdminSalesDashboard(string connectionStr
     };
 }
 
-static bool IsPaidPaymentStatus(string status)
+static int NormalizeDashboardLimit(int? limit)
 {
-    return string.Equals(status, "Pago", StringComparison.OrdinalIgnoreCase);
+    if (!limit.HasValue || limit.Value <= 0)
+        return 50;
+
+    return Math.Clamp(limit.Value, 1, 200);
 }
 
-static bool IsPendingPaymentStatus(string status)
+static int NormalizeDashboardOffset(int? offset)
 {
-    return string.Equals(status, "Pendente", StringComparison.OrdinalIgnoreCase);
+    return Math.Max(0, offset ?? 0);
 }
 
-static bool IsCancelledOrRefundedPaymentStatus(string status)
+static int CountPaymentMethod(SqliteConnection connection, string paymentMethod)
 {
-    return string.Equals(status, "Cancelado", StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(status, "Cancelada", StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(status, "Reembolsado", StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(status, "Reembolsada", StringComparison.OrdinalIgnoreCase);
+    return connection.ExecuteScalar<int>(@"
+        SELECT COUNT(*)
+        FROM Reservas
+        WHERE COALESCE(NULLIF(StatusPagamento, ''), 'Pago') NOT IN ('Cancelado', 'Cancelada', 'Reembolsado', 'Reembolsada')
+          AND COALESCE(NULLIF(FormaPagamento, ''), 'Pix') = @paymentMethod COLLATE NOCASE",
+        new { paymentMethod });
+}
+
+static bool IsRegularImagePayloadWithinLimit(string? value)
+{
+    return IsImagePayloadWithinLimit(value, 700_000);
+}
+
+static bool IsMapImagePayloadWithinLimit(string? value)
+{
+    return IsImagePayloadWithinLimit(value, 1_400_000);
+}
+
+static bool IsImagePayloadWithinLimit(string? value, int maxLength)
+{
+    var text = value?.Trim() ?? string.Empty;
+    if (text.Length == 0)
+        return true;
+
+    if (!text.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        return true;
+
+    return text.Length <= maxLength;
 }
 
 static void EnsureCheckinsForExistingReservations(SqliteConnection connection)
