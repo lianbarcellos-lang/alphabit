@@ -34,7 +34,7 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 
 ## Funcionalidades atuais
 
-- cadastro, login, perfil e recuperação de senha de usuário
+- cadastro, login e perfil de usuário
 - login administrativo
 - listagem, filtros e detalhe de eventos
 - categorias geek, cidades e eventos enriquecidos
@@ -139,8 +139,6 @@ Esse caminho foi mantido por compatibilidade técnica com a base original.
 - `PUT /api/usuarios/{cpf}/perfil`
 - `POST /api/auth/usuarios/cadastro`
 - `POST /api/auth/usuarios/login`
-- `POST /api/auth/usuarios/recuperar-senha`
-- `POST /api/auth/usuarios/redefinir-senha`
 - `POST /api/auth/admin/login`
 
 ### Eventos e catálogos

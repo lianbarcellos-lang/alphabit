@@ -24,24 +24,17 @@
                             {
                                 <span>Já tem uma conta? <button class="auth-switch" type="button" @onclick="OpenLogin">Entrar agora</button></span>
                             }
-                            else if (IsForgot)
-                            {
-                                <span>Lembrou da senha? <button class="auth-switch" type="button" @onclick="OpenLogin">Voltar para o login</button></span>
-                            }
                             else
                             {
-                                <span>Recebeu o código? <button class="auth-switch" type="button" @onclick="OpenLogin">Voltar para o login</button></span>
+                                <span>Já tem uma conta? <button class="auth-switch" type="button" @onclick="OpenLogin">Entrar agora</button></span>
                             }
                         </p>
                     </div>
 
-                    @if (!IsForgot && !IsReset)
-                    {
-                        <div class="auth-tabs" role="tablist" aria-label="Tipo de acesso">
-                            <button class="auth-tab @(IsLogin ? "auth-tab--active" : null)" type="button" @onclick="OpenLogin">Entrar</button>
-                            <button class="auth-tab @(IsRegister ? "auth-tab--active" : null)" type="button" @onclick="OpenRegister">Criar conta</button>
-                        </div>
-                    }
+                    <div class="auth-tabs" role="tablist" aria-label="Tipo de acesso">
+                        <button class="auth-tab @(IsLogin ? "auth-tab--active" : null)" type="button" @onclick="OpenLogin">Entrar</button>
+                        <button class="auth-tab @(IsRegister ? "auth-tab--active" : null)" type="button" @onclick="OpenRegister">Criar conta</button>
+                    </div>
 
                     @if (!string.IsNullOrWhiteSpace(statusMessage))
                     {
@@ -72,16 +65,9 @@
                                 <ValidationMessage For="() => loginModel.Senha" />
                             </div>
 
-                            <button class="auth-switch auth-switch--inline" type="button" @onclick="OpenForgotPassword">Esqueci minha senha</button>
-
                             <button class="auth-submit" type="submit" disabled="@isBusy">
                                 @(isBusy ? "Entrando..." : "Entrar na conta")
                             </button>
-
-                            @if (CanSuggestPasswordReset)
-                            {
-                                <button class="auth-secondary" type="button" @onclick="OpenForgotPassword">Redefinir senha</button>
-                            }
                         </EditForm>
                     }
                     else if (IsRegister)
@@ -151,82 +137,6 @@
                                 @(isBusy ? "Criando conta..." : "Cadastrar e entrar")
                             </button>
 
-                            @if (CanSuggestPasswordReset)
-                            {
-                                <button class="auth-secondary" type="button" @onclick="OpenForgotPasswordWithRegisterEmail">Já tenho uma conta e quero redefinir a senha</button>
-                            }
-                        </EditForm>
-                    }
-                    else if (IsForgot)
-                    {
-                        <EditForm Model="@forgotPasswordModel" OnValidSubmit="HandleForgotPassword" FormName="overlay-forgot" class="auth-form">
-                            <DataAnnotationsValidator />
-
-                            <div class="field">
-                                <label for="overlayForgotLogin">E-mail ou CPF</label>
-                                <InputText id="overlayForgotLogin" class="field__input" @bind-Value="forgotPasswordModel.Login" placeholder="Digite o e-mail ou CPF da conta" />
-                                <ValidationMessage For="() => forgotPasswordModel.Login" />
-                            </div>
-
-                            <button class="auth-submit" type="submit" disabled="@isBusy">
-                                @(isBusy ? "Enviando código..." : "Enviar código de redefinição")
-                            </button>
-                        </EditForm>
-                    }
-                    else
-                    {
-                        <EditForm Model="@resetPasswordModel" OnValidSubmit="HandleResetPassword" FormName="overlay-reset" class="auth-form">
-                            <DataAnnotationsValidator />
-
-                            @if (!string.IsNullOrWhiteSpace(recoveryMaskedEmail))
-                            {
-                                <div class="status-box status-box--success">Enviamos um código para @recoveryMaskedEmail.</div>
-                            }
-
-                            <div class="field">
-                                <label for="overlayResetCode">Código recebido por e-mail</label>
-                                <InputText id="overlayResetCode" class="field__input" @bind-Value="resetPasswordModel.Codigo" placeholder="Digite o código de 6 dígitos" />
-                                <ValidationMessage For="() => resetPasswordModel.Codigo" />
-                            </div>
-
-                            <div class="field auth-form__grid">
-                                <div>
-                                    <label for="overlayNovaSenha">Nova senha</label>
-                                    <div class="field__password">
-                                        <InputText id="overlayNovaSenha" class="field__input field__input--password" type="@(showResetPassword ? "text" : "password")" @bind-Value="resetPasswordModel.NovaSenha" placeholder="Crie sua nova senha" />
-                                        <div class="field__toggle-row">
-                                            <button class="field__toggle" type="button" @onclick="ToggleResetPassword" aria-label="Exibir ou ocultar senha">
-                                                @(showResetPassword ? "Ocultar" : "Mostrar")
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <ValidationMessage For="() => resetPasswordModel.NovaSenha" />
-                                </div>
-                                <div>
-                                    <label for="overlayConfirmarNovaSenha">Confirmar nova senha</label>
-                                    <div class="field__password">
-                                        <InputText id="overlayConfirmarNovaSenha" class="field__input field__input--password" type="@(showResetConfirmPassword ? "text" : "password")" @bind-Value="resetPasswordModel.ConfirmarSenha" placeholder="Repita a nova senha" />
-                                        <div class="field__toggle-row">
-                                            <button class="field__toggle" type="button" @onclick="ToggleResetConfirmPassword" aria-label="Exibir ou ocultar senha">
-                                                @(showResetConfirmPassword ? "Ocultar" : "Mostrar")
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <ValidationMessage For="() => resetPasswordModel.ConfirmarSenha" />
-                                    @if (ResetPasswordMismatch)
-                                    {
-                                        <span class="field__hint field__hint--error">As novas senhas não coincidem.</span>
-                                    }
-                                </div>
-                            </div>
-
-                            <button class="auth-submit" type="submit" disabled="@isBusy">
-                                @(isBusy ? "Atualizando senha..." : "Salvar nova senha")
-                            </button>
-
-                            <button class="auth-secondary" type="button" @onclick="ResendResetCodeAsync" disabled="@isBusy">
-                                Solicitar novo código
-                            </button>
                         </EditForm>
                     }
                 </section>
@@ -238,40 +148,25 @@
 @code {
     private readonly CustomerLoginInputModel loginModel = new();
     private readonly RegisterInputModel registerModel = new();
-    private readonly ForgotPasswordInputModel forgotPasswordModel = new();
-    private readonly ResetPasswordInputModel resetPasswordModel = new();
     private bool isBusy;
     private bool isError;
     private bool showLoginPassword;
     private bool showRegisterPassword;
     private bool showRegisterConfirmPassword;
-    private bool showResetPassword;
-    private bool showResetConfirmPassword;
     private string statusMessage = string.Empty;
-    private string recoveryMaskedEmail = string.Empty;
 
     private bool IsLogin => Overlay.Mode == "login";
     private bool IsRegister => Overlay.Mode == "register";
-    private bool IsForgot => Overlay.Mode == "forgot";
-    private bool IsReset => Overlay.Mode == "reset";
     private string PanelTitle =>
         IsLogin ? "Acesse a sua conta" :
-        IsRegister ? "Crie sua conta" :
-        IsForgot ? "Recupere sua senha" :
-        "Defina uma nova senha";
+        "Crie sua conta";
     private string AsideTitle =>
         IsLogin ? "Seu próximo evento geek começa aqui." :
-        IsRegister ? "Crie sua conta e entre na comunidade." :
-        IsForgot ? "Recupere o acesso a sua conta." :
-        "Escolha uma nova senha com segurança.";
+        "Crie sua conta e entre na comunidade.";
     private string AsideDescription =>
         IsLogin
             ? "Acesse seus ingressos, acompanhe reservas e continue a compra sem perder tempo."
-            : IsRegister
-                ? "Monte sua conta em poucos passos para garantir ingressos, acompanhar pedidos e explorar a agenda geek."
-                : IsForgot
-                    ? "Informe o e-mail ou CPF cadastrado para receber um código de verificação no Gmail configurado da sua conta."
-                    : "Use o código enviado por e-mail para confirmar sua identidade e concluir a redefinição da senha.";
+            : "Monte sua conta em poucos passos para garantir ingressos, acompanhar pedidos e explorar a agenda geek.";
     private bool EmailConfirmationMismatch =>
         !string.IsNullOrWhiteSpace(registerModel.Email) &&
         !string.IsNullOrWhiteSpace(registerModel.ConfirmarEmail) &&
@@ -281,15 +176,6 @@
         !string.IsNullOrWhiteSpace(registerModel.Senha) &&
         !string.IsNullOrWhiteSpace(registerModel.ConfirmarSenha) &&
         !string.Equals(registerModel.Senha, registerModel.ConfirmarSenha, StringComparison.Ordinal);
-    private bool ResetPasswordMismatch =>
-        !string.IsNullOrWhiteSpace(resetPasswordModel.NovaSenha) &&
-        !string.IsNullOrWhiteSpace(resetPasswordModel.ConfirmarSenha) &&
-        !string.Equals(resetPasswordModel.NovaSenha, resetPasswordModel.ConfirmarSenha, StringComparison.Ordinal);
-    private bool CanSuggestPasswordReset =>
-        isError &&
-        ((IsLogin && statusMessage.Contains("Senha", StringComparison.OrdinalIgnoreCase)) ||
-         (IsRegister && statusMessage.Contains("Já existe uma conta", StringComparison.OrdinalIgnoreCase)));
-
     protected override void OnInitialized()
     {
         Overlay.OnChange += HandleOverlayChanged;
@@ -304,7 +190,6 @@
     {
         statusMessage = string.Empty;
         isError = false;
-        recoveryMaskedEmail = string.Empty;
         ResetPasswordVisibility();
         Overlay.OpenLogin();
     }
@@ -313,46 +198,14 @@
     {
         statusMessage = string.Empty;
         isError = false;
-        recoveryMaskedEmail = string.Empty;
         ResetPasswordVisibility();
         Overlay.OpenRegister();
-    }
-
-    private void OpenForgotPassword()
-    {
-        statusMessage = string.Empty;
-        isError = false;
-        recoveryMaskedEmail = string.Empty;
-        ResetPasswordVisibility();
-        forgotPasswordModel.Login = loginModel.Login;
-        Overlay.OpenForgotPassword();
-    }
-
-    private void OpenForgotPasswordWithRegisterEmail()
-    {
-        statusMessage = string.Empty;
-        isError = false;
-        recoveryMaskedEmail = string.Empty;
-        ResetPasswordVisibility();
-        forgotPasswordModel.Login = !string.IsNullOrWhiteSpace(registerModel.Email)
-            ? registerModel.Email
-            : registerModel.Cpf;
-        Overlay.OpenForgotPassword();
-    }
-
-    private void OpenResetPassword()
-    {
-        statusMessage = string.Empty;
-        isError = false;
-        ResetPasswordVisibility();
-        Overlay.OpenResetPassword();
     }
 
     private void Close()
     {
         statusMessage = string.Empty;
         isError = false;
-        recoveryMaskedEmail = string.Empty;
         ResetPasswordVisibility();
         Overlay.Close();
     }
@@ -360,16 +213,12 @@
     private void ToggleLoginPassword() => showLoginPassword = !showLoginPassword;
     private void ToggleRegisterPassword() => showRegisterPassword = !showRegisterPassword;
     private void ToggleRegisterConfirmPassword() => showRegisterConfirmPassword = !showRegisterConfirmPassword;
-    private void ToggleResetPassword() => showResetPassword = !showResetPassword;
-    private void ToggleResetConfirmPassword() => showResetConfirmPassword = !showResetConfirmPassword;
 
     private void ResetPasswordVisibility()
     {
         showLoginPassword = false;
         showRegisterPassword = false;
         showRegisterConfirmPassword = false;
-        showResetPassword = false;
-        showResetConfirmPassword = false;
     }
 
     private async Task HandleLogin()
@@ -481,106 +330,6 @@
         {
             isBusy = false;
         }
-    }
-
-    private async Task HandleForgotPassword()
-    {
-        statusMessage = string.Empty;
-        isError = false;
-        isBusy = true;
-
-        try
-        {
-            var result = await ApiClient.RequestPasswordResetAsync(new ForgotPasswordRequest
-            {
-                Login = forgotPasswordModel.Login
-            });
-
-            if (!result.Sucesso)
-            {
-                isError = true;
-                statusMessage = result.Mensagem;
-                return;
-            }
-
-            recoveryMaskedEmail = result.EmailMascarado;
-            resetPasswordModel.Login = forgotPasswordModel.Login;
-            resetPasswordModel.Codigo = string.Empty;
-            resetPasswordModel.NovaSenha = string.Empty;
-            resetPasswordModel.ConfirmarSenha = string.Empty;
-            statusMessage = result.Mensagem;
-            isError = false;
-            OpenResetPassword();
-            recoveryMaskedEmail = result.EmailMascarado;
-            statusMessage = result.Mensagem;
-        }
-        catch
-        {
-            isError = true;
-            statusMessage = "Não conseguimos iniciar a recuperação agora.";
-        }
-        finally
-        {
-            isBusy = false;
-        }
-    }
-
-    private async Task HandleResetPassword()
-    {
-        statusMessage = string.Empty;
-        isError = false;
-
-        if (ResetPasswordMismatch)
-        {
-            isError = true;
-            statusMessage = "As novas senhas não coincidem.";
-            return;
-        }
-
-        isBusy = true;
-
-        try
-        {
-            var novaSenha = resetPasswordModel.NovaSenha;
-            var result = await ApiClient.ResetPasswordAsync(new ResetPasswordRequest
-            {
-                Login = resetPasswordModel.Login,
-                Codigo = resetPasswordModel.Codigo,
-                NovaSenha = novaSenha
-            });
-
-            if (!result.Sucesso)
-            {
-                isError = true;
-                statusMessage = result.Mensagem;
-                return;
-            }
-
-            loginModel.Login = resetPasswordModel.Login;
-            loginModel.Senha = novaSenha;
-            statusMessage = result.Mensagem;
-            recoveryMaskedEmail = string.Empty;
-            resetPasswordModel.Codigo = string.Empty;
-            resetPasswordModel.NovaSenha = string.Empty;
-            resetPasswordModel.ConfirmarSenha = string.Empty;
-            OpenLogin();
-            statusMessage = result.Mensagem;
-        }
-        catch
-        {
-            isError = true;
-            statusMessage = "Não conseguimos redefinir a senha agora.";
-        }
-        finally
-        {
-            isBusy = false;
-        }
-    }
-
-    private async Task ResendResetCodeAsync()
-    {
-        forgotPasswordModel.Login = resetPasswordModel.Login;
-        await HandleForgotPassword();
     }
 
     public void Dispose()

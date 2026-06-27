@@ -2,7 +2,7 @@
 
 ## Escopo implementado
 
-O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, recuperacao de senha por email, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos e quantidade de ingresso, reservas, filtros de descoberta, convidados, mapa de stands e expositores, atividades com vagas limitadas, avaliacoes, dashboard e check-in por QR Code.
+O GeekTop possui uma API em .NET 9 com SQLite e Dapper, junto com uma interface Blazor Server. O sistema cobre cadastro e autenticacao de usuarios, gestao administrativa de eventos geek, cupons, cidades e categorias, fluxo de compra com carrinho, tipos e quantidade de ingresso, reservas, filtros de descoberta, convidados, mapa de stands e expositores, atividades com vagas limitadas, avaliacoes, dashboard e check-in por QR Code.
 
 A identidade exibida ao usuario e GeekTop. Os nomes tecnicos `Alphabit.*` foram mantidos em projetos, namespaces e banco local para preservar compatibilidade com a base original.
 
@@ -17,13 +17,10 @@ Como cliente, quero criar minha conta com CPF, nome, email e senha, para acessar
 ### HU03 - Login do cliente
 Como cliente, quero entrar com email ou CPF e minha senha, para visualizar eventos e concluir compras.
 
-### HU04 - Recuperacao de senha
-Como cliente, quero receber um codigo por email para redefinir minha senha, para voltar a acessar minha conta quando eu esquecer a senha.
-
-### HU05 - Protecao contra duplicidade
+### HU04 - Protecao contra duplicidade
 Como sistema, quero bloquear CPF e email ja cadastrados, para manter a base consistente.
 
-### HU06 - Login administrativo
+### HU05 - Login administrativo
 Como administrador, quero acessar uma area protegida, para gerenciar a operacao da plataforma.
 
 ### HU07 - Cadastro de evento
@@ -163,11 +160,6 @@ Dado que o cliente possui cadastro completo
 Quando ele informa CPF ou email e senha corretos  
 Entao o sistema deve autenticar o acesso
 
-Cenario: recuperar senha por email  
-Dado que existe um usuario com email cadastrado  
-Quando ele solicita redefinicao de senha  
-Entao o sistema deve gerar um codigo, enviar por email e permitir a troca de senha com o codigo correto
-
 ### Administracao
 
 Cenario: cadastrar evento  
@@ -305,8 +297,6 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `PUT /api/usuarios/{cpf}/perfil`
 - `POST /api/auth/usuarios/cadastro`
 - `POST /api/auth/usuarios/login`
-- `POST /api/auth/usuarios/recuperar-senha`
-- `POST /api/auth/usuarios/redefinir-senha`
 - `POST /api/auth/admin/login`
 
 ### Eventos, cidades e generos
@@ -502,17 +492,6 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `Comentario` TEXT
 - `CriadoEm` TEXT NOT NULL
 
-### Tabela `RecuperacoesSenha`
-
-- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
-- `UsuarioCpf` TEXT NOT NULL
-- `CodigoHash` TEXT NOT NULL
-- `EmailDestino` TEXT NOT NULL
-- `ExpiraEm` TEXT NOT NULL
-- `TentativasInvalidas` INTEGER NOT NULL
-- `UsadoEm` TEXT NULL
-- `CriadoEm` TEXT NOT NULL
-
 ## Observacoes tecnicas
 
 - para rodar localmente, primeiro entre na raiz do projeto com `cd "C:\Users\rapha\Downloads\Projeto\alphabit-main__tentar\alphabit-main"`
@@ -523,8 +502,7 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - o acesso a dados principal utiliza Dapper com parametros nomeados
 - as queries de negocio estao parametrizadas
 - senhas de usuarios sao armazenadas como hash SHA-256
-- a API possui fluxo de recuperacao de senha por email com codigo temporario
-- o app Blazor possui modal de login, cadastro, redefinicao de senha e exibicao de senha
+- o app Blazor possui modal de login, cadastro e exibicao de senha
 - a vitrine publica possui filtros por cidade, dia da semana e categoria geek
 - o carrinho mostra pre-visualizacao do desconto antes da finalizacao e permite escolher a forma de pagamento
 - a rota `GET /api/reservas/{cpf}` usa `INNER JOIN` para retornar o nome do evento

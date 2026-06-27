@@ -62,13 +62,12 @@ O banco e criado/atualizado no startup da API por comandos SQL. O acesso a dados
 - `StandsEspacos`
 - `Checkins`
 - `Avaliacoes`
-- `RecuperacoesSenha`
 
 ## Modulos funcionais
 
 ### Usuarios e autenticacao
 
-Responsavel por cadastro, login, perfil, protecao de reservas e recuperacao de senha.
+Responsavel por cadastro, login, perfil e protecao de reservas.
 
 ### Eventos
 

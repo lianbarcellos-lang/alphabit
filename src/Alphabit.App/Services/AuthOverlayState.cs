@@ -21,20 +21,6 @@ public class AuthOverlayState
         NotifyStateChanged();
     }
 
-    public void OpenForgotPassword()
-    {
-        IsOpen = true;
-        Mode = "forgot";
-        NotifyStateChanged();
-    }
-
-    public void OpenResetPassword()
-    {
-        IsOpen = true;
-        Mode = "reset";
-        NotifyStateChanged();
-    }
-
     public void Close()
     {
         IsOpen = false;

@@ -51,16 +51,7 @@ Critérios de aceite:
 - credenciais validas autenticam o usuario;
 - credenciais invalidas retornam erro claro.
 
-### HU06 - Recuperacao de senha
-Como cliente, quero receber um codigo por email para redefinir minha senha, para recuperar acesso a conta.
-
-Critérios de aceite:
-
-- codigo temporario deve ser gerado;
-- codigo invalido ou expirado deve ser rejeitado;
-- senha redefinida deve passar a valer no login.
-
-### HU07 - Protecao de dados
+### HU06 - Protecao de dados
 Como sistema, quero restringir perfil e reservas ao proprio cliente ou administrador, para proteger dados pessoais.
 
 Critérios de aceite:
