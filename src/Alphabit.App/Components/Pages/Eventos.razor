@@ -2,7 +2,6 @@
 @page "/eventos"
 @inject AlphabitApiClient ApiClient
 @inject UserSessionState Session
-@inject NavigationManager Navigation
 @inject EventSearchState EventSearch
 @implements IDisposable
 
@@ -40,11 +39,8 @@
                 <div class="featured-carousel__track">
                     @foreach (var item in GetVisibleFeaturedItems())
                     {
-                        <article class="featured-card"
-                                 tabindex="0"
-                                 role="link"
-                                 @onclick="() => OpenEvent(item.Id)"
-                                 @onkeydown="args => HandleEventCardKeyDown(args, item.Id)">
+                        <a class="featured-card"
+                           href="@GetEventHref(item.Id)">
                             @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
                             {
                                 <img src="@item.ImagemUrl" alt="@item.Nome" />
@@ -55,9 +51,9 @@
                                 <h2>@item.Nome</h2>
                                 <strong>@item.Artista</strong>
                                 <p>@item.LocalEvento, @item.CidadeEvento • @item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
-                                <button class="buy-button" type="button" @onclick:stopPropagation="true" @onclick="() => OpenEvent(item.Id)">Ver ingressos</button>
+                                <span class="buy-button">Ver ingressos</span>
                             </div>
-                        </article>
+                        </a>
                     }
                 </div>
 
@@ -131,11 +127,8 @@
         <section class="events-grid">
             @foreach (var item in filteredEvents)
             {
-                <article class="event-card @GetTheme(item)"
-                         tabindex="0"
-                         role="link"
-                         @onclick="() => OpenEvent(item.Id)"
-                         @onkeydown="args => HandleEventCardKeyDown(args, item.Id)">
+                <a class="event-card @GetTheme(item)"
+                   href="@GetEventHref(item.Id)">
                     @if (!string.IsNullOrWhiteSpace(item.ImagemUrl))
                     {
                         <img class="event-card__image" src="@item.ImagemUrl" alt="@item.Nome" />
@@ -152,10 +145,10 @@
                         <p class="event-card__location">@item.LocalEvento, @item.CidadeEvento</p>
                         <p class="event-card__date">@item.DataEvento.ToString("dd/MM/yyyy 'as' HH:mm")</p>
                         <div class="event-card__actions">
-                            <button class="buy-button" type="button" @onclick:stopPropagation="true" @onclick="() => OpenEvent(item.Id)">Ver ingressos</button>
+                            <span class="buy-button">Ver ingressos</span>
                         </div>
                     </div>
-                </article>
+                </a>
             }
         </section>
     }
@@ -207,16 +200,7 @@
         RebuildEventLists();
     }
 
-    private void OpenEvent(int eventId)
-    {
-        Navigation.NavigateTo($"/eventos/{eventId}");
-    }
-
-    private void HandleEventCardKeyDown(KeyboardEventArgs args, int eventId)
-    {
-        if (args.Key is "Enter" or " ")
-            OpenEvent(eventId);
-    }
+    private static string GetEventHref(int eventId) => $"/eventos/{eventId}";
 
     private void HandleSearchChanged()
     {

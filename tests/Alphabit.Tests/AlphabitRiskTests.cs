@@ -175,7 +175,8 @@ public class AlphabitRiskTests
 
         Assert.Contains("@page \"/\"", EventsPageSource);
         Assert.Contains("@page \"/eventos\"", EventsPageSource);
-        Assert.Contains("OpenEvent(item.Id)", EventsPageSource);
+        Assert.Contains("href=\"@GetEventHref(item.Id)\"", EventsPageSource);
+        Assert.Contains("private static string GetEventHref(int eventId) => $\"/eventos/{eventId}\"", EventsPageSource);
         Assert.Contains("Navigation.NavigateTo($\"/eventos/{item.EventoId}#compra\")", CartPageSource);
         Assert.DoesNotContain("/assentos", EventsPageSource);
         Assert.DoesNotContain("/assentos", CartPageSource);
