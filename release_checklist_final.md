@@ -11,3 +11,7 @@
 - [x] ADR criado em `/docs`
 - [x] Documento operacional criado em `/docs/operacao.md`
 - [x] Checklist final entregue na raiz
+- [x] Deploy Railway documentado em `/docs/railway.md`
+- [x] Dominio de apresentacao `https://geektop.store` documentado
+- [x] Recuperacao de senha removida da interface e da lista de funcionalidades entregues
+- [x] Cards de eventos documentados como links reais para `/eventos/{id}`

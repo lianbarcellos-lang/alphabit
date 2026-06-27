@@ -32,7 +32,7 @@ A arquitetura tecnica descreve como o sistema foi implementado. O projeto usa um
 - Acesso a dados: Dapper.
 - Testes: xUnit.
 - Interatividade pontual: JavaScript interop para QR scanner e drag/drop.
-- Deploy previsto: Railway ou execucao local.
+- Deploy: execucao local ou Railway em um unico servico Docker de empacotamento.
 
 ## Estrutura principal
 
@@ -110,6 +110,11 @@ Tabelas centrais:
 - Sem microservices.
 - Sem Clean Architecture completa nesta entrega.
 - Sem deteccao automatica de planta por imagem.
+- Sem recuperacao de senha exposta na interface nesta entrega.
+
+## Deploy atual
+
+Em producao, o GeekTop esta em `https://geektop.store`. O Railway executa um unico servico Docker: a API fica interna em `8081` e o App Blazor fica publico na porta definida por `$PORT`.
 
 ## Decisoes de performance
 

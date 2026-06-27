@@ -22,6 +22,7 @@ O cliente pode:
 
 - criar conta e fazer login;
 - navegar pela vitrine de eventos;
+- abrir eventos clicando no card ou em `Ver ingressos`;
 - filtrar eventos por cidade, data e categoria geek;
 - abrir o detalhe do evento;
 - visualizar convidados e atividades;
@@ -73,7 +74,7 @@ Nao fazem parte desta entrega:
 - JWT;
 - MariaDB;
 - SQL Server;
-- Docker obrigatorio;
+- Docker como arquitetura obrigatoria;
 - Clean Architecture;
 - Microservices;
 - CQRS;
@@ -81,4 +82,4 @@ Nao fazem parte desta entrega:
 
 ## Estado atual
 
-O projeto ja possui vitrine publica, fluxo de compra, reservas, cupons, tipos de ingresso, convidados, atividades, mapa de stands, avaliacoes, dashboard administrativo e check-in com QR Code.
+O projeto ja possui vitrine publica, fluxo de compra, reservas, cupons, tipos de ingresso, convidados, atividades, mapa de stands, avaliacoes, dashboard administrativo, check-in com QR Code e deploy em `https://geektop.store`.

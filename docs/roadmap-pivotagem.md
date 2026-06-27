@@ -20,7 +20,7 @@ Nao implementar nesta pivotagem:
 - Swagger obrigatorio
 - MariaDB
 - SQL Server
-- Docker
+- Docker como arquitetura obrigatoria da aplicacao
 - Clean Architecture
 - Microservices
 - CQRS
@@ -191,7 +191,9 @@ Campos de atividade:
 - `EventoId`
 - `Nome`
 - `Horario`
+- `HorarioFim`
 - `Tipo`
+- `Descricao`
 - `LimiteParticipantes`
 
 Tipos de atividade:
@@ -213,6 +215,8 @@ Regras:
 - impedir inscricao duplicada
 - impedir inscricao acima do limite
 - atividade deve pertencer a evento existente
+- assentos devem ser gerados dinamicamente pela capacidade
+- lugar ocupado nao pode ser escolhido novamente
 
 Frontend:
 
@@ -352,14 +356,14 @@ Regras:
 - stand reservado precisa ter nome de ocupante;
 - cliente apenas visualiza o mapa;
 - administrador pode reservar e liberar espaços;
-- administrador pode aplicar organizacao automatica por grades 2x2, 3x3 e 4x4;
+- administrador pode aplicar organizacao automatica por grades compactas visiveis 3x3 e 4x4;
 - grade automatica so fica disponivel quando comporta a quantidade atual de stands;
 - depois da grade automatica, o administrador ainda pode arrastar os stands manualmente.
 
 Frontend:
 
 - aba `Mapa de stands` no painel administrativo;
-- mapa em blocos clicáveis e planta enviada pelo administrador com organizacao automatica por grade e posicionamento manual;
+- mapa em blocos e planta enviada pelo administrador com organizacao automatica por grade e posicionamento manual;
 - visualização publica no detalhe do evento;
 - lista por linhas/setores.
 
@@ -495,7 +499,7 @@ PDF considerado: `C:\Users\rapha\Downloads\Geek_Event_Platform_AI_Specification_
 Atendido:
 
 - stack mantida: C#, ASP.NET Core Minimal API, Blazor Server / Razor Components, Dapper, SQLite e xUnit
-- sem Entity Framework, Clean Architecture, Microservices, Redis, Docker, CQRS, MediatR, JWT, Kubernetes, SQL Server ou MariaDB
+- sem Entity Framework, Clean Architecture, Microservices, Redis, Docker como arquitetura obrigatoria, CQRS, MediatR, JWT, Kubernetes, SQL Server ou MariaDB
 - modulos de usuarios, eventos, reservas, cupons, atividades, convidados, mapa de stands, tipos de ingresso, dashboard e check-in
 - tabelas `Convidados`, `EventoConvidados`, `StandsEspacos`, `Atividades`, `TiposIngresso`, `Reservas`, `Cupons`, `Checkins` e `Avaliacoes`
 - regras de capacidade, inscricao duplicada, preco de VIP, limite de Meet and Greet e check-in unico

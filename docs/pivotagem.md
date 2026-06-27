@@ -20,7 +20,7 @@ Nao devem ser adicionados nesta pivotagem:
 - Clean Architecture
 - Microservices
 - Redis
-- Docker
+- Docker como tecnologia obrigatoria da aplicacao
 - CQRS
 - MediatR
 - JWT
@@ -136,7 +136,9 @@ Exemplos de setores:
 
 Cada stand pode ser reservado pelo administrador para empresas, marcas, lojas, arenas ou atrações.
 
-O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grades 2x2, 3x3 ou 4x4 e arrastar cada stand para a posição desejada. O sistema salva as coordenadas em porcentagem, junto com ocupante, tipo, area em m², preço por m² ou preço fixo para espaços premium. Ao abrir a planta novamente, a imagem e os stands posicionados são carregados automaticamente.
+O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grades 3x3 ou 4x4 e arrastar cada stand para a posição desejada. O sistema salva as coordenadas em porcentagem, junto com ocupante, tipo, area em m², preço por m² ou preço fixo para espaços premium. Ao abrir a planta novamente, a imagem e os stands posicionados são carregados automaticamente.
+
+O Dockerfile existente e usado apenas para empacotar o deploy no Railway.
 
 Campos implementados:
 
@@ -191,7 +193,7 @@ Campos desejados:
 - RN05 - impedir check-in duplicado.
 - RN06 - stand reservado deve ter nome de empresa, marca ou atração.
 - RN07 - apenas administrador pode alterar alocacao de stands.
-- RN08 - cliente pode visualizar e baixar o mapa, mas nao pode alterar áreas.
+- RN08 - cliente pode visualizar o mapa, mas nao pode alterar áreas.
 - RN09 - organização automática de stands deve respeitar a capacidade da grade escolhida e permitir ajuste manual depois.
 
 ## Tabelas previstas

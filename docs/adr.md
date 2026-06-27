@@ -13,7 +13,8 @@ Este documento registra as principais decisoes tecnicas do projeto GeekTop. O ob
 | Dapper | Da controle sobre SQL, usa parametros contra SQL Injection e evita a complexidade de um ORM completo. |
 | xUnit | Garante testes automatizados para regras principais e reduz risco de regressao durante as pivotagens. |
 | JavaScript interop | Foi usado apenas onde Blazor sozinho nao era suficiente, como camera para QR Code e drag/drop no mapa. |
-| Railway | Foi escolhido como opcao simples de deploy para apresentacao, com baixo atrito para publicar a aplicacao. |
+| Railway | Foi escolhido como opcao simples de deploy para apresentacao, com baixo atrito para publicar a aplicacao. O Dockerfile e apenas empacotamento do deploy. |
+| Links reais nos cards | Foram usados para que a navegacao dos eventos continue funcional mesmo se o circuito Blazor reconectar ou atrasar. |
 
 ## ADR 001 - Persistencia com Minimal API, SQLite e Dapper
 
@@ -129,7 +130,7 @@ Depois da pivotagem para GeekTop, o evento passou a precisar de informacoes inte
 
 Foi adicionada a tabela `StandsEspacos`, vinculada a `Eventos`, com linhas/setores, codigo do stand, posicao no mapa, dados do ocupante e dados comerciais. O evento tambem armazena a imagem da planta enviada pelo administrador em `MapaImagemUrl`. A alocacao e feita no painel administrativo e a visualizacao e publica no detalhe do evento.
 
-O mapa aceita uma planta enviada manualmente pelo administrador. Os stands sao posicionados por drag/drop sobre a imagem usando coordenadas percentuais, sem deteccao automatica por imagem. Para acelerar a montagem inicial, o painel administrativo oferece organizacao automatica por grades 2x2, 3x3 e 4x4, aplicando posicoes compactas e centralizadas sem bloquear ajustes manuais posteriores.
+O mapa aceita uma planta enviada manualmente pelo administrador. Os stands sao posicionados por drag/drop sobre a imagem usando coordenadas percentuais, sem deteccao automatica por imagem. Para acelerar a montagem inicial, o painel administrativo oferece organizacao automatica por grades compactas e centralizadas, sem bloquear ajustes manuais posteriores. Na interface atual, o administrador usa as opcoes visiveis de 3x3 e 4x4.
 
 ### Por que usamos essa abordagem
 
@@ -196,3 +197,76 @@ Prós:
 Contras:
 - uma separacao completa em camadas ainda pode ser desejavel no futuro;
 - carregamento preguiçoso total de abas do admin ficou como melhoria posterior.
+
+## ADR 008 - Deploy Railway em servico unico
+
+### Contexto
+
+O Railway precisava hospedar API e App com o minimo de configuracao para apresentacao. A alternativa de dois servicos exigia URL publica da API, mais variaveis e mais pontos de falha.
+
+### Decisao
+
+Usar um unico servico Docker no Railway. O container inicia a API internamente em `8081` e o App Blazor publicamente na porta `$PORT`. O dominio `https://geektop.store` aponta para esse servico.
+
+### Por que usamos essa abordagem
+
+Ela simplifica o deploy, reduz custo operacional e evita problema de comunicacao entre dois servicos. O Dockerfile nao altera a stack do projeto; ele apenas empacota a execucao da API e do App para o Railway.
+
+### Consequencias
+
+Prós:
+- menos variaveis para configurar;
+- menor chance de erro na URL da API;
+- deploy mais simples para apresentacao.
+
+Contras:
+- API e App escalam juntos;
+- para producao maior, separar servicos pode voltar a ser interessante.
+
+## ADR 009 - Remocao da recuperacao de senha da interface
+
+### Contexto
+
+O sistema tinha referencias a recuperacao de senha, mas o fluxo de email nao estava configurado e validado no dominio de producao.
+
+### Decisao
+
+Remover a recuperacao de senha das telas e da documentacao de funcionalidades entregues.
+
+### Por que usamos essa abordagem
+
+Uma funcionalidade incompleta poderia prejudicar a apresentacao. E melhor entregar login/cadastro consistentes do que exibir uma opcao que depende de infraestrutura externa nao configurada.
+
+### Consequencias
+
+Prós:
+- evita fluxo quebrado para o usuario;
+- reduz risco na avaliacao;
+- mantem a demonstracao objetiva.
+
+Contras:
+- recuperacao de senha fica como melhoria futura, dependente de provedor de email e validacao ponta a ponta.
+
+## ADR 010 - Navegacao por cards com links reais
+
+### Contexto
+
+Os cards de eventos dependiam apenas de clique Blazor. Em producao, eventuais atrasos/reconexoes poderiam deixar o card parecendo clicavel sem navegar.
+
+### Decisao
+
+Transformar cards de eventos e destaques em links reais para `/eventos/{id}`, mantendo o botao visual `Ver ingressos`.
+
+### Por que usamos essa abordagem
+
+Links reais sao mais robustos, funcionam com clique comum, abrir em nova aba e carregamento normal do navegador. Isso tambem melhora acessibilidade e reduz dependencia do estado do circuito Blazor.
+
+### Consequencias
+
+Prós:
+- navegacao mais previsivel;
+- melhora uso em producao;
+- reduz chance de travamento percebido pelo cliente.
+
+Contras:
+- exige cuidado para manter o estilo visual de card sem parecer link cru.

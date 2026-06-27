@@ -55,6 +55,7 @@ O projeto nao e apenas uma loja de ingressos. Ele tambem organiza o que acontece
 O sistema ja possui os principais fluxos funcionando:
 
 - cliente compra ingresso;
+- cards da vitrine abrem o detalhe por link real;
 - cliente ve reservas e QR Code;
 - administrador cadastra eventos;
 - administrador cria programacao;
@@ -62,6 +63,7 @@ O sistema ja possui os principais fluxos funcionando:
 - administrador valida check-in;
 - dashboard exibe metricas;
 - avaliacoes aparecem no evento.
+- producao esta publicada em `https://geektop.store`.
 
 ## Direcao futura
 
@@ -73,5 +75,4 @@ As proximas melhorias naturais sao:
 - melhoria visual final;
 - monitoramento de performance;
 - permissao por perfil administrativo;
-- notificacoes por email.
-
+- notificacoes externas configuraveis.

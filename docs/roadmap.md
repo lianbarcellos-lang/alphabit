@@ -53,14 +53,16 @@ Legenda:
 | 29.2 | Edicao e movimentacao de stands entre linhas | Mapa de stands e admin | Sim | Sim | Concluido |
 | 29.3 | Precificacao comercial de stands | Mapa de stands | Sim | Sim | Concluido |
 | 29.4 | Planta enviada pelo administrador com drag/drop de stands | Mapa de stands e admin | Sim | Sim | Concluido |
-| 29.5 | Organizacao automatica de stands por grades 2x2, 3x3 e 4x4 | Mapa de stands e admin | Sim | Sim | Concluido |
-| 30 | Documentacao final | Projeto implementado | Sim | Em andamento | Em andamento |
-| 31 | Limpeza final de dados de QA | Testes manuais locais | Parcial | Parcial | Opcional |
+| 29.5 | Organizacao automatica de stands por grades compactas visiveis 3x3 e 4x4 | Mapa de stands e admin | Sim | Sim | Concluido |
+| 30 | Cards de eventos com link real para detalhe | Vitrine e detalhe | Sim | Sim | Concluido |
+| 31 | Deploy Railway com dominio geektop.store | Projeto implementado | Sim | Sim | Concluido |
+| 32 | Documentacao final | Projeto implementado | Sim | Sim | Concluido |
+| 33 | Limpeza final de dados de QA | Testes manuais locais | Parcial | Parcial | Opcional |
 
 ## Ordem recomendada para futuras melhorias
 
 1. Revisar documentacao final e manter `docs` atualizada.
-2. Fazer uma passada visual completa em Home, Eventos, Detalhe, Mapa de stands, Reservas e Admin.
+2. Fazer uma passada visual completa em Eventos, Detalhe, Mapa de stands, Reservas e Admin.
 3. Limpar dados locais de teste antes de apresentacao, se necessario.
 4. Adicionar campos literais opcionais do PDF, caso sejam exigidos:
    - `FaixaEtaria`;

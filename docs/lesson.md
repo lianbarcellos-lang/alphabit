@@ -108,7 +108,7 @@ Foram avaliadas alternativas como deteccao automatica, matriz, SVG e desenho ass
 
 ### Solucao aplicada
 
-O sistema passou a permitir upload da planta, cadastro manual de stands, drag/drop com coordenadas percentuais e organizacao automatica simples por grades 2x2, 3x3 e 4x4.
+O sistema passou a permitir upload da planta, cadastro manual de stands, drag/drop com coordenadas percentuais e organizacao automatica simples por grades compactas.
 
 ## 7. Organizacao automatica de stands
 
@@ -122,11 +122,11 @@ O mapa ficava visualmente ruim e exigia muito ajuste manual.
 
 ### Por que demorou
 
-Foi necessario equilibrar centralizacao, espacamento, tamanho dos blocos, limite da planta e liberdade para o administrador escolher 2x2, 3x3 ou 4x4.
+Foi necessario equilibrar centralizacao, espacamento, tamanho dos blocos, limite da planta e liberdade para o administrador escolher uma grade adequada.
 
 ### Solucao aplicada
 
-A organizacao foi limitada a 2x2, 3x3 e 4x4. O layout passou a usar uma area util central, com margens internas, espacamento uniforme e possibilidade de ajuste manual depois.
+A organizacao visivel foi limitada a 3x3 e 4x4. O layout passou a usar uma area util central, com margens internas, espacamento uniforme e possibilidade de ajuste manual depois.
 
 ## 8. QR Code e camera no navegador
 
@@ -224,3 +224,57 @@ Alguns testes eram de inspecao textual e precisaram ser atualizados quando a imp
 ### Solucao aplicada
 
 Os testes foram mantidos e ajustados para validar o comportamento novo. A regra de manutencao ficou: rodar build e testes antes de considerar uma fase concluida.
+
+## 13. Recuperacao de senha sem infraestrutura validada
+
+### Problema
+
+A interface chegou a ter caminho de recuperacao de senha, mas o envio de email nao estava configurado e validado no dominio de producao.
+
+### Impacto
+
+Se o professor ou um usuario clicasse nessa opcao, a funcionalidade poderia parecer quebrada e prejudicar a avaliacao do sistema.
+
+### Por que demorou
+
+O fluxo parecia pequeno visualmente, mas dependia de infraestrutura externa, configuracao de email, dominio e testes ponta a ponta.
+
+### Solucao aplicada
+
+A recuperacao de senha foi removida da interface e da documentacao de funcionalidades entregues. O login e cadastro ficaram como fluxos principais, totalmente demonstraveis.
+
+## 14. Cards de eventos pareciam clicaveis, mas dependiam demais do Blazor
+
+### Problema
+
+Os cards de eventos navegavam por eventos de clique do Blazor. Em producao, qualquer atraso ou reconexao podia deixar o card sem responder imediatamente.
+
+### Impacto
+
+O usuario poderia achar que o site travou ou que o evento nao abre.
+
+### Por que demorou
+
+Localmente o clique funcionava, mas o comportamento em producao exigia validar o carregamento real no dominio.
+
+### Solucao aplicada
+
+Os cards e destaques passaram a usar links reais para `/eventos/{id}`, mantendo o visual de card e o botao `Ver ingressos`.
+
+## 15. Deploy Railway em um servico unico
+
+### Problema
+
+A documentacao antiga falava em dois servicos no Railway, mas o deploy real foi consolidado em um unico container.
+
+### Impacto
+
+Seguir o documento antigo poderia fazer o deploy ficar mais complexo e com variaveis erradas.
+
+### Por que demorou
+
+O projeto tem API e App separados na solucao, mas no Railway ficou mais simples empacotar os dois juntos.
+
+### Solucao aplicada
+
+O `Dockerfile` e o `railway-start.sh` iniciam API e App no mesmo servico. A API fica interna em `8081`, o App usa `$PORT` e o dominio `https://geektop.store` aponta para o servico publico.

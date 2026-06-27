@@ -29,6 +29,7 @@ Como cliente, quero abrir o detalhe de um evento, para ver local, cidade, data, 
 Critérios de aceite:
 
 - o detalhe deve mostrar os dados principais do evento;
+- card e botao `Ver ingressos` devem abrir o detalhe por link real;
 - deve haver caminho para comprar;
 - convidados, atividades, mapa de stands e avaliacoes devem aparecer quando existirem.
 
@@ -50,6 +51,7 @@ Critérios de aceite:
 
 - credenciais validas autenticam o usuario;
 - credenciais invalidas retornam erro claro.
+- recuperacao de senha nao deve aparecer enquanto nao houver envio de email validado.
 
 ### HU06 - Protecao de dados
 Como sistema, quero restringir perfil e reservas ao proprio cliente ou administrador, para proteger dados pessoais.
@@ -152,7 +154,7 @@ Critérios de aceite:
 - administrador deve poder enviar uma imagem da planta;
 - administrador deve poder cadastrar um stand;
 - administrador deve poder criar, renomear e excluir linhas vazias;
-- administrador deve poder aplicar uma organização automática por grade 2x2, 3x3 ou 4x4;
+- administrador deve poder aplicar uma organização automática por grade compacta visivel 3x3 ou 4x4;
 - sistema deve desabilitar grades que nao comportam a quantidade atual de stands;
 - administrador deve poder arrastar o stand para a posição desejada na planta;
 - administrador deve poder editar ou excluir um stand diretamente na lista da linha;
@@ -198,7 +200,7 @@ Como cliente ou administrador, quero ver a media de avaliacoes junto ao preco do
 
 Critérios de aceite:
 
-- media deve aparecer na Home, vitrine, detalhe e admin;
+- media deve aparecer na vitrine, detalhe e admin;
 - total de avaliacoes deve aparecer quando houver avaliacao;
 - eventos sem avaliacao devem exibir `Sem avaliações`.
 

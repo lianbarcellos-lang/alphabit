@@ -27,8 +27,7 @@ O frontend fica em `src/Alphabit.App` e usa Blazor Server / Razor Components.
 
 Principais telas:
 
-- Home;
-- Eventos;
+- Vitrine de eventos (`/` e `/eventos`);
 - Detalhe do evento;
 - Escolha de ingressos;
 - Carrinho;
@@ -67,7 +66,7 @@ O banco e criado/atualizado no startup da API por comandos SQL. O acesso a dados
 
 ### Usuarios e autenticacao
 
-Responsavel por cadastro, login, perfil e protecao de reservas.
+Responsavel por cadastro, login, perfil e protecao de reservas. A interface nao exibe recuperacao de senha nesta entrega, porque nao ha fluxo de envio de email configurado para producao.
 
 ### Eventos
 
@@ -91,7 +90,11 @@ Permite cadastro de convidados e associacao deles aos eventos.
 
 ### Mapa de stands
 
-Permite gerar espaços por evento, organizar por linhas/setores e reservar stands para empresas, lojas, arenas ou atrações. O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grades 2x2, 3x3 ou 4x4 e depois ajustar cada stand manualmente por drag/drop. As coordenadas ficam salvas em porcentagem para recarregar a planta com os stands no mesmo lugar. O cliente continua visualizando o mapa atualizado no detalhe do evento e na área de ingressos.
+Permite gerar espaços por evento, organizar por linhas/setores e reservar stands para empresas, lojas, arenas ou atrações. O admin pode enviar uma imagem de planta do evento, cadastrar stands, aplicar uma organização automática por grade e depois ajustar cada stand manualmente por drag/drop. As coordenadas ficam salvas em porcentagem para recarregar a planta com os stands no mesmo lugar. O cliente continua visualizando o mapa atualizado no detalhe do evento e na área de ingressos.
+
+### Deploy
+
+O deploy atual no Railway usa um unico servico Docker apenas como empacotamento. A API roda internamente na porta `8081` e o App Blazor fica publico na porta fornecida pelo Railway. O dominio de apresentacao e `https://geektop.store`.
 
 ### Check-in
 

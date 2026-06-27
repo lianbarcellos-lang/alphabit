@@ -6,6 +6,7 @@ Sistema de venda e vitrine de eventos geek/anime com API em .NET 9, banco SQLite
 
 - cadastro de cliente com `CPF`, `nome`, `email` e `senha`
 - login do cliente com `email ou CPF + senha`
+- modal de login/cadastro sem recuperação de senha por e-mail, para evitar fluxo não configurado em produção
 - acesso administrativo no mesmo site
 - painel ADM para cadastrar, listar, editar e excluir eventos
 - cadastro de cupons
@@ -15,6 +16,7 @@ Sistema de venda e vitrine de eventos geek/anime com API em .NET 9, banco SQLite
 - atividades internas com inscrição
 - convidados associados aos eventos
 - mapa de stands e expositores por evento, com organização automática por grades e ajuste manual por drag/drop
+- cards da vitrine com link direto para o detalhe do evento e botão `Ver ingressos`
 - check-in administrativo com QR Code
 - avaliações de eventos por clientes com reserva
 - dashboard administrativo com receita, reservas, check-ins, capacidade, cupons e avaliações
@@ -95,7 +97,7 @@ Ao entrar com esse acesso, o sistema libera o painel administrativo.
 - cadastrar atividades e convidados
 - associar convidados aos eventos
 - reservar/liberar stands para empresas, lojas, arenas e atrações
-- organizar automaticamente os stands em grades 2x2, 3x3 ou 4x4 antes dos ajustes manuais
+- organizar automaticamente os stands em grades 3x3 ou 4x4 antes dos ajustes manuais
 - validar check-in por QR Code
 - acompanhar métricas do dashboard
 - moderar avaliações recentes
@@ -269,6 +271,8 @@ Os testes cobrem regras como:
 - as operações principais usam Dapper com queries parametrizadas
 - isso reduz o risco de SQL Injection nas rotas implementadas
 - eventos demo são inseridos automaticamente quando a tabela `Eventos` está vazia
+- em produção, o domínio configurado é `https://geektop.store`
+- no Railway, o `Dockerfile` da raiz sobe API e App no mesmo serviço; a API fica interna e o App fica público
 
 ## Documentação complementar
 

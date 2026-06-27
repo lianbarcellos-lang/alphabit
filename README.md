@@ -20,7 +20,7 @@ Projeto acadêmico de plataforma de eventos Geek / Anime / Gaming, construído s
 - SQLite
 - xUnit
 
-Não foram adicionados JWT, Swagger obrigatório, MariaDB, SQL Server, Docker, Entity Framework, CQRS, MediatR ou Clean Architecture.
+Não foram adicionados JWT, Swagger obrigatório, MariaDB, SQL Server, Entity Framework, CQRS, MediatR ou Clean Architecture. O `Dockerfile` existente é usado apenas como empacotamento do deploy no Railway, sem alterar a stack da aplicação.
 
 ## Estrutura
 
@@ -46,7 +46,7 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 - check-in administrativo manual ou por câmera/webcam, com bloqueio de duplicidade e rejeição de reserva cancelada
 - convidados e associação de convidados aos eventos
 - atividades internas com limite de vagas e inscrição
-- mapa de stands e expositores por evento, com imagem de planta enviada pelo administrador, organização automática por grades 2x2, 3x3, 4x4, 5x5 e 8x8, posicionamento manual por drag/drop, alocação administrativa por linhas/setores, preço por m²/preço fixo e visualização no detalhe/ingressos
+- mapa de stands e expositores por evento, com imagem de planta enviada pelo administrador, organização automática por grades 3x3 e 4x4, posicionamento manual por drag/drop, alocação administrativa por linhas/setores e visualização no detalhe/ingressos
 - avaliações de eventos com bloqueio de duplicidade e média exibida junto ao preço
 - dashboard administrativo com relatório de vendas, eventos populares, compras recentes, cupons, avaliações, check-ins e capacidade
 
@@ -56,12 +56,9 @@ Os nomes técnicos `Alphabit.*` foram mantidos nos projetos, namespaces e banco 
 
 O guia completo esta em [docs/railway.md](docs/railway.md).
 
-Para Railway, publique o projeto como dois servicos:
+No Railway atual, o deploy usa o `Dockerfile` da raiz. Ele publica a API e o App no mesmo serviço: a API roda internamente na porta `8081` e o App Blazor fica exposto pela porta pública do Railway.
 
-- API: `src/Alphabit.API`
-- App: `src/Alphabit.App`
-
-No App, configure `AlphabitApi__BaseUrl` com a URL publica da API. Na API, configure `AdminAccess__Token`, `AdminAccess__Login` e `AdminAccess__Password`. Para manter o SQLite depois de redeploy/restart, adicione um volume no servico da API.
+Configure no serviço as variáveis `AdminAccess__Token`, `AdminAccess__Login` e `AdminAccess__Password`. Para manter o SQLite depois de redeploy/restart, adicione um volume ao serviço. O domínio de apresentação configurado é `https://geektop.store`.
 
 ### Rodar localmente
 

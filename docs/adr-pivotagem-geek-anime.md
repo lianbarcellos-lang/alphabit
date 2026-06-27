@@ -17,7 +17,7 @@ A pivotagem precisa aproveitar a estrutura existente:
 - testes com xUnit
 - logica atual de usuarios, eventos, reservas e cupons
 
-Tambem foi definido que a pivotagem nao deve introduzir novas tecnologias estruturais como Entity Framework, JWT, MariaDB, SQL Server, Docker, microservices, CQRS, MediatR ou Clean Architecture.
+Tambem foi definido que a pivotagem nao deve introduzir novas tecnologias estruturais como Entity Framework, JWT, MariaDB, SQL Server, microservices, CQRS, MediatR ou Clean Architecture. O Dockerfile usado no Railway e apenas empacotamento de deploy, nao uma nova camada arquitetural da aplicacao.
 
 ## Decisao
 

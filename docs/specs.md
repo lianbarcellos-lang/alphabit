@@ -24,9 +24,9 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 
 - Cadastro de cliente.
 - Login com e-mail ou CPF.
-- Recuperação de senha.
 - Perfil do usuário.
 - Proteção de reservas por CPF.
+- Recuperação de senha não exposta na interface desta entrega.
 
 ### Regras
 
@@ -62,6 +62,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 
 - Listar eventos públicos.
 - Ver detalhe do evento.
+- Abrir detalhe ao clicar no card ou no botão `Ver ingressos`.
 - Cadastrar evento.
 - Editar evento.
 - Excluir evento.
@@ -80,6 +81,8 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - `DataEvento`
 - `PrecoPadrao`
 - `ImagemUrl`
+- `MapaImagemUrl`
+- `EhDestaque`
 
 ### Regras
 
@@ -95,11 +98,13 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Filtrar por dia da semana.
 - Filtrar por categoria geek.
 - Pesquisar eventos pela barra de busca.
+- Usar links reais nos cards para manter navegação funcional mesmo durante reconexões do Blazor.
 
 ### Regras
 
 - Filtros devem funcionar combinados.
 - Botão de limpar filtros deve restaurar a lista.
+- Cada card deve apontar para `/eventos/{id}`.
 
 ## 7. Tipos de ingresso
 
@@ -223,7 +228,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Permitir que o administrador envie uma imagem de planta do evento.
 - Permitir que o administrador cadastre stands manualmente.
 - Permitir que o administrador crie, renomeie e exclua linhas/setores do mapa.
-- Permitir organização automática dos stands por grades 2x2, 3x3 e 4x4.
+- Permitir organização automática dos stands por grades compactas visíveis 3x3 e 4x4.
 - Reposicionar todos os stands proporcionalmente dentro da planta ao aplicar uma grade automática.
 - Manter o ajuste manual por drag/drop após a aplicação da grade automática.
 - Permitir que o administrador arraste stands sobre a planta e salve as coordenadas.
@@ -233,7 +238,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Permitir que o administrador reserve cada stand para empresa, marca, loja, arena ou atração.
 - Permitir que o administrador libere um stand reservado.
 - Exibir o mapa atualizado no detalhe do evento para o cliente.
-- Exibir o mesmo mapa em blocos na área de ingressos do cliente, com opção de baixar o resumo.
+- Exibir o mesmo mapa no detalhe e na área de ingressos do cliente.
 - Exibir também uma lista por setor com o stand e seu ocupante.
 - Recarregar o mapa administrativo quando o administrador troca o evento selecionado.
 
@@ -289,7 +294,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - O sistema deve manter o mapa padrão em blocos quando não houver planta enviada.
 - A planta enviada deve usar coordenadas percentuais para funcionar em telas de tamanhos diferentes.
 - Ao criar ou carregar um evento sem stands, o sistema deve gerar o mapa padrão.
-- A grade automática deve respeitar a quantidade de stands cadastrados: 2x2 até 4, 3x3 até 9 e 4x4 até 16.
+- A grade automática deve respeitar a quantidade de stands cadastrados: 3x3 até 9 e 4x4 até 16.
 - A grade automática deve ficar desabilitada quando a quantidade de stands ultrapassar sua capacidade.
 - A grade automática deve recalcular posição e tamanho dos stands para reduzir sobreposições, sem impedir ajustes manuais posteriores.
 
@@ -312,7 +317,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 4. Envia a imagem da planta do evento.
 5. Cadastra ou seleciona um stand.
 6. Preenche empresa ou atração, tipo e descrição.
-7. Opcionalmente aplica uma grade automática 2x2, 3x3 ou 4x4 para organizar os stands.
+7. Opcionalmente aplica uma grade automática 3x3 ou 4x4 para organizar os stands.
 8. Arrasta o stand para o ponto desejado na planta quando precisar de ajuste fino.
 9. Salva a alocação.
 10. Ao reabrir o mapa, a planta e os stands aparecem nas posições salvas.
@@ -323,7 +328,7 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 2. Visualiza o mapa do evento, usando a planta enviada quando houver imagem cadastrada.
 3. Consulta setores e stands reservados.
 4. Usa o mapa para entender onde ficam empresas, lojas, arenas e atrações.
-5. Na área de ingressos, abre o mapa em janela e pode baixar o resumo.
+5. Na área de ingressos, abre o mapa em janela para consulta.
 
 ### Testes esperados
 
@@ -335,6 +340,14 @@ Proposta: plataforma de eventos geek/anime/games/cultura pop, com compra de ingr
 - Validar que stand reservado precisa de ocupante.
 - Validar que o detalhe do evento consome e exibe os stands.
 - Validar que a tela administrativa exibe as opções de grade automática e mantém drag/drop manual.
+
+## Deploy e dominio
+
+- Deploy em Railway com um unico servico Docker.
+- API interna em `8081`.
+- App Blazor publico na porta `$PORT`.
+- Dominio de apresentacao: `https://geektop.store`.
+- Cards e destaques usam links reais para `/eventos/{id}`.
 
 ## 14. Check-in com QR Code
 

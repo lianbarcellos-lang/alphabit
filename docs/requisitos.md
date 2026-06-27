@@ -44,6 +44,9 @@ Como administrador, quero editar e excluir cupons, para ajustar campanhas promoc
 ### HU13 - Vitrine publica de eventos
 Como cliente, quero visualizar os eventos disponiveis com imagem e informacoes principais, para escolher o que desejo comprar.
 
+### HU13.0 - Abertura de evento pelo card
+Como cliente, quero clicar no card do evento ou no botao `Ver ingressos`, para abrir o detalhe sem depender de um segundo botao ou de uma acao escondida.
+
 ### HU13.1 - Identidade visual geek
 Como cliente, quero ver imagens relacionadas a games, anime, cosplay e cultura geek, para entender rapidamente a proposta da plataforma.
 
@@ -111,10 +114,9 @@ Como administrador, quero criar, renomear e excluir linhas do mapa, para organiz
 
 Como administrador, quero editar ou excluir um stand diretamente na lista da linha, para corrigir erros sem precisar refazer todo o cadastro.
 
-Como administrador, quero aplicar uma organização automática em grade 2x2, 3x3 ou 4x4, para distribuir rapidamente os stands antes de fazer ajustes manuais.
+Como administrador, quero aplicar uma organização automática em grade compacta, para distribuir rapidamente os stands antes de fazer ajustes manuais.
 
 Critérios:
-- grade 2x2 comporta ate 4 stands;
 - grade 3x3 comporta ate 9 stands;
 - grade 4x4 comporta ate 16 stands;
 - grades menores que a quantidade atual de stands devem ficar indisponiveis;
@@ -277,6 +279,11 @@ Dado que existem eventos cadastrados
 Quando a vitrine e aberta  
 Entao os eventos devem ser exibidos com suas informacoes principais
 
+Cenario: abrir detalhe pelo card
+Dado que existem eventos na vitrine
+Quando o cliente clica no card ou no botao `Ver ingressos`
+Entao o navegador deve abrir `/eventos/{id}` por link real
+
 Cenario: filtrar eventos  
 Dado que existem eventos com cidades, artistas, dias e generos diferentes  
 Quando o cliente aplica filtros  
@@ -284,7 +291,7 @@ Entao a vitrine deve exibir apenas os eventos compativeis
 
 Cenario: manter imagens alinhadas ao dominio geek  
 Dado que o sistema exibe banners e capas de eventos  
-Quando o usuario navega pela Home ou pela vitrine  
+Quando o usuario navega pela vitrine
 Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou cultura geek
 
 ## Endpoints implementados
@@ -386,6 +393,8 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `DataEvento` TEXT NOT NULL
 - `PrecoPadrao` REAL NOT NULL
 - `ImagemUrl` TEXT
+- `MapaImagemUrl` TEXT NOT NULL DEFAULT ''
+- `EhDestaque` INTEGER NOT NULL DEFAULT 0
 
 ### Tabela `Cupons`
 
@@ -434,7 +443,9 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `EventoId` INTEGER NOT NULL
 - `Nome` TEXT NOT NULL
 - `Horario` TEXT NOT NULL
+- `HorarioFim` TEXT NOT NULL DEFAULT ''
 - `Tipo` TEXT NOT NULL
+- `Descricao` TEXT NOT NULL DEFAULT ''
 - `LimiteParticipantes` INTEGER NOT NULL
 
 ### Tabela `InscricoesAtividades`
@@ -442,6 +453,8 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `Id` INTEGER PRIMARY KEY AUTOINCREMENT
 - `AtividadeId` INTEGER NOT NULL
 - `UsuarioCpf` TEXT NOT NULL
+- `Quantidade` INTEGER NOT NULL DEFAULT 1
+- `Assentos` TEXT NOT NULL DEFAULT ''
 - `CriadoEm` TEXT NOT NULL
 
 ### Tabela `Convidados`
@@ -449,8 +462,8 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `Id` INTEGER PRIMARY KEY AUTOINCREMENT
 - `Nome` TEXT NOT NULL
 - `Tipo` TEXT NOT NULL
-- `Descricao` TEXT NOT NULL
-- `ImagemUrl` TEXT
+- `Bio` TEXT NOT NULL DEFAULT ''
+- `FotoUrl` TEXT NOT NULL DEFAULT ''
 
 ### Tabela `EventoConvidados`
 
@@ -467,6 +480,11 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `PosicaoY` INTEGER NOT NULL
 - `Largura` INTEGER NOT NULL
 - `Altura` INTEGER NOT NULL
+- `TipoArea` TEXT NOT NULL DEFAULT 'Stand'
+- `AreaX` REAL NOT NULL DEFAULT 0
+- `AreaY` REAL NOT NULL DEFAULT 0
+- `AreaLargura` REAL NOT NULL DEFAULT 12
+- `AreaAltura` REAL NOT NULL DEFAULT 8
 - `AreaMetrosQuadrados` REAL NOT NULL
 - `PrecoPorMetroQuadrado` REAL NOT NULL
 - `PrecoFixo` REAL NOT NULL
@@ -474,6 +492,12 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - `NomeOcupante` TEXT NOT NULL
 - `TipoOcupante` TEXT NOT NULL
 - `Descricao` TEXT NOT NULL
+
+### Tabela `StandSetores`
+
+- `Id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `EventoId` INTEGER NOT NULL
+- `Nome` TEXT NOT NULL
 
 ### Tabela `Checkins`
 
@@ -514,6 +538,7 @@ Entao as imagens devem estar relacionadas a games, anime, cosplay, card games ou
 - as avaliacoes exigem reserva do usuario, nota valida e bloqueiam duplicidade por usuario/evento
 - as datas de compra do historico e do relatorio sao convertidas para o horario de Brasilia
 - as rotas sensiveis de usuarios e reservas exigem autorizacao do proprio cliente ou do administrador
-- o projeto esta preparado para deploy no Railway com configuracao por variavel de ambiente e volume persistente para o banco SQLite
-- a API suporta envio de email tanto por Gmail SMTP quanto por API HTTP compativel com endpoint `/emails`
+- o projeto esta preparado para deploy no Railway em um unico servico Docker de empacotamento, com volume persistente para o banco SQLite
+- em producao, o dominio de apresentacao e `https://geektop.store`
+- a recuperacao de senha nao fica exposta na interface nesta entrega
 - existem testes automatizados com xUnit cobrindo regras principais e riscos de seguranca
