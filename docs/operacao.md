@@ -1,33 +1,35 @@
-# Operacao do Alphabit
+# Operacao do GeekTop
+
+Este documento consolida os riscos operacionais do GeekTop e referencia as fichas de SLO, metricas e politica de error budget usadas na apresentacao.
 
 ## Matriz de Riscos
 
-| Risco | Probabilidade | Impacto | Ação | Gatilho |
-| --- | --- | --- | --- | --- |
-| Venda acima da capacidade do evento | Media | Alto | Bloquear novas reservas quando a capacidade for atingida | Soma de reservas igual ou maior que a capacidade |
-| Uso incorreto de cupons | Media | Alto | Validar cupom, valor minimo e recalcular o total antes do insert | Cupom informado no checkout |
-| Cadastro duplicado por CPF | Media | Medio | Retornar `400 BadRequest` e impedir novo insert | CPF ja existente na tabela `Usuarios` |
-| Alocacao incorreta de stand | Media | Medio | Exigir token administrativo, validar nome do ocupante quando o stand for reservado e permitir reorganizacao por grade com ajuste manual | Tentativa de reservar stand sem ocupante, por cliente ou com posição incorreta no mapa |
-| Queda da API durante apresentacao | Baixa | Alto | Reiniciar a API, revisar logs locais e validar banco e rotas criticas | Falha de resposta em rota principal |
+| Risco | Probabilidade | Impacto | Estratégia | Ação | Gatilho |
+| --- | --- | --- | --- | --- | --- |
+| Venda acima da capacidade do evento | Media | Alto | Mitigar | Revalidar capacidade dentro da transacao e bloquear novas reservas quando o limite for atingido | Soma de reservas confirmadas igual ou maior que a capacidade |
+| Uso incorreto de cupons | Media | Alto | Mitigar | Validar cupom, valor minimo e recalcular o total no checkout antes de persistir a reserva | Cupom informado no checkout ou desconto inesperado |
+| Cadastro duplicado por CPF | Media | Medio | Prevenir | Retornar `400 BadRequest`, manter CPF como identificador de usuario e impedir novo insert | CPF ja existente na tabela `Usuarios` |
+| Alocacao incorreta de stand | Media | Medio | Mitigar | Exigir acesso administrativo, validar ocupante e permitir ajuste manual de coordenadas apos organizacao automatica | Tentativa de reservar stand sem ocupante, por cliente ou fora da planta |
+| Check-in duplicado | Media | Alto | Prevenir | Usar QR Code unico, indice unico por reserva e rejeitar check-in ja usado | Segundo POST em `/api/checkin` para a mesma reserva |
+| Reserva cancelada tentando entrar | Baixa | Alto | Prevenir | Rejeitar validacao de check-in quando a reserva estiver cancelada | Check-in com reserva em status cancelado |
+| Queda da API durante apresentacao | Baixa | Alto | Contingenciar | Reiniciar servico no Railway, verificar logs e validar rotas criticas | Falha de resposta em `/api/eventos` ou no App publico |
+| Perda de dados SQLite no deploy | Media | Alto | Mitigar | Usar volume persistente no Railway e evitar recriar banco sem backup | Novo deploy sem reservas ou eventos esperados |
 
-## Metrica Operacional
+## Gatilhos de Risco
 
-Fórmula: `(reservas concluidas com sucesso / tentativas de reserva) * 100`
+| Gatilho | Severidade | Verificacao | Resposta esperada |
+| --- | --- | --- | --- |
+| Build falhou | Alta | `dotnet build .\Alphabit.sln` | Corrigir antes de qualquer deploy |
+| Testes falharam | Alta | `dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore` | Bloquear publicacao ate todos passarem |
+| SLO de reservas abaixo de 95% | Alta | Ficha em `docs/slo.md` | Ativar politica de error budget nivel 3 |
+| Erro no checkout ou cupom | Alta | Smoke test de compra | Priorizar correcao transacional |
+| Falha de login admin | Media | Teste manual do painel ADM | Conferir variaveis `AdminAccess__*` |
+| QR Code nao valida | Media | Teste manual com codigo e camera | Manter validacao manual como contingencia |
 
-Fonte de Dados: respostas das rotas `POST /api/reservas` e registros persistidos no banco SQLite
+## Referencias Operacionais
 
-Frequência: verificacao a cada dia de uso ou antes de apresentacoes importantes
-
-Ação se Violado: revisar regras de negocio, logs de erro, dados de cupom, capacidade dos eventos e corrigir a causa antes de liberar nova demonstracao
-
-## Objetivo de Serviço
-
-SLO: 95% de reservas concluidas com sucesso em uma janela de 7 dias
-
-## Error Budget Policy
-
-Error Budget Policy:
-- se o SLO ficar abaixo da meta, o time deve interromper novas evolucoes visuais e priorizar estabilidade
-- corrigir primeiro falhas de reserva, capacidade, cupom, stands e integridade de dados
-- executar novamente os testes automatizados antes de novas entregas
-- somente retomar novas funcionalidades depois que a taxa minima prometida voltar a ser atendida
+- `docs/slo.md`: ficha de SLO e SLI.
+- `docs/error_budget_policy.md`: politica de error budget com 3 niveis.
+- `docs/metricas_dora.md`: metricas DORA em formato de ficha.
+- `docs/metricas_qualidade.md`: metricas de qualidade do projeto.
+- `docs/threat_model_e_gates.md`: ameacas, controles e gates.

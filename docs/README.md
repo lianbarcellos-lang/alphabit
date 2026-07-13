@@ -31,6 +31,27 @@ Sistema de venda e vitrine de eventos geek/anime com API em .NET 9, banco SQLite
 - `tests/Alphabit.Tests`: testes automatizados
 - `docs/requisitos.md`: requisitos atualizados do sistema
 
+## Documentos de avaliacao e manutencao
+
+- `docs/analise_arquitetura.md`: arquitetura tecnica, conceitual e padroes.
+- `docs/violacoes_arquiteturais.md`: regras, desvios e riscos arquiteturais.
+- `docs/adrs/`: decisoes arquiteturais em formato ADR.
+- `docs/divida_tecnica.md`: dividas tecnicas conhecidas.
+- `docs/priorizacao_divida.md`: priorizacao da divida tecnica.
+- `docs/classificacao_manutencao.md`: manutencao corretiva, adaptativa, perfectiva e preventiva.
+- `docs/pipeline_liberacao.md`: pipeline, gates, rollback e deploy.
+- `docs/plano_iteracao.md`: plano de iteracoes.
+- `docs/kanban_wip.md`: quadro Kanban e limites de WIP.
+- `docs/operacao.md`: matriz de riscos com estrategia e gatilhos.
+- `docs/metricas_dora.md`: fichas DORA.
+- `docs/metricas_qualidade.md`: metricas de qualidade.
+- `docs/slo.md`: ficha de SLO.
+- `docs/error_budget_policy.md`: politica em 3 niveis.
+- `docs/ssdf.md`: praticas de desenvolvimento seguro.
+- `docs/threat_model_e_gates.md`: threat model e gates.
+- `docs/topologia_times.md`: organizacao do grupo.
+- `docs/definition_of_done.md`: criterio de pronto.
+
 ## Como rodar
 
 Todos os comandos devem ser executados a partir da raiz do projeto:

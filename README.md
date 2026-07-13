@@ -102,7 +102,7 @@ dotnet test .\tests\Alphabit.Tests\Alphabit.Tests.csproj --no-restore
 Última validação local:
 
 - build aprovado com 0 erros e 0 avisos
-- 36 testes aprovados
+- 41 testes aprovados
 - 0 falhas
 
 ## Credenciais de demonstração
@@ -195,11 +195,28 @@ Esse caminho foi mantido por compatibilidade técnica com a base original.
 
 - [docs/visao.md](docs/visao.md)
 - [docs/arquitetura.md](docs/arquitetura.md)
+- [docs/analise_arquitetura.md](docs/analise_arquitetura.md)
+- [docs/violacoes_arquiteturais.md](docs/violacoes_arquiteturais.md)
+- [docs/adrs](docs/adrs)
 - [docs/specs.md](docs/specs.md)
 - [docs/roadmap.md](docs/roadmap.md)
 - [docs/historias-usuario.md](docs/historias-usuario.md)
 - [docs/pivotagem.md](docs/pivotagem.md)
 - [docs/roadmap-pivotagem.md](docs/roadmap-pivotagem.md)
 - [docs/requisitos.md](docs/requisitos.md)
+- [docs/divida_tecnica.md](docs/divida_tecnica.md)
+- [docs/priorizacao_divida.md](docs/priorizacao_divida.md)
+- [docs/classificacao_manutencao.md](docs/classificacao_manutencao.md)
+- [docs/pipeline_liberacao.md](docs/pipeline_liberacao.md)
+- [docs/plano_iteracao.md](docs/plano_iteracao.md)
+- [docs/kanban_wip.md](docs/kanban_wip.md)
+- [docs/metricas_dora.md](docs/metricas_dora.md)
+- [docs/metricas_qualidade.md](docs/metricas_qualidade.md)
+- [docs/slo.md](docs/slo.md)
+- [docs/error_budget_policy.md](docs/error_budget_policy.md)
+- [docs/ssdf.md](docs/ssdf.md)
+- [docs/threat_model_e_gates.md](docs/threat_model_e_gates.md)
+- [docs/topologia_times.md](docs/topologia_times.md)
+- [docs/definition_of_done.md](docs/definition_of_done.md)
 - [docs/checklist-entrega.md](docs/checklist-entrega.md)
 - [docs/adr-pivotagem-geek-anime.md](docs/adr-pivotagem-geek-anime.md)
